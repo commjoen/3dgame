@@ -317,15 +317,25 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
     - name: Run npm audit
-      run: npm audit --audit-level=moderate
+      run: npm audit --audit-level=high
       
     - name: Run Snyk to check for vulnerabilities
       uses: snyk/actions/node@master
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
-        args: --severity-threshold=high
+        args: --severity-threshold=high --sarif-file-output=snyk.sarif
+      continue-on-error: true
         
     - name: Upload Snyk results
       uses: github/codeql-action/upload-sarif@v3

@@ -15,10 +15,10 @@
     "test:mobile": "playwright test --project=mobile",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint src/ --ext .js,.ts",
-    "lint:fix": "eslint src/ --ext .js,.ts --fix",
-    "format": "prettier --write src/",
-    "format:check": "prettier --check src/",
+    "lint": "npx eslint src/ --ext .js,.ts",
+    "lint:fix": "npx eslint src/ --ext .js,.ts --fix",
+    "format": "npx prettier --write src/",
+    "format:check": "npx prettier --check src/",
     "type-check": "tsc --noEmit",
     "analyze": "npm run build && npx vite-bundle-analyzer dist/stats.html",
     "analyze:bundle": "webpack-bundle-analyzer dist/stats.json",
@@ -54,8 +54,8 @@
     "npm": ">=10.0.0"
   },
   "dependencies": {
-    "three": "^0.158.0",
-    "stats.js": "^0.17.0"
+    "stats.js": "^0.17.0",
+    "three": "^0.158.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
@@ -65,7 +65,7 @@
     "@vitejs/plugin-legacy": "^4.1.0",
     "@vitest/coverage-v8": "^0.34.0",
     "@vitest/ui": "^0.34.0",
-    "eslint": "^8.50.0",
+    "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "jsdom": "^22.1.0",
