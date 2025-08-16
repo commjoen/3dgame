@@ -61,6 +61,94 @@
         .hidden {
             display: none;
         }
+        
+        /* Mobile Controls */
+        #mobileControls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 150px;
+            pointer-events: none;
+            z-index: 200;
+        }
+        
+        .virtual-joystick {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 120px;
+            height: 120px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            background: rgba(0, 17, 34, 0.5);
+            pointer-events: auto;
+            touch-action: none;
+            backdrop-filter: blur(4px);
+        }
+        
+        .joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease-out;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .mobile-buttons {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .mobile-btn {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            background: rgba(0, 17, 34, 0.6);
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            touch-action: none;
+            backdrop-filter: blur(4px);
+            user-select: none;
+        }
+        
+        .mobile-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.95);
+        }
+        
+        /* Mobile-specific UI adjustments */
+        @media (max-width: 768px) {
+            #ui {
+                font-size: 16px;
+                top: 15px;
+                left: 15px;
+            }
+            
+            #mobileControls {
+                display: block;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            #mobileControls {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -72,6 +160,16 @@
     <div id="ui" class="hidden">
         <div>Stars: <span id="starCount">0</span></div>
         <div>Level: <span id="levelNumber">1</span></div>
+    </div>
+    
+    <div id="mobileControls">
+        <div class="virtual-joystick" id="virtualJoystick">
+            <div class="joystick-knob" id="joystickKnob"></div>
+        </div>
+        <div class="mobile-buttons">
+            <div class="mobile-btn" id="swimUpBtn">↑</div>
+            <div class="mobile-btn" id="swimDownBtn">↓</div>
+        </div>
     </div>
     
     <canvas id="gameCanvas"></canvas>

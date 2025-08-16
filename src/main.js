@@ -193,16 +193,208 @@ class OceanAdventure {
   }
 
   setupTouchControls() {
-    // Placeholder touch control setup
+    // Setup virtual joystick
+    this.setupVirtualJoystick()
+
+    // Setup mobile action buttons
+    this.setupMobileButtons()
+
+    // Touch control state for general canvas interactions
+    this.touchState = {
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      isActive: false,
+    }
+
+    // General canvas touch events (for swipe gestures)
     this.canvas.addEventListener('touchstart', event => {
       event.preventDefault()
-      // Touch control logic will be implemented here
+      if (event.touches.length > 0) {
+        const touch = event.touches[0]
+        this.touchState.startX = touch.clientX
+        this.touchState.startY = touch.clientY
+        this.touchState.currentX = touch.clientX
+        this.touchState.currentY = touch.clientY
+        this.touchState.isActive = true
+      }
     })
 
     this.canvas.addEventListener('touchmove', event => {
       event.preventDefault()
-      // Touch movement logic will be implemented here
+      if (event.touches.length > 0 && this.touchState.isActive) {
+        const touch = event.touches[0]
+        this.touchState.currentX = touch.clientX
+        this.touchState.currentY = touch.clientY
+
+        // Calculate movement delta for swipe gestures
+        const deltaX = this.touchState.currentX - this.touchState.startX
+        const deltaY = this.touchState.currentY - this.touchState.startY
+
+        // Apply gentle swipe-based movement (subtle effect)
+        const moveSpeed = 0.05
+        const sensitivity = 3
+
+        if (Math.abs(deltaX) > 20) {
+          this.player.position.x += (deltaX / sensitivity) * moveSpeed * 0.01
+        }
+
+        if (Math.abs(deltaY) > 20) {
+          this.player.position.z += (deltaY / sensitivity) * moveSpeed * 0.01
+        }
+
+        this.updateCamera()
+      }
     })
+
+    this.canvas.addEventListener('touchend', event => {
+      event.preventDefault()
+      this.touchState.isActive = false
+    })
+
+    this.canvas.addEventListener('touchcancel', event => {
+      event.preventDefault()
+      this.touchState.isActive = false
+    })
+  }
+
+  setupVirtualJoystick() {
+    const joystick = document.getElementById('virtualJoystick')
+    const knob = document.getElementById('joystickKnob')
+
+    if (!joystick || !knob) {
+      return
+    }
+
+    const joystickState = {
+      isActive: false,
+      centerX: 0,
+      centerY: 0,
+      currentX: 0,
+      currentY: 0,
+    }
+
+    const moveSpeed = 0.15
+
+    joystick.addEventListener('touchstart', event => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      if (event.touches.length > 0) {
+        const touch = event.touches[0]
+        const rect = joystick.getBoundingClientRect()
+
+        joystickState.isActive = true
+        joystickState.centerX = rect.left + rect.width / 2
+        joystickState.centerY = rect.top + rect.height / 2
+        joystickState.currentX = touch.clientX
+        joystickState.currentY = touch.clientY
+
+        this.updateJoystickKnob(knob, joystickState, rect)
+      }
+    })
+
+    joystick.addEventListener('touchmove', event => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      if (event.touches.length > 0 && joystickState.isActive) {
+        const touch = event.touches[0]
+        const rect = joystick.getBoundingClientRect()
+
+        joystickState.currentX = touch.clientX
+        joystickState.currentY = touch.clientY
+
+        // Calculate movement vector
+        const deltaX = joystickState.currentX - joystickState.centerX
+        const deltaY = joystickState.currentY - joystickState.centerY
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+        const maxDistance = rect.width / 2 - 20
+
+        // Normalize and apply movement
+        if (distance > 5) {
+          const normalizedX = deltaX / maxDistance
+          const normalizedY = deltaY / maxDistance
+
+          // Apply movement to player
+          this.player.position.x += normalizedX * moveSpeed * 0.03
+          this.player.position.z += normalizedY * moveSpeed * 0.03
+
+          this.updateCamera()
+        }
+
+        this.updateJoystickKnob(knob, joystickState, rect)
+      }
+    })
+
+    joystick.addEventListener('touchend', event => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      joystickState.isActive = false
+      knob.style.transform = 'translate(-50%, -50%)'
+    })
+
+    joystick.addEventListener('touchcancel', event => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      joystickState.isActive = false
+      knob.style.transform = 'translate(-50%, -50%)'
+    })
+  }
+
+  updateJoystickKnob(knob, joystickState, rect) {
+    const deltaX = joystickState.currentX - joystickState.centerX
+    const deltaY = joystickState.currentY - joystickState.centerY
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+    const maxDistance = rect.width / 2 - 20
+
+    if (distance <= maxDistance) {
+      knob.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`
+    } else {
+      const angle = Math.atan2(deltaY, deltaX)
+      const x = Math.cos(angle) * maxDistance
+      const y = Math.sin(angle) * maxDistance
+      knob.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
+    }
+  }
+
+  setupMobileButtons() {
+    const swimUpBtn = document.getElementById('swimUpBtn')
+    const swimDownBtn = document.getElementById('swimDownBtn')
+
+    if (swimUpBtn) {
+      swimUpBtn.addEventListener('touchstart', event => {
+        event.preventDefault()
+        event.stopPropagation()
+        this.mobileButtonState = { swimUp: true }
+      })
+
+      swimUpBtn.addEventListener('touchend', event => {
+        event.preventDefault()
+        event.stopPropagation()
+        this.mobileButtonState = { swimUp: false }
+      })
+    }
+
+    if (swimDownBtn) {
+      swimDownBtn.addEventListener('touchstart', event => {
+        event.preventDefault()
+        event.stopPropagation()
+        this.mobileButtonState = { swimDown: true }
+      })
+
+      swimDownBtn.addEventListener('touchend', event => {
+        event.preventDefault()
+        event.stopPropagation()
+        this.mobileButtonState = { swimDown: false }
+      })
+    }
+
+    // Initialize mobile button state
+    this.mobileButtonState = { swimUp: false, swimDown: false }
   }
 
   onWindowResize() {
@@ -264,6 +456,19 @@ class OceanAdventure {
   update() {
     if (!this.isLoaded) {
       return
+    }
+
+    // Handle mobile button states
+    if (this.isMobile && this.mobileButtonState) {
+      const moveSpeed = 0.2
+      if (this.mobileButtonState.swimUp) {
+        this.player.position.y += moveSpeed * 0.5
+        this.updateCamera()
+      }
+      if (this.mobileButtonState.swimDown) {
+        this.player.position.y -= moveSpeed * 0.5
+        this.updateCamera()
+      }
     }
 
     // Animate stars
