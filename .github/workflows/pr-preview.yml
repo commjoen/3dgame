@@ -23,7 +23,7 @@ jobs:
     
     steps:
     - name: Checkout PR code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         
@@ -49,7 +49,7 @@ jobs:
         VITE_BASE_PATH: /3dgame/pr-${{ github.event.number }}/
       
     - name: Checkout gh-pages branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: gh-pages
         path: gh-pages
