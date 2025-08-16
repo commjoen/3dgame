@@ -24,14 +24,14 @@ export default defineConfig({
         orientation: 'any',
         icons: [
           {
-            src: 'icon-192.png',
+            src: 'favicon.ico',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/x-icon'
           },
           {
-            src: 'icon-512.png',
+            src: 'favicon.ico',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/x-icon'
           }
         ]
       }
