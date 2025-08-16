@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm test
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Create changelog
+      id: changelog
+      run: |
+        # Generate changelog from git commits
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:"- %s (%h)" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Create release archive
+      run: |
+        tar -czf ocean-adventure-${{ github.ref_name }}.tar.gz dist/
+        zip -r ocean-adventure-${{ github.ref_name }}.zip dist/
+        
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Ocean Adventure ${{ github.ref_name }}
+        body: |
+          ## Changes in this Release
+          ${{ steps.changelog.outputs.CHANGELOG }}
+          
+          ## Installation
+          Download the appropriate archive below and extract it to your web server.
+          
+          ## System Requirements
+          - Modern web browser with WebGL 2.0 support
+          - Mobile devices: iOS 13+ Safari, Android Chrome 80+
+          - Desktop: Chrome 80+, Firefox 75+, Safari 13+, Edge 80+
+          
+          ## What's New
+          See the [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+        draft: false
+        prerelease: false
+        
+    - name: Upload tar.gz archive
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./ocean-adventure-${{ github.ref_name }}.tar.gz
+        asset_name: ocean-adventure-${{ github.ref_name }}.tar.gz
+        asset_content_type: application/gzip
+        
+    - name: Upload zip archive
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./ocean-adventure-${{ github.ref_name }}.zip
+        asset_name: ocean-adventure-${{ github.ref_name }}.zip
+        asset_content_type: application/zip
