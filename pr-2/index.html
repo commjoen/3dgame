@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ocean Adventure - 3D underwater platform game" />
+    <meta name="theme-color" content="#1e40af" />
+    <link rel="icon" type="image/x-icon" href="/3dgame/pr-2/3dgame/pr-2/favicon.ico" />
+    <link rel="manifest" href="/3dgame/pr-2/3dgame/pr-2/manifest.json" />
+    <title>Ocean Adventure</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #1e40af, #0f172a);
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            z-index: 1000;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+  <script type="module" crossorigin src="/3dgame/pr-2/3dgame/pr-2/assets/index-e4a37dd3.js"></script>
+  <link rel="modulepreload" crossorigin href="/3dgame/pr-2/3dgame/pr-2/assets/three-33f155ec.js">
+  <script type="module">import.meta.url;import("_").catch(()=>1);async function* g(){};if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
+  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+<link rel="manifest" href="/3dgame/pr-2/3dgame/pr-2/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/3dgame/pr-2/3dgame/pr-2/registerSW.js"></script></head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Loading Ocean Adventure...</p>
+    </div>
+    
+    <div id="ui" class="hidden">
+        <div>Stars: <span id="starCount">0</span></div>
+        <div>Level: <span id="levelNumber">1</span></div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+    
+    
+  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+  <script nomodule crossorigin id="vite-legacy-polyfill" src="/3dgame/pr-2/3dgame/pr-2/assets/polyfills-legacy-32ee1459.js"></script>
+  <script nomodule crossorigin id="vite-legacy-entry" data-src="/3dgame/pr-2/3dgame/pr-2/assets/index-legacy-40a055ce.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+</body>
+</html>

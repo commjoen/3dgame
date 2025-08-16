@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Adventure - PR Previews</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background: linear-gradient(to bottom, #1e40af, #0f172a);
+            color: white;
+            min-height: 100vh;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .preview-item { 
+            background: rgba(255,255,255,0.1); 
+            margin: 20px 0; 
+            padding: 20px; 
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .preview-item h3 { margin-top: 0; color: #60a5fa; }
+        .preview-link { 
+            display: inline-block;
+            background: #1e40af; 
+            color: white; 
+            padding: 10px 20px; 
+            text-decoration: none; 
+            border-radius: 4px;
+            margin: 5px 5px 5px 0;
+        }
+        .preview-link:hover { background: #1d4ed8; }
+        .main-link { background: #059669; }
+        .main-link:hover { background: #047857; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌊 Ocean Adventure - Preview Deployments</h1>
+        <div class="preview-item">
+            <h3>🚀 Main Branch (Stable)</h3>
+            <p>The stable version deployed from the main branch.</p>
+            <a href="/3dgame/" class="preview-link main-link">Play Main Version</a>
+        </div>
+                <div class="preview-item">
+                    <h3>🔄 Pull Request #2</h3>
+                    <p>Preview deployment for PR #2</p>
+                    <a href="/3dgame/pr-2/" class="preview-link">Play PR #2</a>
+                    <a href="https://github.com/commjoen/3dgame/pull/2" class="preview-link">View PR</a>
+                </div>
+    </div>
+</body>
+</html>
