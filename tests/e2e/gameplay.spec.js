@@ -21,12 +21,22 @@ test.describe('Ocean Adventure E2E Tests', () => {
     expect(webglSupported).toBe(true)
   })
 
-  test('should show loading screen initially', async ({ page }) => {
-    // Check that loading screen is visible initially
-    await expect(page.locator('#loading')).toBeVisible()
-
-    // Wait for game to load (in a real implementation)
-    // await expect(page.locator('#loading')).toBeHidden({ timeout: 10000 })
+  test('should load the game and hide loading screen', async ({ page }) => {
+    // Either loading screen is visible or already hidden (game loaded quickly)
+    const loadingScreen = page.locator('#loading')
+    const gameCanvas = page.locator('#gameCanvas')
+    const ui = page.locator('#ui')
+    
+    // Ensure the game canvas is present
+    await expect(gameCanvas).toBeVisible()
+    
+    // Ensure UI is present (which means game loaded)
+    await expect(ui).toBeVisible()
+    
+    // If loading screen is still visible, wait for it to be hidden
+    if (await loadingScreen.isVisible()) {
+      await expect(loadingScreen).toBeHidden({ timeout: 10000 })
+    }
   })
 
   test('should have responsive design', async ({ page }) => {
