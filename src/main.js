@@ -7,6 +7,9 @@
  */
 
 import * as THREE from 'three'
+import { PhysicsEngine } from './core/Physics.js'
+import { ParticleSystem } from './core/ParticleSystem.js'
+import { Player } from './components/Player.js'
 
 // Game configuration
 const CONFIG = {
@@ -26,9 +29,32 @@ class OceanAdventure {
     this.isLoaded = false
     this.isMobile = this.detectMobile()
 
+    // Core systems
+    this.physicsEngine = null
+    this.particleSystem = null
+    this.player = null
+    this.environmentObjects = []
+
     // Game state
     this.starCount = 0
     this.levelNumber = 1
+
+    // Input state
+    this.inputState = {
+      keys: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+      },
+      joystick: { x: 0, y: 0 },
+      mobileButtons: { swimUp: false, swimDown: false },
+    }
+
+    // Timing
+    this.lastTime = 0
 
     console.log('🌊 Ocean Adventure - Initializing...')
   }
@@ -40,6 +66,16 @@ class OceanAdventure {
       this.setupScene()
       this.setupCamera()
       this.setupLights()
+
+      // Initialize core systems
+      this.initializePhysics()
+      this.initializeParticleSystem()
+
+      // Create game objects
+      this.createUnderwaterEnvironment()
+      this.createPlayer()
+      this.createSampleStars()
+
       this.setupEventListeners()
 
       // Hide loading screen and show UI
@@ -81,11 +117,22 @@ class OceanAdventure {
 
   setupScene() {
     this.scene = new THREE.Scene()
+  }
 
-    // Add basic underwater environment
-    this.createUnderwaterEnvironment()
-    this.createPlayer()
-    this.createSampleStars()
+  /**
+   * Initialize physics engine
+   */
+  initializePhysics() {
+    this.physicsEngine = new PhysicsEngine()
+    console.log('⚡ Physics engine initialized')
+  }
+
+  /**
+   * Initialize particle system
+   */
+  initializeParticleSystem() {
+    this.particleSystem = new ParticleSystem(this.scene, 500) // Reduced for mobile performance
+    console.log('✨ Particle system initialized')
   }
 
   setupCamera() {
@@ -125,37 +172,59 @@ class OceanAdventure {
     floor.receiveShadow = true
     this.scene.add(floor)
 
-    // Add some basic coral/rocks
+    // Create physics body for floor
+    const floorPhysicsBody = this.physicsEngine.createBoxBody(
+      new THREE.Vector3(0, -5, 0),
+      new THREE.Vector3(100, 0.1, 100),
+      true // Static
+    )
+    floorPhysicsBody.type = 'environment'
+    this.physicsEngine.addRigidBody(floorPhysicsBody)
+
+    // Add coral/rocks with collision detection
     for (let i = 0; i < 10; i++) {
-      const geometry = new THREE.SphereGeometry(0.5 + Math.random() * 1.5)
+      const radius = 0.5 + Math.random() * 1.5
+      const geometry = new THREE.SphereGeometry(radius)
       const material = new THREE.MeshLambertMaterial({
         color: new THREE.Color().setHSL(Math.random() * 0.3, 0.7, 0.5),
       })
       const coral = new THREE.Mesh(geometry, material)
-      coral.position.set(
+
+      const position = new THREE.Vector3(
         (Math.random() - 0.5) * 80,
         -4 + Math.random() * 2,
         (Math.random() - 0.5) * 80
       )
+      coral.position.copy(position)
       coral.castShadow = true
       this.scene.add(coral)
+
+      // Add physics body for collision
+      const coralPhysicsBody = this.physicsEngine.createSphereBody(
+        position,
+        radius * 1.2, // Slightly larger for collision detection
+        true // Static
+      )
+      coralPhysicsBody.type = 'environment'
+      coralPhysicsBody.mesh = coral // Reference to visual representation
+      this.physicsEngine.addRigidBody(coralPhysicsBody)
+      this.environmentObjects.push({
+        mesh: coral,
+        physicsBody: coralPhysicsBody,
+      })
     }
   }
 
   createPlayer() {
-    // Simple player representation (will be replaced with proper model)
-    const playerGeometry = new THREE.CapsuleGeometry(0.5, 1.5)
-    const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff88 })
-    this.player = new THREE.Mesh(playerGeometry, playerMaterial)
-    this.player.position.set(0, 0, 0)
-    this.player.castShadow = true
-    this.scene.add(this.player)
+    // Create enhanced player with physics
+    this.player = new Player(this.scene, this.physicsEngine)
+    console.log('🏊 Player created with physics')
   }
 
   createSampleStars() {
     this.stars = []
 
-    // Create glowing star collectibles
+    // Create glowing star collectibles with physics
     for (let i = 0; i < 5; i++) {
       const starGeometry = new THREE.SphereGeometry(0.3)
       const starMaterial = new THREE.MeshLambertMaterial({
@@ -165,16 +234,31 @@ class OceanAdventure {
       })
 
       const star = new THREE.Mesh(starGeometry, starMaterial)
-      star.position.set(
+      const position = new THREE.Vector3(
         (Math.random() - 0.5) * 20,
         Math.random() * 8 - 2,
         (Math.random() - 0.5) * 20
       )
+      star.position.copy(position)
+
+      // Add physics body for collision detection
+      const starPhysicsBody = this.physicsEngine.createSphereBody(
+        position,
+        0.5, // Slightly larger for easier collection
+        true // Static - stars don't move
+      )
+      starPhysicsBody.type = 'collectible'
+      starPhysicsBody.mesh = star
+      starPhysicsBody.collected = false
+      this.physicsEngine.addRigidBody(starPhysicsBody)
 
       // Add simple rotation animation
-      star.userData = { rotationSpeed: 0.02 + Math.random() * 0.02 }
+      star.userData = {
+        rotationSpeed: 0.02 + Math.random() * 0.02,
+        physicsBody: starPhysicsBody,
+      }
 
-      this.stars.push(star)
+      this.stars.push({ mesh: star, physicsBody: starPhysicsBody })
       this.scene.add(star)
     }
   }
@@ -183,12 +267,68 @@ class OceanAdventure {
     // Handle window resize
     window.addEventListener('resize', () => this.onWindowResize())
 
-    // Basic movement controls (placeholder)
+    // Enhanced input handling
     window.addEventListener('keydown', event => this.onKeyDown(event))
+    window.addEventListener('keyup', event => this.onKeyUp(event))
 
-    // Touch controls for mobile (placeholder)
+    // Touch controls for mobile
     if (this.isMobile) {
       this.setupTouchControls()
+    }
+  }
+
+  onKeyDown(event) {
+    switch (event.code) {
+      case 'ArrowUp':
+      case 'KeyW':
+        this.inputState.keys.forward = true
+        break
+      case 'ArrowDown':
+      case 'KeyS':
+        this.inputState.keys.backward = true
+        break
+      case 'ArrowLeft':
+      case 'KeyA':
+        this.inputState.keys.left = true
+        break
+      case 'ArrowRight':
+      case 'KeyD':
+        this.inputState.keys.right = true
+        break
+      case 'Space':
+        this.inputState.keys.up = true
+        event.preventDefault()
+        break
+      case 'ShiftLeft':
+        this.inputState.keys.down = true
+        break
+    }
+  }
+
+  onKeyUp(event) {
+    switch (event.code) {
+      case 'ArrowUp':
+      case 'KeyW':
+        this.inputState.keys.forward = false
+        break
+      case 'ArrowDown':
+      case 'KeyS':
+        this.inputState.keys.backward = false
+        break
+      case 'ArrowLeft':
+      case 'KeyA':
+        this.inputState.keys.left = false
+        break
+      case 'ArrowRight':
+      case 'KeyD':
+        this.inputState.keys.right = false
+        break
+      case 'Space':
+        this.inputState.keys.up = false
+        break
+      case 'ShiftLeft':
+        this.inputState.keys.down = false
+        break
     }
   }
 
@@ -275,8 +415,6 @@ class OceanAdventure {
       currentY: 0,
     }
 
-    const moveSpeed = 0.15
-
     joystick.addEventListener('touchstart', event => {
       event.preventDefault()
       event.stopPropagation()
@@ -317,11 +455,12 @@ class OceanAdventure {
           const normalizedX = deltaX / maxDistance
           const normalizedY = deltaY / maxDistance
 
-          // Apply movement to player
-          this.player.position.x += normalizedX * moveSpeed * 0.03
-          this.player.position.z += normalizedY * moveSpeed * 0.03
-
-          this.updateCamera()
+          // Update input state instead of directly moving player
+          this.inputState.joystick.x = normalizedX * 0.8 // Scale down for smoother control
+          this.inputState.joystick.y = normalizedY * 0.8
+        } else {
+          this.inputState.joystick.x = 0
+          this.inputState.joystick.y = 0
         }
 
         this.updateJoystickKnob(knob, joystickState, rect)
@@ -333,6 +472,8 @@ class OceanAdventure {
       event.stopPropagation()
 
       joystickState.isActive = false
+      this.inputState.joystick.x = 0
+      this.inputState.joystick.y = 0
       knob.style.transform = 'translate(-50%, -50%)'
     })
 
@@ -341,6 +482,8 @@ class OceanAdventure {
       event.stopPropagation()
 
       joystickState.isActive = false
+      this.inputState.joystick.x = 0
+      this.inputState.joystick.y = 0
       knob.style.transform = 'translate(-50%, -50%)'
     })
   }
@@ -369,13 +512,13 @@ class OceanAdventure {
       swimUpBtn.addEventListener('touchstart', event => {
         event.preventDefault()
         event.stopPropagation()
-        this.mobileButtonState = { swimUp: true }
+        this.inputState.mobileButtons.swimUp = true
       })
 
       swimUpBtn.addEventListener('touchend', event => {
         event.preventDefault()
         event.stopPropagation()
-        this.mobileButtonState = { swimUp: false }
+        this.inputState.mobileButtons.swimUp = false
       })
     }
 
@@ -383,18 +526,15 @@ class OceanAdventure {
       swimDownBtn.addEventListener('touchstart', event => {
         event.preventDefault()
         event.stopPropagation()
-        this.mobileButtonState = { swimDown: true }
+        this.inputState.mobileButtons.swimDown = true
       })
 
       swimDownBtn.addEventListener('touchend', event => {
         event.preventDefault()
         event.stopPropagation()
-        this.mobileButtonState = { swimDown: false }
+        this.inputState.mobileButtons.swimDown = false
       })
     }
-
-    // Initialize mobile button state
-    this.mobileButtonState = { swimUp: false, swimDown: false }
   }
 
   onWindowResize() {
@@ -403,102 +543,112 @@ class OceanAdventure {
     this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
-  onKeyDown(event) {
-    // Basic movement controls (placeholder)
-    const moveSpeed = 0.2
-
-    switch (event.code) {
-      case 'ArrowUp':
-      case 'KeyW':
-        this.player.position.z -= moveSpeed
-        break
-      case 'ArrowDown':
-      case 'KeyS':
-        this.player.position.z += moveSpeed
-        break
-      case 'ArrowLeft':
-      case 'KeyA':
-        this.player.position.x -= moveSpeed
-        break
-      case 'ArrowRight':
-      case 'KeyD':
-        this.player.position.x += moveSpeed
-        break
-      case 'Space':
-        this.player.position.y += moveSpeed * 0.5
-        break
-      case 'ShiftLeft':
-        this.player.position.y -= moveSpeed * 0.5
-        break
-    }
-
-    // Update camera to follow player
-    this.updateCamera()
-  }
-
   updateCamera() {
-    // Simple camera follow logic (will be improved)
+    // Enhanced camera follow logic
+    const playerPosition = this.player.getPosition()
     const offset = new THREE.Vector3(0, 5, 10)
-    const targetPosition = this.player.position.clone().add(offset)
+    const targetPosition = playerPosition.clone().add(offset)
+
     this.camera.position.lerp(targetPosition, 0.1)
-    this.camera.lookAt(this.player.position)
+    this.camera.lookAt(playerPosition)
   }
 
   startGameLoop() {
-    const animate = () => {
+    const animate = currentTime => {
       requestAnimationFrame(animate)
-      this.update()
+
+      // Calculate delta time
+      const deltaTime =
+        this.lastTime > 0 ? (currentTime - this.lastTime) / 1000 : 0.016
+      this.lastTime = currentTime
+
+      this.update(deltaTime)
       this.render()
     }
-    animate()
+    animate(0)
   }
 
-  update() {
+  update(deltaTime) {
     if (!this.isLoaded) {
       return
     }
 
-    // Handle mobile button states
-    if (this.isMobile && this.mobileButtonState) {
-      const moveSpeed = 0.2
-      if (this.mobileButtonState.swimUp) {
-        this.player.position.y += moveSpeed * 0.5
-        this.updateCamera()
-      }
-      if (this.mobileButtonState.swimDown) {
-        this.player.position.y -= moveSpeed * 0.5
-        this.updateCamera()
-      }
-    }
+    // Clamp delta time to prevent large jumps
+    deltaTime = Math.min(deltaTime, 0.033) // Max 30fps equivalent
+
+    // Update physics engine
+    this.physicsEngine.update(deltaTime)
+
+    // Update player with input
+    this.player.handleInput(this.inputState)
+    this.player.update()
+
+    // Update particle system
+    this.particleSystem.update(deltaTime)
+
+    // Update camera
+    this.updateCamera()
 
     // Animate stars
-    this.stars.forEach(star => {
+    this.stars.forEach(starData => {
+      const star = starData.mesh
       star.rotation.y += star.userData.rotationSpeed
       star.rotation.x += star.userData.rotationSpeed * 0.5
     })
 
-    // Check star collection (simple distance check)
+    // Check star collection using collision detection
     this.checkStarCollection()
   }
 
   checkStarCollection() {
-    this.stars.forEach((star, index) => {
-      const distance = this.player.position.distanceTo(star.position)
-      if (distance < 1.0) {
+    // Get player collisions from physics engine
+    const playerCollisions = this.physicsEngine.collisionSystem.checkCollisions(
+      this.player.physicsBody
+    )
+
+    for (const collision of playerCollisions) {
+      if (collision.type === 'collectible' && !collision.collected) {
         // Collect star
-        this.scene.remove(star)
-        this.stars.splice(index, 1)
-        this.starCount++
-        this.updateUI()
+        collision.collected = true
 
-        console.log(`⭐ Star collected! Total: ${this.starCount}`)
+        // Find and remove the star from scene and physics
+        const starData = this.stars.find(s => s.physicsBody === collision)
+        if (starData) {
+          // Remove from scene
+          this.scene.remove(starData.mesh)
 
-        // Check if level is complete
-        if (this.stars.length === 0) {
-          this.levelComplete()
+          // Remove from physics
+          this.physicsEngine.removeRigidBody(starData.physicsBody)
+
+          // Remove from stars array
+          const index = this.stars.indexOf(starData)
+          if (index !== -1) {
+            this.stars.splice(index, 1)
+          }
+
+          // Update game state
+          this.starCount++
+          this.updateUI()
+
+          // Create collection effect
+          this.particleSystem.createBurst(starData.mesh.position, {
+            count: 15,
+            life: 1.5,
+            velocity: new THREE.Vector3(0, 2, 0),
+            velocityVariation: new THREE.Vector3(3, 3, 3),
+            color: new THREE.Color(0xffd700),
+            size: { min: 3, max: 8 },
+          })
+
+          console.log(`⭐ Star collected! Total: ${this.starCount}`)
+
+          // Check if level is complete
+          if (this.stars.length === 0) {
+            this.levelComplete()
+          }
         }
       }
-    })
+    }
   }
 
   levelComplete() {
