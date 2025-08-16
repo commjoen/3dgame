@@ -1,0 +1,249 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linter
+      run: npm run lint
+      
+    - name: Run unit tests
+      run: npm run test:unit
+      
+    - name: Run integration tests
+      run: npm run test:integration
+      
+    - name: Check code formatting
+      run: npm run format:check
+      
+    - name: Type check
+      run: npm run type-check
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Run E2E tests
+      run: npm run test:e2e
+      
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
+
+  mobile-compatibility:
+    name: Mobile Compatibility Check
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+      
+    - name: Run mobile tests
+      run: npm run test:mobile
+      
+    - name: Upload mobile test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: mobile-test-results
+        path: test-results/
+        retention-days: 30
+
+  performance-audit:
+    name: Performance Audit
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Run Lighthouse CI
+      run: |
+        npm install -g @lhci/cli@0.12.x
+        lhci autorun
+      env:
+        LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        
+    - name: Bundle size analysis
+      run: npm run analyze:bundle
+      
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-report
+        path: |
+          lighthouseci/
+          bundle-analysis/
+        retention-days: 30
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [test, e2e-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build for production
+      run: npm run build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+        retention-days: 30
+
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [build, performance-audit]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload to GitHub Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./dist
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate
+      
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+        
+    - name: Upload Snyk results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: snyk.sarif

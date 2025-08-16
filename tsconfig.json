@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "declaration": true,
+    "outDir": "./dist/types",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/core/*": ["src/core/*"],
+      "@/components/*": ["src/components/*"],
+      "@/utils/*": ["src/utils/*"],
+      "@/assets/*": ["src/assets/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build"
+  ]
+}
