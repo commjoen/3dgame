@@ -81,10 +81,6 @@ jobs:
         
         # Copy built files to PR preview directory
         cp -r dist/* gh-pages/pr-${{ github.event.number }}/
-        
-        # Update index file with correct base path
-        sed -i 's|src="/|src="/3dgame/pr-${{ github.event.number }}/|g' gh-pages/pr-${{ github.event.number }}/index.html
-        sed -i 's|href="/|href="/3dgame/pr-${{ github.event.number }}/|g' gh-pages/pr-${{ github.event.number }}/index.html
       
     - name: Update preview index
       run: |
