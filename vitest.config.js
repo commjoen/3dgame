@@ -5,12 +5,14 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['tests/setup.js'],
+    include: ['tests/unit/**/*.test.js', 'tests/integration/**/*.test.js'],
+    exclude: ['tests/e2e/**/*.spec.js', 'node_modules/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
-        'tests/',
+        'tests/e2e/',
         'dist/',
         '**/*.d.ts',
         'vite.config.js',
