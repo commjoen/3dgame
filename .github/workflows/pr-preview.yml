@@ -74,19 +74,22 @@ jobs:
           cd ..
         fi
       
-    - name: Setup preview directory
-      run: |
-        # Create PR preview directory
-        mkdir -p gh-pages/pr-${{ github.event.number }}
-        
-        # Copy built files to PR preview directory
-        cp -r dist/* gh-pages/pr-${{ github.event.number }}/
-      
-    - name: Update preview index
+    - name: Commit preview deployment
       run: |
         cd gh-pages
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
         
-        # Create or update previews index
+        # Fetch latest changes and reset to remote state
+        git fetch origin gh-pages
+        git reset --hard origin/gh-pages
+        
+        # Recreate the PR preview directory and files
+        mkdir -p pr-${{ github.event.number }}
+        cp -r ../dist/* pr-${{ github.event.number }}/
+        
+        # Regenerate the previews index
         cat > previews.html << 'EOF'
         <!DOCTYPE html>
         <html lang="en">
@@ -154,13 +157,8 @@ jobs:
         </body>
         </html>
         EOF
-      
-    - name: Commit preview deployment
-      run: |
-        cd gh-pages
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
+        
+        # Add and commit changes
         git add .
         git diff --staged --quiet || git commit -m "Deploy PR #${{ github.event.number }} preview"
         git push origin gh-pages
