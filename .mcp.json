@@ -1,0 +1,63 @@
+{
+  "name": "ocean-adventure-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol configuration for Ocean Adventure 3D game",
+  "mcpServer": {
+    "name": "ocean-adventure-mcp-server",
+    "version": "1.0.0",
+    "description": "MCP server for Ocean Adventure game development",
+    "capabilities": {
+      "resources": [
+        {
+          "uri": "file://src/",
+          "description": "Game source code including Three.js components and mobile controls"
+        },
+        {
+          "uri": "file://tests/",
+          "description": "Test suite including unit, integration, and e2e tests"
+        },
+        {
+          "uri": "file://docs/",
+          "description": "Project documentation and development guides"
+        }
+      ],
+      "tools": [
+        {
+          "name": "game-dev-analyzer",
+          "description": "Analyze game performance and code quality"
+        },
+        {
+          "name": "mobile-control-tester", 
+          "description": "Test mobile touch controls and virtual joystick"
+        },
+        {
+          "name": "build-optimizer",
+          "description": "Optimize build configuration and bundle size"
+        }
+      ]
+    },
+    "prompts": [
+      {
+        "name": "game-architecture",
+        "description": "Get guidance on game architecture and design patterns"
+      },
+      {
+        "name": "mobile-optimization",
+        "description": "Get help with mobile performance optimization"
+      },
+      {
+        "name": "testing-strategy",
+        "description": "Get recommendations for testing approach"
+      }
+    ]
+  },
+  "clientConfig": {
+    "contextWindow": 8192,
+    "preferences": {
+      "codeStyle": "prettier",
+      "testFramework": "vitest",
+      "buildTool": "vite",
+      "linter": "eslint"
+    }
+  }
+}
