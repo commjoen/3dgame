@@ -188,13 +188,11 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     permissions:
-      contents: read
-      pages: write
-      id-token: write
+      contents: write
       
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: https://commjoen.github.io/3dgame/
       
     steps:
     - name: Checkout code
@@ -211,18 +209,105 @@ jobs:
       
     - name: Build application
       run: npm run build
-      
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
-      
-    - name: Upload to GitHub Pages
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: ./dist
+      env:
+        VITE_BASE_PATH: /3dgame/
         
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+    - name: Checkout gh-pages branch
+      uses: actions/checkout@v4
+      with:
+        ref: gh-pages
+        path: gh-pages
+        token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+      
+    - name: Initialize gh-pages branch if needed
+      run: |
+        if [ ! -d "gh-pages" ] || [ ! -d "gh-pages/.git" ]; then
+          echo "Creating new gh-pages branch..."
+          mkdir -p gh-pages
+          cd gh-pages
+          git init
+          git remote add origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "# Ocean Adventure - GitHub Pages" > README.md
+          git add README.md
+          git commit -m "Initialize gh-pages branch"
+          git branch -M gh-pages
+          git push -u origin gh-pages
+          cd ..
+        fi
+      
+    - name: Deploy to gh-pages
+      run: |
+        # Copy built files to gh-pages root (excluding PR directories)
+        find gh-pages -maxdepth 1 -type f -delete
+        find gh-pages -maxdepth 1 -type d ! -name 'pr-*' ! -name '.git' ! -name 'gh-pages' -exec rm -rf {} +
+        
+        # Copy new build
+        cp -r dist/* gh-pages/
+        
+        # Create or update previews index if it doesn't exist
+        if [ ! -f gh-pages/previews.html ]; then
+          cat > gh-pages/previews.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Ocean Adventure - PR Previews</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    margin: 40px; 
+                    background: linear-gradient(to bottom, #1e40af, #0f172a);
+                    color: white;
+                    min-height: 100vh;
+                }
+                .container { max-width: 800px; margin: 0 auto; }
+                .preview-item { 
+                    background: rgba(255,255,255,0.1); 
+                    margin: 20px 0; 
+                    padding: 20px; 
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.2);
+                }
+                .preview-item h3 { margin-top: 0; color: #60a5fa; }
+                .preview-link { 
+                    display: inline-block;
+                    background: #1e40af; 
+                    color: white; 
+                    padding: 10px 20px; 
+                    text-decoration: none; 
+                    border-radius: 4px;
+                    margin: 5px 5px 5px 0;
+                }
+                .preview-link:hover { background: #1d4ed8; }
+                .main-link { background: #059669; }
+                .main-link:hover { background: #047857; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🌊 Ocean Adventure - Preview Deployments</h1>
+                <div class="preview-item">
+                    <h3>🚀 Main Branch (Stable)</h3>
+                    <p>The stable version deployed from the main branch.</p>
+                    <a href="/3dgame/" class="preview-link main-link">Play Main Version</a>
+                </div>
+            </div>
+        </body>
+        </html>
+        EOF
+        fi
+        
+        cd gh-pages
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
+        git add .
+        git diff --staged --quiet || git commit -m "Deploy main branch to GitHub Pages"
+        git push
 
   security-scan:
     name: Security Scan

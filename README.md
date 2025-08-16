@@ -118,6 +118,26 @@ Ocean Adventure is fully optimized for mobile devices with:
 - **Battery Conscious**: Frame rate limiting to preserve battery life
 - **Memory Management**: Efficient asset loading and garbage collection
 
+## 🌐 Live Previews & Deployments
+
+Ocean Adventure uses automated GitHub Actions to provide live previews and deployments:
+
+### 🚀 Stable Deployment
+- **Main Branch**: [https://commjoen.github.io/3dgame/](https://commjoen.github.io/3dgame/)
+- Automatically deployed when changes are merged to `main`
+- Always represents the latest stable version
+
+### 🔄 Pull Request Previews
+- **Automatic Previews**: Every PR automatically gets its own preview deployment
+- **Unique URLs**: Each PR gets a dedicated URL at `https://commjoen.github.io/3dgame/pr-{number}/`
+- **Live Updates**: Previews update automatically when new commits are pushed
+- **Auto Cleanup**: Preview deployments are automatically removed when PRs are closed
+
+### 📋 Preview Management
+- **All Previews**: [https://commjoen.github.io/3dgame/previews.html](https://commjoen.github.io/3dgame/previews.html)
+- View all active PR previews and the main deployment in one place
+- Direct links to both the game and the corresponding GitHub PR
+
 ## 🤝 Contributing
 
 We welcome contributions from developers of all skill levels! Here's how to get started:

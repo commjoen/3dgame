@@ -3,6 +3,7 @@ import legacy from '@vitejs/plugin-legacy'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || '/',
   publicDir: 'public',
   plugins: [
     legacy({

@@ -1,0 +1,217 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  pull-requests: write
+
+jobs:
+  deploy-preview:
+    name: Deploy PR Preview
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    
+    environment:
+      name: pr-preview-${{ github.event.number }}
+      url: ${{ steps.deploy.outputs.page_url }}pr-${{ github.event.number }}/
+    
+    steps:
+    - name: Checkout PR code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: |
+        npm run lint
+        npm run test:unit
+        npm run type-check
+      
+    - name: Build application for preview
+      run: npm run build
+      env:
+        # Set base path for PR preview
+        VITE_BASE_PATH: /3dgame/pr-${{ github.event.number }}/
+      
+    - name: Checkout gh-pages branch
+      uses: actions/checkout@v4
+      with:
+        ref: gh-pages
+        path: gh-pages
+        token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+      
+    - name: Initialize gh-pages branch if needed
+      run: |
+        if [ ! -d "gh-pages" ] || [ ! -d "gh-pages/.git" ]; then
+          echo "Creating new gh-pages branch..."
+          mkdir -p gh-pages
+          cd gh-pages
+          git init
+          git remote add origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "# Ocean Adventure - GitHub Pages" > README.md
+          git add README.md
+          git commit -m "Initialize gh-pages branch"
+          git branch -M gh-pages
+          git push -u origin gh-pages
+          cd ..
+        fi
+      
+    - name: Setup preview directory
+      run: |
+        # Create PR preview directory
+        mkdir -p gh-pages/pr-${{ github.event.number }}
+        
+        # Copy built files to PR preview directory
+        cp -r dist/* gh-pages/pr-${{ github.event.number }}/
+        
+        # Update index file with correct base path
+        sed -i 's|src="/|src="/3dgame/pr-${{ github.event.number }}/|g' gh-pages/pr-${{ github.event.number }}/index.html
+        sed -i 's|href="/|href="/3dgame/pr-${{ github.event.number }}/|g' gh-pages/pr-${{ github.event.number }}/index.html
+      
+    - name: Update preview index
+      run: |
+        cd gh-pages
+        
+        # Create or update previews index
+        cat > previews.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Ocean Adventure - PR Previews</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    margin: 40px; 
+                    background: linear-gradient(to bottom, #1e40af, #0f172a);
+                    color: white;
+                    min-height: 100vh;
+                }
+                .container { max-width: 800px; margin: 0 auto; }
+                .preview-item { 
+                    background: rgba(255,255,255,0.1); 
+                    margin: 20px 0; 
+                    padding: 20px; 
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.2);
+                }
+                .preview-item h3 { margin-top: 0; color: #60a5fa; }
+                .preview-link { 
+                    display: inline-block;
+                    background: #1e40af; 
+                    color: white; 
+                    padding: 10px 20px; 
+                    text-decoration: none; 
+                    border-radius: 4px;
+                    margin: 5px 5px 5px 0;
+                }
+                .preview-link:hover { background: #1d4ed8; }
+                .main-link { background: #059669; }
+                .main-link:hover { background: #047857; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🌊 Ocean Adventure - Preview Deployments</h1>
+                <div class="preview-item">
+                    <h3>🚀 Main Branch (Stable)</h3>
+                    <p>The stable version deployed from the main branch.</p>
+                    <a href="/3dgame/" class="preview-link main-link">Play Main Version</a>
+                </div>
+        EOF
+        
+        # Add current PR previews
+        for dir in pr-*/; do
+            if [ -d "$dir" ]; then
+                pr_num=${dir#pr-}
+                pr_num=${pr_num%/}
+                echo "                <div class=\"preview-item\">" >> previews.html
+                echo "                    <h3>🔄 Pull Request #$pr_num</h3>" >> previews.html
+                echo "                    <p>Preview deployment for PR #$pr_num</p>" >> previews.html
+                echo "                    <a href=\"/3dgame/$dir\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
+                echo "                    <a href=\"https://github.com/commjoen/3dgame/pull/$pr_num\" class=\"preview-link\">View PR</a>" >> previews.html
+                echo "                </div>" >> previews.html
+            fi
+        done
+        
+        cat >> previews.html << 'EOF'
+            </div>
+        </body>
+        </html>
+        EOF
+      
+    - name: Commit preview deployment
+      run: |
+        cd gh-pages
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
+        git add .
+        git diff --staged --quiet || git commit -m "Deploy PR #${{ github.event.number }} preview"
+        git push
+    
+    - name: Comment on PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const pr_number = context.payload.pull_request.number;
+          const preview_url = `https://commjoen.github.io/3dgame/pr-${pr_number}/`;
+          const previews_url = `https://commjoen.github.io/3dgame/previews.html`;
+          
+          // Find existing preview comment
+          const comments = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: pr_number,
+          });
+          
+          const existingComment = comments.data.find(comment => 
+            comment.user.login === 'github-actions[bot]' && 
+            comment.body.includes('🎮 PR Preview Deployed')
+          );
+          
+          const body = `## 🎮 PR Preview Deployed
+          
+          Your PR has been deployed to a preview environment!
+          
+          **🌊 Play the preview:** ${preview_url}
+          
+          **📋 All previews:** ${previews_url}
+          
+          The preview will be automatically updated when you push new commits to this PR.
+          `;
+          
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr_number,
+              body: body
+            });
+          }
