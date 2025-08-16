@@ -50,8 +50,8 @@
   },
   "homepage": "https://commjoen.github.io/3dgame",
   "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=7.0.0"
+    "node": ">=24.0.0",
+    "npm": ">=10.0.0"
   },
   "dependencies": {
     "three": "^0.158.0",
@@ -82,7 +82,6 @@
     "firefox >= 75",
     "safari >= 13",
     "edge >= 80",
-    "ios_saf >= 13",
-    "chrome_android >= 80"
+    "ios_saf >= 13"
   ]
 }

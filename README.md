@@ -39,8 +39,8 @@ Visit [Ocean Adventure Game](https://commjoen.github.io/3dgame) to play directly
 ## 🛠️ Development
 
 ### Prerequisites
-- Node.js 16+ 
-- npm 7+
+- Node.js 24+ 
+- npm 10+
 - Modern web browser with WebGL support
 
 ### Installation

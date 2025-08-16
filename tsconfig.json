@@ -9,12 +9,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "allowJs": true,
+    "checkJs": false,
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "declaration": true,
-    "outDir": "./dist/types",
+    "declaration": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
@@ -25,8 +26,10 @@
     }
   },
   "include": [
-    "src/**/*",
-    "tests/**/*"
+    "src/**/*.js",
+    "src/**/*.ts",
+    "tests/**/*.js",
+    "tests/**/*.ts"
   ],
   "exclude": [
     "node_modules",

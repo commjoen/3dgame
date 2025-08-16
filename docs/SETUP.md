@@ -5,8 +5,8 @@
 Before setting up the Ocean Adventure development environment, ensure you have the following installed:
 
 ### Required Software
-- **Node.js** (v16.0.0 or higher) - [Download](https://nodejs.org/)
-- **npm** (v7.0.0 or higher) - Comes with Node.js
+- **Node.js** (v24.0.0 or higher) - [Download](https://nodejs.org/)
+- **npm** (v10.0.0 or higher) - Comes with Node.js
 - **Git** - [Download](https://git-scm.com/)
 - **Modern Web Browser** with WebGL 2.0 support:
   - Chrome 80+

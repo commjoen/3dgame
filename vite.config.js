@@ -3,9 +3,10 @@ import legacy from '@vitejs/plugin-legacy'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  publicDir: 'public',
   plugins: [
     legacy({
-      targets: ['defaults', 'not IE 11']
+      targets: ['chrome >= 80', 'firefox >= 75', 'safari >= 13', 'edge >= 80']
     }),
     VitePWA({
       registerType: 'autoUpdate',
@@ -42,7 +43,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {

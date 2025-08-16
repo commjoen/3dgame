@@ -47,22 +47,29 @@ global.HTMLCanvasElement = class HTMLCanvasElement {
   removeEventListener() {}
 }
 
-// Mock document.getElementById
-global.document = {
-  ...global.document,
-  getElementById: vi.fn((id) => {
-    if (id === 'gameCanvas') {
-      return new HTMLCanvasElement()
-    }
-    return {
-      classList: {
-        add: vi.fn(),
-        remove: vi.fn()
-      },
-      textContent: ''
-    }
-  })
+// Ensure document.body exists
+if (!global.document.body) {
+  global.document.body = {
+    innerHTML: '',
+    appendChild: vi.fn(),
+    removeChild: vi.fn()
+  }
 }
+
+// Mock document.getElementById
+global.document.getElementById = vi.fn((id) => {
+  if (id === 'gameCanvas') {
+    return new HTMLCanvasElement()
+  }
+  return {
+    classList: {
+      add: vi.fn(),
+      remove: vi.fn()
+    },
+    textContent: '',
+    innerHTML: ''
+  }
+})
 
 // Mock window.requestAnimationFrame
 global.requestAnimationFrame = vi.fn((callback) => {
