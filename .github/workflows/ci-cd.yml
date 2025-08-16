@@ -234,7 +234,7 @@ jobs:
           git add README.md
           git commit -m "Initialize gh-pages branch"
           git branch -M gh-pages
-          git push -u origin gh-pages
+          git push --set-upstream origin gh-pages
           cd ..
         fi
       
@@ -307,7 +307,7 @@ jobs:
         git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
         git add .
         git diff --staged --quiet || git commit -m "Deploy main branch to GitHub Pages"
-        git push
+        git push origin gh-pages
 
   security-scan:
     name: Security Scan
