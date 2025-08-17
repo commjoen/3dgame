@@ -317,13 +317,21 @@ export class PhysicsEngine {
    * @param {THREE.Vector3} previousPosition - Position before collision
    */
   resolveCollisions(body, collisions, previousPosition) {
-    // Simple collision resolution: revert to previous position and stop movement
-    body.position.copy(previousPosition)
+    // Check if any collisions are with collectibles that should not block movement
+    const blockingCollisions = collisions.filter(
+      collision => collision.type !== 'collectible' || collision.collected
+    )
 
-    // Reduce velocity on collision (bounce/friction)
-    body.velocity.multiplyScalar(0.3)
+    // Only revert position and stop movement for blocking collisions
+    if (blockingCollisions.length > 0) {
+      // Simple collision resolution: revert to previous position and stop movement
+      body.position.copy(previousPosition)
 
-    // Notify collision callbacks if present
+      // Reduce velocity on collision (bounce/friction)
+      body.velocity.multiplyScalar(0.3)
+    }
+
+    // Notify collision callbacks if present (for all collisions)
     if (body.onCollision) {
       body.onCollision(collisions)
     }

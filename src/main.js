@@ -257,6 +257,25 @@ class OceanAdventure {
   }
 
   createUnderwaterEnvironment() {
+    // Create water surface at Y=5 (matches depth meter calculation)
+    const waterSurfaceGeometry = new THREE.PlaneGeometry(200, 200)
+    const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
+      color: 0x006994,
+      transparent: true,
+      opacity: 0.6,
+      shininess: 100,
+      specular: 0x87ceeb,
+      side: THREE.DoubleSide,
+    })
+    const waterSurface = new THREE.Mesh(
+      waterSurfaceGeometry,
+      waterSurfaceMaterial
+    )
+    waterSurface.rotation.x = -Math.PI / 2
+    waterSurface.position.y = 5 // Water surface level used by depth meter
+    waterSurface.receiveShadow = true
+    this.scene.add(waterSurface)
+
     // Create ocean floor with enhanced material
     const floorGeometry = new THREE.PlaneGeometry(100, 100)
     const floorMaterial = new THREE.MeshPhongMaterial({
