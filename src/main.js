@@ -107,6 +107,9 @@ class OceanAdventure {
         alpha: false,
         powerPreference: this.isMobile ? 'low-power' : 'high-performance',
         failIfMajorPerformanceCaveat: false, // Allow fallback rendering
+        preserveDrawingBuffer: false, // Better performance
+        premultipliedAlpha: false,
+        stencil: false, // Reduce memory usage
       })
 
       this.renderer.setSize(window.innerWidth, window.innerHeight)
@@ -124,6 +127,9 @@ class OceanAdventure {
       if (!gl) {
         throw new Error('Failed to get WebGL context')
       }
+
+      // Add error handling for WebGL
+      gl.getExtension('WEBGL_lose_context')
 
       console.log('✅ WebGL Renderer initialized successfully')
     } catch (error) {
@@ -173,9 +179,20 @@ class OceanAdventure {
     // Directional light simulating filtered sunlight
     const directionalLight = new THREE.DirectionalLight(0x87ceeb, 0.8)
     directionalLight.position.set(0, 50, 0)
-    directionalLight.castShadow = true
-    directionalLight.shadow.mapSize.width = 2048
-    directionalLight.shadow.mapSize.height = 2048
+    
+    // Only enable shadows on desktop for better compatibility
+    if (!this.isMobile && this.renderer.shadowMap.enabled) {
+      directionalLight.castShadow = true
+      directionalLight.shadow.mapSize.width = 1024  // Reduced for better compatibility
+      directionalLight.shadow.mapSize.height = 1024
+      directionalLight.shadow.camera.near = 0.5
+      directionalLight.shadow.camera.far = 500
+      directionalLight.shadow.camera.left = -50
+      directionalLight.shadow.camera.right = 50
+      directionalLight.shadow.camera.top = 50
+      directionalLight.shadow.camera.bottom = -50
+    }
+    
     this.scene.add(directionalLight)
   }
 
@@ -759,8 +776,16 @@ class OceanAdventure {
   }
 
   render() {
-    if (this.renderer && this.scene && this.camera) {
-      this.renderer.render(this.scene, this.camera)
+    try {
+      if (this.renderer && this.scene && this.camera) {
+        this.renderer.render(this.scene, this.camera)
+      }
+    } catch (error) {
+      // Silently handle WebGL render errors to prevent spam
+      if (this.webglErrorCount < 5) {
+        console.warn('WebGL render error:', error)
+        this.webglErrorCount = (this.webglErrorCount || 0) + 1
+      }
     }
   }
 
