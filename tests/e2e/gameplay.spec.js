@@ -16,19 +16,23 @@ test.describe('Ocean Adventure E2E Tests', () => {
     const webglSupported = await page.evaluate(() => {
       try {
         const canvas = document.createElement('canvas')
-        const gl = canvas.getContext('webgl2') || 
-                   canvas.getContext('webgl') || 
-                   canvas.getContext('experimental-webgl')
-        
+        const gl =
+          canvas.getContext('webgl2') ||
+          canvas.getContext('webgl') ||
+          canvas.getContext('experimental-webgl')
+
         if (!gl) {
           console.log('WebGL context could not be created')
           return false
         }
-        
+
         // Basic WebGL capability check
-        const isWebGL = gl instanceof WebGLRenderingContext || 
-                       gl instanceof WebGL2RenderingContext
-        
+        const isWebGL =
+          (typeof WebGLRenderingContext !== 'undefined' &&
+            gl instanceof WebGLRenderingContext) ||
+          (typeof WebGL2RenderingContext !== 'undefined' &&
+            gl instanceof WebGL2RenderingContext)
+
         console.log('WebGL context created successfully:', isWebGL)
         return isWebGL
       } catch (error) {
@@ -36,7 +40,7 @@ test.describe('Ocean Adventure E2E Tests', () => {
         return false
       }
     })
-    
+
     // Skip WebGL check if not supported (common in CI environments)
     if (webglSupported === null || webglSupported === false) {
       console.log('WebGL not supported in this environment, skipping check')
@@ -50,18 +54,18 @@ test.describe('Ocean Adventure E2E Tests', () => {
     const loadingScreen = page.locator('#loading')
     const gameCanvas = page.locator('#gameCanvas')
     const ui = page.locator('#ui')
-    
+
     // Ensure the game canvas is present
     await expect(gameCanvas).toBeVisible()
-    
+
     // Wait for game initialization - give it more time for CI environments
     await page.waitForTimeout(5000)
-    
+
     // Check if loading screen is still visible and wait for it to hide
     if (await loadingScreen.isVisible()) {
       await expect(loadingScreen).toBeHidden({ timeout: 20000 })
     }
-    
+
     // Wait for UI to become visible (indicating game has loaded)
     // Increase timeout significantly for CI environments
     await expect(ui).toBeVisible({ timeout: 15000 })
@@ -114,26 +118,27 @@ test.describe('Ocean Adventure E2E Tests', () => {
 
     // Check that the canvas is keyboard accessible
     await canvas.focus()
-    
+
     // Check color contrast (basic check)
     const bodyStyles = await page.evaluate(() => {
       const body = document.body
       const styles = window.getComputedStyle(body)
       return {
         backgroundColor: styles.backgroundColor,
-        color: styles.color
+        color: styles.color,
       }
     })
-    
+
     expect(bodyStyles.backgroundColor).toBeTruthy()
   })
 })
 
 test.describe('Mobile Specific Tests', () => {
-  test.use({ 
+  test.use({
     hasTouch: true,
-    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1',
-    viewport: { width: 375, height: 667 }
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1',
+    viewport: { width: 375, height: 667 },
   })
 
   test('should work on mobile devices', async ({ page }) => {
@@ -159,18 +164,18 @@ test.describe('Mobile Specific Tests', () => {
     await page.goto('/')
 
     const canvas = page.locator('#gameCanvas')
-    
+
     // Test click instead of tap for broader compatibility
     await canvas.click()
 
     // Test swipe gestures (placeholder)
     await canvas.dragTo(canvas, {
       sourcePosition: { x: 100, y: 200 },
-      targetPosition: { x: 200, y: 100 }
+      targetPosition: { x: 200, y: 100 },
     })
 
     // In a real implementation, these gestures would control player movement
-  }))
+  })
 })
 
 test.describe('Performance Tests', () => {
@@ -181,16 +186,18 @@ test.describe('Performance Tests', () => {
     const performanceMetrics = await page.evaluate(() => {
       return {
         loadTime: performance.now(),
-        memory: performance.memory ? {
-          used: performance.memory.usedJSHeapSize,
-          total: performance.memory.totalJSHeapSize,
-          limit: performance.memory.jsHeapSizeLimit
-        } : null
+        memory: performance.memory
+          ? {
+              used: performance.memory.usedJSHeapSize,
+              total: performance.memory.totalJSHeapSize,
+              limit: performance.memory.jsHeapSizeLimit,
+            }
+          : null,
       }
     })
 
     expect(performanceMetrics.loadTime).toBeLessThan(10000) // 10 seconds max load time
-    
+
     if (performanceMetrics.memory) {
       // Check memory usage (less than 100MB on initial load)
       expect(performanceMetrics.memory.used).toBeLessThan(100 * 1024 * 1024)
@@ -214,7 +221,7 @@ test.describe('Performance Tests', () => {
       return {
         averageFPS: 60, // This would be calculated from actual measurements
         minFPS: 55,
-        maxFPS: 62
+        maxFPS: 62,
       }
     })
 

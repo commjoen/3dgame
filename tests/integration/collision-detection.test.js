@@ -31,8 +31,10 @@ describe('Collision Detection Integration', () => {
     player.setPosition(new THREE.Vector3(0.5, 0, 0))
 
     // Check collision
-    const collisions = physicsEngine.collisionSystem.checkCollisions(player.physicsBody)
-    
+    const collisions = physicsEngine.collisionSystem.checkCollisions(
+      player.physicsBody
+    )
+
     expect(collisions.length).toBeGreaterThan(0)
     expect(collisions[0].type).toBe('environment')
   })
@@ -51,8 +53,10 @@ describe('Collision Detection Integration', () => {
     player.setPosition(new THREE.Vector3(0, 0, 0))
 
     // Player at origin should collide with collectible
-    const collisions = physicsEngine.collisionSystem.checkCollisions(player.physicsBody)
-    
+    const collisions = physicsEngine.collisionSystem.checkCollisions(
+      player.physicsBody
+    )
+
     expect(collisions.length).toBeGreaterThan(0)
     expect(collisions[0].type).toBe('collectible')
   })
@@ -68,24 +72,24 @@ describe('Collision Detection Integration', () => {
     physicsEngine.addRigidBody(obstacle)
 
     // Check collision - should be none
-    const collisions = physicsEngine.collisionSystem.checkCollisions(player.physicsBody)
-    
+    const collisions = physicsEngine.collisionSystem.checkCollisions(
+      player.physicsBody
+    )
+
     expect(collisions.length).toBe(0)
   })
 
   it('should handle player movement with physics', () => {
-    const initialPosition = player.getPosition()
-    
     // Simulate movement input
     const inputState = {
       keys: { forward: true },
       joystick: { x: 0, y: 0 },
-      mobileButtons: { swimUp: false, swimDown: false }
+      mobileButtons: { swimUp: false, swimDown: false },
     }
 
     // Update player
     player.handleInput(inputState)
-    
+
     // Player should have some velocity after input
     const velocity = player.getVelocity()
     expect(velocity.length()).toBeGreaterThan(0)
@@ -105,7 +109,7 @@ describe('Collision Detection Integration', () => {
   it('should resolve collisions by preventing penetration', () => {
     // Place player and obstacle overlapping
     player.setPosition(new THREE.Vector3(0, 0, 0))
-    
+
     const obstacle = physicsEngine.createSphereBody(
       new THREE.Vector3(0.5, 0, 0), // Overlapping with player
       1, // Large radius to ensure overlap
@@ -116,12 +120,10 @@ describe('Collision Detection Integration', () => {
 
     // Give player velocity towards obstacle
     player.physicsBody.velocity.set(1, 0, 0)
-    
-    const initialPosition = player.getPosition()
-    
+
     // Update physics - should resolve collision
     physicsEngine.update(0.1)
-    
+
     // Player should have moved back or velocity reduced due to collision
     const finalVelocity = player.getVelocity()
     expect(finalVelocity.length()).toBeLessThan(1) // Velocity should be reduced
@@ -133,9 +135,9 @@ describe('Collision Detection Integration', () => {
     for (let i = 0; i < 3; i++) {
       const obstacle = physicsEngine.createSphereBody(
         new THREE.Vector3(
-          Math.cos(i * Math.PI * 2 / 3) * 1.5,
+          Math.cos((i * Math.PI * 2) / 3) * 1.5,
           0,
-          Math.sin(i * Math.PI * 2 / 3) * 1.5
+          Math.sin((i * Math.PI * 2) / 3) * 1.5
         ),
         1, // radius
         true // static
@@ -149,8 +151,10 @@ describe('Collision Detection Integration', () => {
     player.setPosition(new THREE.Vector3(0, 0, 0))
 
     // Check collisions - player at origin should collide with multiple obstacles
-    const collisions = physicsEngine.collisionSystem.checkCollisions(player.physicsBody)
-    
+    const collisions = physicsEngine.collisionSystem.checkCollisions(
+      player.physicsBody
+    )
+
     expect(collisions.length).toBeGreaterThan(0)
     // All colliding objects should be environment type
     collisions.forEach(collision => {
@@ -160,8 +164,6 @@ describe('Collision Detection Integration', () => {
 
   it('should maintain performance with many collision objects', () => {
     // Create many static collision objects
-    const startTime = performance.now()
-    
     for (let i = 0; i < 100; i++) {
       const object = physicsEngine.createSphereBody(
         new THREE.Vector3(
@@ -175,14 +177,14 @@ describe('Collision Detection Integration', () => {
       object.type = 'environment'
       physicsEngine.addRigidBody(object)
     }
-    
+
     // Check collision performance
     const collisionStartTime = performance.now()
     physicsEngine.collisionSystem.checkCollisions(player.physicsBody)
     const collisionEndTime = performance.now()
-    
+
     const collisionTime = collisionEndTime - collisionStartTime
-    
+
     // Collision detection should be fast (less than 10ms even with 100 objects)
     expect(collisionTime).toBeLessThan(10)
   })

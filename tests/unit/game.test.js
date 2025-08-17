@@ -18,11 +18,14 @@ describe('Ocean Adventure Game', () => {
       // Mock mobile user agent
       Object.defineProperty(navigator, 'userAgent', {
         value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
-        configurable: true
+        configurable: true,
       })
 
       // This would test the mobile detection logic
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        )
       expect(isMobile).toBe(true)
     })
 
@@ -31,7 +34,7 @@ describe('Ocean Adventure Game', () => {
       const gameState = {
         starCount: 0,
         levelNumber: 1,
-        isLoaded: false
+        isLoaded: false,
       }
 
       expect(gameState.starCount).toBe(0)
@@ -54,7 +57,7 @@ describe('Ocean Adventure Game', () => {
     it('should have correct performance targets', () => {
       const config = {
         targetFPS: 60,
-        mobileFPS: 30
+        mobileFPS: 30,
       }
 
       expect(config.targetFPS).toBe(60)
@@ -65,7 +68,7 @@ describe('Ocean Adventure Game', () => {
       const canvasConfig = {
         canvasId: 'gameCanvas',
         antialias: true, // Would be false on mobile
-        alpha: false
+        alpha: false,
       }
 
       expect(canvasConfig.canvasId).toBe('gameCanvas')

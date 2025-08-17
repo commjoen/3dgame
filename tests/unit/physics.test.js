@@ -1,10 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import * as THREE from 'three'
-import { PhysicsEngine, CollisionSystem, UnderwaterPhysics } from '../../src/core/Physics.js'
+import {
+  PhysicsEngine,
+  CollisionSystem,
+  UnderwaterPhysics,
+} from '../../src/core/Physics.js'
 
 describe('Physics Engine', () => {
   let physicsEngine
-  
+
   beforeEach(() => {
     physicsEngine = new PhysicsEngine()
   })
@@ -20,13 +24,13 @@ describe('Physics Engine', () => {
       const sphereA = {
         position: new THREE.Vector3(0, 0, 0),
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
-      
+
       const sphereB = {
         position: new THREE.Vector3(1.5, 0, 0),
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
 
       const colliding = collisionSystem.checkCollision(sphereA, sphereB)
@@ -37,13 +41,13 @@ describe('Physics Engine', () => {
       const sphereA = {
         position: new THREE.Vector3(0, 0, 0),
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
-      
+
       const sphereB = {
         position: new THREE.Vector3(5, 0, 0),
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
 
       const colliding = collisionSystem.checkCollision(sphereA, sphereB)
@@ -54,13 +58,13 @@ describe('Physics Engine', () => {
       const boxA = {
         position: new THREE.Vector3(0, 0, 0),
         collisionType: 'box',
-        size: new THREE.Vector3(2, 2, 2)
+        size: new THREE.Vector3(2, 2, 2),
       }
-      
+
       const boxB = {
         position: new THREE.Vector3(1, 0, 0),
         collisionType: 'box',
-        size: new THREE.Vector3(2, 2, 2)
+        size: new THREE.Vector3(2, 2, 2),
       }
 
       const colliding = collisionSystem.checkCollision(boxA, boxB)
@@ -71,13 +75,13 @@ describe('Physics Engine', () => {
       const sphere = {
         position: new THREE.Vector3(0, 0, 0),
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
-      
+
       const box = {
         position: new THREE.Vector3(1.5, 0, 0),
         collisionType: 'box',
-        size: new THREE.Vector3(1, 1, 1)
+        size: new THREE.Vector3(1, 1, 1),
       }
 
       const colliding = collisionSystem.checkCollision(sphere, box)
@@ -88,14 +92,14 @@ describe('Physics Engine', () => {
       const collider = {
         position: new THREE.Vector3(0, 0, 0),
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
 
       expect(collisionSystem.colliders.length).toBe(0)
-      
+
       collisionSystem.addCollider(collider)
       expect(collisionSystem.colliders.length).toBe(1)
-      
+
       collisionSystem.removeCollider(collider)
       expect(collisionSystem.colliders.length).toBe(0)
     })
@@ -104,13 +108,13 @@ describe('Physics Engine', () => {
       const dynamicCollider = {
         position: new THREE.Vector3(0, 0, 0),
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
 
       const staticCollider = {
         position: new THREE.Vector3(2, 0, 0),
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
 
       collisionSystem.addCollider(dynamicCollider, false)
@@ -130,7 +134,7 @@ describe('Physics Engine', () => {
 
     it('should apply buoyancy force', () => {
       const body = {
-        velocity: new THREE.Vector3(0, 0, 0)
+        velocity: new THREE.Vector3(0, 0, 0),
       }
 
       const deltaTime = 0.016 // ~60fps
@@ -141,7 +145,7 @@ describe('Physics Engine', () => {
 
     it('should apply drag to reduce velocity', () => {
       const body = {
-        velocity: new THREE.Vector3(5, 5, 5)
+        velocity: new THREE.Vector3(5, 5, 5),
       }
 
       const originalMagnitude = body.velocity.length()
@@ -152,7 +156,7 @@ describe('Physics Engine', () => {
 
     it('should apply current forces', () => {
       const body = {
-        velocity: new THREE.Vector3(0, 0, 0)
+        velocity: new THREE.Vector3(0, 0, 0),
       }
 
       const deltaTime = 0.016
@@ -164,7 +168,7 @@ describe('Physics Engine', () => {
 
     it('should apply all underwater effects', () => {
       const body = {
-        velocity: new THREE.Vector3(1, -1, 1)
+        velocity: new THREE.Vector3(1, -1, 1),
       }
 
       const originalVelocity = body.velocity.clone()
@@ -179,9 +183,9 @@ describe('Physics Engine', () => {
     it('should create sphere bodies correctly', () => {
       const position = new THREE.Vector3(1, 2, 3)
       const radius = 2
-      
+
       const body = physicsEngine.createSphereBody(position, radius, false)
-      
+
       expect(body.position.equals(position)).toBe(true)
       expect(body.radius).toBe(radius)
       expect(body.collisionType).toBe('sphere')
@@ -192,9 +196,9 @@ describe('Physics Engine', () => {
     it('should create box bodies correctly', () => {
       const position = new THREE.Vector3(1, 2, 3)
       const size = new THREE.Vector3(2, 2, 2)
-      
+
       const body = physicsEngine.createBoxBody(position, size, true)
-      
+
       expect(body.position.equals(position)).toBe(true)
       expect(body.size.equals(size)).toBe(true)
       expect(body.collisionType).toBe('box')
@@ -203,12 +207,12 @@ describe('Physics Engine', () => {
 
     it('should add and remove rigid bodies', () => {
       const body = physicsEngine.createSphereBody(new THREE.Vector3(), 1)
-      
+
       expect(physicsEngine.rigidBodies.length).toBe(0)
-      
+
       physicsEngine.addRigidBody(body)
       expect(physicsEngine.rigidBodies.length).toBe(1)
-      
+
       physicsEngine.removeRigidBody(body)
       expect(physicsEngine.rigidBodies.length).toBe(0)
     })
@@ -216,43 +220,54 @@ describe('Physics Engine', () => {
     it('should update physics bodies', () => {
       const body = physicsEngine.createSphereBody(new THREE.Vector3(0, 0, 0), 1)
       body.velocity.set(1, 0, 0)
-      
+
       physicsEngine.addRigidBody(body)
-      
+
       const originalPosition = body.position.clone()
       physicsEngine.update(0.1) // 100ms update
-      
+
       // Position should change due to velocity
       expect(body.position.equals(originalPosition)).toBe(false)
       expect(body.position.x).toBeGreaterThan(originalPosition.x)
     })
 
     it('should not update static bodies', () => {
-      const body = physicsEngine.createSphereBody(new THREE.Vector3(0, 0, 0), 1, true)
+      const body = physicsEngine.createSphereBody(
+        new THREE.Vector3(0, 0, 0),
+        1,
+        true
+      )
       body.velocity.set(1, 1, 1)
-      
+
       physicsEngine.addRigidBody(body)
-      
+
       const originalPosition = body.position.clone()
       physicsEngine.update(0.1)
-      
+
       // Static body should not move
       expect(body.position.equals(originalPosition)).toBe(true)
     })
 
     it('should handle collisions and resolve them', () => {
       // Create two overlapping spheres
-      const bodyA = physicsEngine.createSphereBody(new THREE.Vector3(0, 0, 0), 1)
-      const bodyB = physicsEngine.createSphereBody(new THREE.Vector3(1, 0, 0), 1, true)
-      
+      const bodyA = physicsEngine.createSphereBody(
+        new THREE.Vector3(0, 0, 0),
+        1
+      )
+      const bodyB = physicsEngine.createSphereBody(
+        new THREE.Vector3(1, 0, 0),
+        1,
+        true
+      )
+
       bodyA.velocity.set(1, 0, 0) // Moving towards bodyB
-      
+
       physicsEngine.addRigidBody(bodyA)
       physicsEngine.addRigidBody(bodyB)
-      
+
       // Update physics - should detect and resolve collision
       physicsEngine.update(0.1)
-      
+
       // Velocity should be reduced due to collision
       expect(bodyA.velocity.length()).toBeLessThan(1)
     })
@@ -260,12 +275,12 @@ describe('Physics Engine', () => {
     it('should apply underwater physics effects', () => {
       const body = physicsEngine.createSphereBody(new THREE.Vector3(0, 0, 0), 1)
       physicsEngine.addRigidBody(body)
-      
+
       // Should start with no velocity
       expect(body.velocity.length()).toBe(0)
-      
+
       physicsEngine.update(0.1)
-      
+
       // Should have some velocity from underwater effects (buoyancy, current)
       expect(body.velocity.length()).toBeGreaterThan(0)
     })
@@ -276,10 +291,10 @@ describe('Physics Engine', () => {
       const body = physicsEngine.createSphereBody(new THREE.Vector3(0, 0, 0), 1)
       body.velocity.set(1, 1, 1)
       physicsEngine.addRigidBody(body)
-      
+
       const originalPosition = body.position.clone()
       physicsEngine.update(0) // Zero delta time
-      
+
       // Position should not change with zero delta time
       expect(body.position.equals(originalPosition)).toBe(true)
     })
@@ -288,16 +303,19 @@ describe('Physics Engine', () => {
       const sphereA = {
         position: new THREE.Vector3(0, 0, 0),
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
-      
+
       const sphereB = {
         position: new THREE.Vector3(0, 0, 0), // Same position
         collisionType: 'sphere',
-        radius: 1
+        radius: 1,
       }
 
-      const colliding = physicsEngine.collisionSystem.checkCollision(sphereA, sphereB)
+      const colliding = physicsEngine.collisionSystem.checkCollision(
+        sphereA,
+        sphereB
+      )
       expect(colliding).toBe(true)
     })
 
@@ -305,16 +323,19 @@ describe('Physics Engine', () => {
       const sphereA = {
         position: new THREE.Vector3(0, 0, 0),
         collisionType: 'sphere',
-        radius: 0.001
+        radius: 0.001,
       }
-      
+
       const sphereB = {
         position: new THREE.Vector3(0.0015, 0, 0),
         collisionType: 'sphere',
-        radius: 0.001
+        radius: 0.001,
       }
 
-      const colliding = physicsEngine.collisionSystem.checkCollision(sphereA, sphereB)
+      const colliding = physicsEngine.collisionSystem.checkCollision(
+        sphereA,
+        sphereB
+      )
       expect(colliding).toBe(true)
     })
   })

@@ -29,7 +29,8 @@ function setupMockDOM() {
   global.window = dom.window
   global.document = dom.window.document
   global.navigator = {
-    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
   }
 
   // Mock canvas and WebGL context
@@ -50,9 +51,10 @@ describe('Mobile Controls', () => {
 
   test('should detect mobile devices correctly', () => {
     // Mobile user agent should be detected
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    )
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      )
     expect(isMobile).toBe(true)
   })
 
@@ -76,11 +78,11 @@ describe('Mobile Controls', () => {
     expect(mobileControls).toBeTruthy()
     expect(virtualJoystick).toBeTruthy()
     expect(mobileButtons).toBeTruthy()
-    
+
     // Check that virtual joystick contains the knob
     const knob = virtualJoystick.querySelector('.joystick-knob')
     expect(knob).toBeTruthy()
-    
+
     // Check that mobile buttons contain the swim controls
     const swimUpBtn = mobileButtons.querySelector('#swimUpBtn')
     const swimDownBtn = mobileButtons.querySelector('#swimDownBtn')
@@ -90,7 +92,7 @@ describe('Mobile Controls', () => {
 
   test('should initialize touch event listeners', () => {
     const canvas = document.getElementById('gameCanvas')
-    
+
     // Create a mock game class to test touch control setup
     class MockGame {
       constructor() {
@@ -102,7 +104,7 @@ describe('Mobile Controls', () => {
           startY: 0,
           currentX: 0,
           currentY: 0,
-          isActive: false
+          isActive: false,
         }
       }
 
@@ -111,7 +113,7 @@ describe('Mobile Controls', () => {
         this.canvas.addEventListener('touchstart', () => {
           this.touchState.isActive = true
         })
-        
+
         this.canvas.addEventListener('touchend', () => {
           this.touchState.isActive = false
         })
@@ -123,16 +125,16 @@ describe('Mobile Controls', () => {
 
     // Create and dispatch a mock touch event
     const touchStartEvent = new window.TouchEvent('touchstart', {
-      touches: [{ clientX: 100, clientY: 100 }]
+      touches: [{ clientX: 100, clientY: 100 }],
     })
-    
+
     canvas.dispatchEvent(touchStartEvent)
     expect(game.touchState.isActive).toBe(true)
 
     const touchEndEvent = new window.TouchEvent('touchend', {
-      touches: []
+      touches: [],
     })
-    
+
     canvas.dispatchEvent(touchEndEvent)
     expect(game.touchState.isActive).toBe(false)
   })
@@ -140,22 +142,22 @@ describe('Mobile Controls', () => {
   test('should handle mobile button interactions', () => {
     const swimUpBtn = document.getElementById('swimUpBtn')
     const swimDownBtn = document.getElementById('swimDownBtn')
-    
-    let buttonState = { swimUp: false, swimDown: false }
-    
+
+    const buttonState = { swimUp: false, swimDown: false }
+
     // Simulate button event listeners
     swimUpBtn.addEventListener('touchstart', () => {
       buttonState.swimUp = true
     })
-    
+
     swimUpBtn.addEventListener('touchend', () => {
       buttonState.swimUp = false
     })
-    
+
     swimDownBtn.addEventListener('touchstart', () => {
       buttonState.swimDown = true
     })
-    
+
     swimDownBtn.addEventListener('touchend', () => {
       buttonState.swimDown = false
     })
@@ -164,7 +166,7 @@ describe('Mobile Controls', () => {
     const touchStartUpEvent = new window.TouchEvent('touchstart')
     swimUpBtn.dispatchEvent(touchStartUpEvent)
     expect(buttonState.swimUp).toBe(true)
-    
+
     const touchEndUpEvent = new window.TouchEvent('touchend')
     swimUpBtn.dispatchEvent(touchEndUpEvent)
     expect(buttonState.swimUp).toBe(false)
@@ -173,7 +175,7 @@ describe('Mobile Controls', () => {
     const touchStartDownEvent = new window.TouchEvent('touchstart')
     swimDownBtn.dispatchEvent(touchStartDownEvent)
     expect(buttonState.swimDown).toBe(true)
-    
+
     const touchEndDownEvent = new window.TouchEvent('touchend')
     swimDownBtn.dispatchEvent(touchEndDownEvent)
     expect(buttonState.swimDown).toBe(false)

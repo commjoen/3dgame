@@ -26,7 +26,7 @@ const mockWebGLContext = {
   clear: vi.fn(),
   enable: vi.fn(),
   depthFunc: vi.fn(),
-  blendFunc: vi.fn()
+  blendFunc: vi.fn(),
 }
 
 // Mock HTMLCanvasElement
@@ -35,14 +35,14 @@ global.HTMLCanvasElement = class HTMLCanvasElement {
     this.width = 800
     this.height = 600
   }
-  
+
   getContext(type) {
     if (type === 'webgl' || type === 'webgl2') {
       return mockWebGLContext
     }
     return null
   }
-  
+
   addEventListener() {}
   removeEventListener() {}
 }
@@ -52,37 +52,37 @@ if (!global.document.body) {
   global.document.body = {
     innerHTML: '',
     appendChild: vi.fn(),
-    removeChild: vi.fn()
+    removeChild: vi.fn(),
   }
 }
 
 // Mock document.getElementById
-global.document.getElementById = vi.fn((id) => {
+global.document.getElementById = vi.fn(id => {
   if (id === 'gameCanvas') {
     return new HTMLCanvasElement()
   }
   return {
     classList: {
       add: vi.fn(),
-      remove: vi.fn()
+      remove: vi.fn(),
     },
     textContent: '',
-    innerHTML: ''
+    innerHTML: '',
   }
 })
 
 // Mock window.requestAnimationFrame
-global.requestAnimationFrame = vi.fn((callback) => {
+global.requestAnimationFrame = vi.fn(callback => {
   setTimeout(callback, 16) // 60fps
 })
 
 // Mock performance.now
 global.performance = {
-  now: vi.fn(() => Date.now())
+  now: vi.fn(() => Date.now()),
 }
 
 // Mock navigator for mobile detection
 Object.defineProperty(global.navigator, 'userAgent', {
   value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-  configurable: true
+  configurable: true,
 })
