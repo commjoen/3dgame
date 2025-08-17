@@ -618,22 +618,70 @@ class OceanAdventure {
     const closeSettings = document.getElementById('closeSettings')
 
     if (settingsButton && settingsModal && closeSettings) {
-      // Open settings
-      settingsButton.addEventListener('click', () => {
+      // Open settings - improved for mobile
+      const openSettings = () => {
         settingsModal.classList.remove('hidden')
-      })
+        // Prevent body scrolling on mobile when modal is open
+        document.body.style.overflow = 'hidden'
+      }
 
-      // Close settings
-      closeSettings.addEventListener('click', () => {
+      // Close settings - improved for mobile
+      const closeModal = () => {
         settingsModal.classList.add('hidden')
-      })
+        // Restore body scrolling
+        document.body.style.overflow = ''
+      }
 
-      // Close on background click
+      // Settings button click/touch events
+      settingsButton.addEventListener('click', openSettings)
+      if (this.isMobile) {
+        settingsButton.addEventListener('touchstart', event => {
+          event.preventDefault()
+          event.stopPropagation()
+        })
+        settingsButton.addEventListener('touchend', event => {
+          event.preventDefault()
+          event.stopPropagation()
+          openSettings()
+        })
+      }
+
+      // Close button click/touch events
+      closeSettings.addEventListener('click', closeModal)
+      if (this.isMobile) {
+        closeSettings.addEventListener('touchstart', event => {
+          event.preventDefault()
+          event.stopPropagation()
+        })
+        closeSettings.addEventListener('touchend', event => {
+          event.preventDefault()
+          event.stopPropagation()
+          closeModal()
+        })
+      }
+
+      // Close on background click/touch - improved for mobile
       settingsModal.addEventListener('click', event => {
         if (event.target === settingsModal) {
-          settingsModal.classList.add('hidden')
+          closeModal()
         }
       })
+
+      if (this.isMobile) {
+        settingsModal.addEventListener('touchstart', event => {
+          if (event.target === settingsModal) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+        })
+        settingsModal.addEventListener('touchend', event => {
+          if (event.target === settingsModal) {
+            event.preventDefault()
+            event.stopPropagation()
+            closeModal()
+          }
+        })
+      }
 
       // Close on escape key
       document.addEventListener('keydown', event => {
@@ -641,7 +689,7 @@ class OceanAdventure {
           event.key === 'Escape' &&
           !settingsModal.classList.contains('hidden')
         ) {
-          settingsModal.classList.add('hidden')
+          closeModal()
         }
       })
     }

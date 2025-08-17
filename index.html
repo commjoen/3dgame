@@ -176,6 +176,14 @@
             transform: scale(1.1);
         }
         
+        /* Mobile-specific touch styles for settings button */
+        @media (hover: none) and (pointer: coarse) {
+            .settings-button:active {
+                background: rgba(255, 255, 255, 0.4);
+                transform: scale(0.95);
+            }
+        }
+        
         /* Settings Modal */
         .settings-modal {
             position: fixed;
@@ -201,6 +209,26 @@
             max-height: 80vh;
             overflow-y: auto;
             backdrop-filter: blur(10px);
+            margin: 20px;
+            box-sizing: border-box;
+        }
+        
+        /* Mobile responsive settings modal */
+        @media (max-width: 768px) {
+            .settings-content {
+                margin: 10px;
+                padding: 20px;
+                max-height: 90vh;
+                border-radius: 10px;
+            }
+            
+            .settings-button {
+                top: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
         }
         
         .settings-header {
@@ -235,6 +263,14 @@
         
         .close-button:hover {
             background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Mobile-specific touch styles for close button */
+        @media (hover: none) and (pointer: coarse) {
+            .close-button:active {
+                background: rgba(255, 255, 255, 0.4);
+                transform: scale(0.9);
+            }
         }
         
         .settings-body h3 {
