@@ -251,7 +251,8 @@ export class Player {
    * @returns {THREE.Vector3} Current position
    */
   getPosition() {
-    return this.mesh.position.clone()
+    // Return physics body position (authoritative) instead of mesh position (includes floating animation)
+    return this.physicsBody.position.clone()
   }
 
   /**

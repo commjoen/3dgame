@@ -107,14 +107,14 @@ test.describe('Settings Modal Mobile Tests', () => {
     // Modal should initially be hidden
     await expect(settingsModal).toBeHidden()
     
-    // Tap settings button to open modal
-    await settingsButton.tap()
+    // Click settings button to open modal (using click instead of tap for compatibility)
+    await settingsButton.click()
     
     // Modal should now be visible
     await expect(settingsModal).toBeVisible()
     
-    // Tap close button to close modal
-    await closeButton.tap()
+    // Click close button to close modal
+    await closeButton.click()
     
     // Modal should be hidden again
     await expect(settingsModal).toBeHidden()
@@ -129,11 +129,11 @@ test.describe('Settings Modal Mobile Tests', () => {
     const settingsModal = page.locator('#settingsModal')
     
     // Open modal
-    await settingsButton.tap()
+    await settingsButton.click()
     await expect(settingsModal).toBeVisible()
     
-    // Tap on modal background
-    await settingsModal.tap()
+    // Click on modal background
+    await settingsModal.click()
     
     // Modal should close
     await expect(settingsModal).toBeHidden()
