@@ -179,11 +179,11 @@ class OceanAdventure {
     // Directional light simulating filtered sunlight
     const directionalLight = new THREE.DirectionalLight(0x87ceeb, 0.8)
     directionalLight.position.set(0, 50, 0)
-    
+
     // Only enable shadows on desktop for better compatibility
     if (!this.isMobile && this.renderer.shadowMap.enabled) {
       directionalLight.castShadow = true
-      directionalLight.shadow.mapSize.width = 1024  // Reduced for better compatibility
+      directionalLight.shadow.mapSize.width = 1024 // Reduced for better compatibility
       directionalLight.shadow.mapSize.height = 1024
       directionalLight.shadow.camera.near = 0.5
       directionalLight.shadow.camera.far = 500
@@ -192,7 +192,7 @@ class OceanAdventure {
       directionalLight.shadow.camera.top = 50
       directionalLight.shadow.camera.bottom = -50
     }
-    
+
     this.scene.add(directionalLight)
   }
 
@@ -497,8 +497,14 @@ class OceanAdventure {
           const normalizedY = deltaY / maxDistance
 
           // Update input state with improved sensitivity for mobile
-          this.inputState.joystick.x = Math.max(-1, Math.min(1, normalizedX * 1.2))
-          this.inputState.joystick.y = Math.max(-1, Math.min(1, normalizedY * 1.2))
+          this.inputState.joystick.x = Math.max(
+            -1,
+            Math.min(1, normalizedX * 1.2)
+          )
+          this.inputState.joystick.y = Math.max(
+            -1,
+            Math.min(1, normalizedY * 1.2)
+          )
         } else {
           this.inputState.joystick.x = 0
           this.inputState.joystick.y = 0
@@ -515,7 +521,7 @@ class OceanAdventure {
       joystickState.isActive = false
       this.inputState.joystick.x = 0
       this.inputState.joystick.y = 0
-      
+
       // Reset visual feedback
       joystick.style.borderColor = 'rgba(255, 255, 255, 0.3)'
       joystick.style.background = 'rgba(0, 17, 34, 0.5)'
@@ -529,7 +535,7 @@ class OceanAdventure {
       joystickState.isActive = false
       this.inputState.joystick.x = 0
       this.inputState.joystick.y = 0
-      
+
       // Reset visual feedback
       joystick.style.borderColor = 'rgba(255, 255, 255, 0.3)'
       joystick.style.background = 'rgba(0, 17, 34, 0.5)'
@@ -631,7 +637,10 @@ class OceanAdventure {
 
       // Close on escape key
       document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && !settingsModal.classList.contains('hidden')) {
+        if (
+          event.key === 'Escape' &&
+          !settingsModal.classList.contains('hidden')
+        ) {
           settingsModal.classList.add('hidden')
         }
       })
@@ -766,7 +775,7 @@ class OceanAdventure {
   updateUI() {
     document.getElementById('starCount').textContent = this.starCount
     document.getElementById('levelNumber').textContent = this.levelNumber
-    
+
     // Update depth meter based on player Y position
     if (this.player) {
       const playerPosition = this.player.getPosition()
