@@ -46,6 +46,9 @@ export class Player {
     this.mesh.castShadow = true
     this.mesh.receiveShadow = true
 
+    // Set initial position - start underwater with some depth
+    this.mesh.position.set(0, 2, 0) // Start 3 meters below water surface (5 - 2 = 3m depth)
+
     // Add to scene
     this.scene.add(this.mesh)
   }
@@ -55,7 +58,7 @@ export class Player {
    */
   createPhysicsBody() {
     this.physicsBody = this.physicsEngine.createSphereBody(
-      this.mesh.position,
+      this.mesh.position.clone(), // Use the mesh position which is now set to (0, 2, 0)
       0.7, // Slightly larger radius for collision detection
       false // Not static - player can move
     )
@@ -175,15 +178,16 @@ export class Player {
    * Update player state
    */
   update() {
-    // Sync mesh position with physics body
+    // Sync mesh position with physics body (don't override physics with floating animation)
     this.mesh.position.copy(this.physicsBody.position)
 
-    // Add gentle floating animation
+    // Add gentle floating animation to visual representation only
     const time = Date.now() * 0.001
-    this.mesh.position.y += Math.sin(time * 2) * 0.02
+    const floatingOffset = Math.sin(time * 2) * 0.02
+    this.mesh.position.y += floatingOffset
 
-    // Update physics body position to match (for the floating effect)
-    this.physicsBody.position.copy(this.mesh.position)
+    // Don't update physics body position from mesh - let physics handle position
+    // The physics body position should be authoritative
   }
 
   /**

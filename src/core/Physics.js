@@ -175,7 +175,7 @@ export class CollisionSystem {
  */
 export class UnderwaterPhysics {
   constructor() {
-    this.buoyancyForce = 9.8 // Force opposing gravity underwater
+    this.buoyancyForce = 2.0 // Further reduced buoyancy force (was 4.0)
     this.dragCoefficient = 0.95 // Water resistance (0-1, lower = more drag)
     this.currentDirection = new THREE.Vector3(0.1, 0, 0.05) // Gentle underwater current
     this.currentStrength = 0.02

@@ -47,7 +47,10 @@ describe('Collision Detection Integration', () => {
     collectible.type = 'collectible'
     physicsEngine.addRigidBody(collectible)
 
-    // Player starts at origin, should collide with collectible
+    // Move player to origin for this test
+    player.setPosition(new THREE.Vector3(0, 0, 0))
+
+    // Player at origin should collide with collectible
     const collisions = physicsEngine.collisionSystem.checkCollisions(player.physicsBody)
     
     expect(collisions.length).toBeGreaterThan(0)
@@ -141,6 +144,9 @@ describe('Collision Detection Integration', () => {
       physicsEngine.addRigidBody(obstacle)
       obstacles.push(obstacle)
     }
+
+    // Move player to origin for this test
+    player.setPosition(new THREE.Vector3(0, 0, 0))
 
     // Check collisions - player at origin should collide with multiple obstacles
     const collisions = physicsEngine.collisionSystem.checkCollisions(player.physicsBody)

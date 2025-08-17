@@ -795,7 +795,9 @@ class OceanAdventure {
     // Update depth meter based on player Y position
     if (this.player) {
       const playerPosition = this.player.getPosition()
-      const depth = Math.max(0, -playerPosition.y) // Negative Y means deeper
+      // Water surface is at Y=5, so depth = surface level - current Y position
+      const waterSurface = 5.0
+      const depth = Math.max(0, waterSurface - playerPosition.y)
       document.getElementById('depthMeter').textContent = depth.toFixed(1)
     }
   }
