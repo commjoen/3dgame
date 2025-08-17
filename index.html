@@ -197,6 +197,9 @@
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(4px);
+            /* Ensure modal is interactive */
+            pointer-events: auto;
+            touch-action: manipulation;
         }
         
         .settings-content {
@@ -211,6 +214,8 @@
             backdrop-filter: blur(10px);
             margin: 20px;
             box-sizing: border-box;
+            /* Prevent content from receiving background events */
+            pointer-events: auto;
         }
         
         /* Mobile responsive settings modal */

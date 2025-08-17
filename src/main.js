@@ -618,70 +618,58 @@ class OceanAdventure {
     const closeSettings = document.getElementById('closeSettings')
 
     if (settingsButton && settingsModal && closeSettings) {
-      // Open settings - improved for mobile
-      const openSettings = () => {
+      // Open settings
+      const openSettings = event => {
+        if (event) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
         settingsModal.classList.remove('hidden')
-        // Prevent body scrolling on mobile when modal is open
+        // Prevent body scrolling when modal is open
         document.body.style.overflow = 'hidden'
       }
 
-      // Close settings - improved for mobile
-      const closeModal = () => {
+      // Close settings
+      const closeModal = event => {
+        if (event) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
         settingsModal.classList.add('hidden')
         // Restore body scrolling
         document.body.style.overflow = ''
       }
 
-      // Settings button click/touch events
+      // Unified event handling for settings button
       settingsButton.addEventListener('click', openSettings)
-      if (this.isMobile) {
-        settingsButton.addEventListener('touchstart', event => {
-          event.preventDefault()
-          event.stopPropagation()
-        })
-        settingsButton.addEventListener('touchend', event => {
-          event.preventDefault()
-          event.stopPropagation()
-          openSettings()
-        })
-      }
-
-      // Close button click/touch events
-      closeSettings.addEventListener('click', closeModal)
-      if (this.isMobile) {
-        closeSettings.addEventListener('touchstart', event => {
-          event.preventDefault()
-          event.stopPropagation()
-        })
-        closeSettings.addEventListener('touchend', event => {
-          event.preventDefault()
-          event.stopPropagation()
-          closeModal()
-        })
-      }
-
-      // Close on background click/touch - improved for mobile
-      settingsModal.addEventListener('click', event => {
-        if (event.target === settingsModal) {
-          closeModal()
+      settingsButton.addEventListener('touchend', event => {
+        // Only handle touchend if it wasn't already handled by click
+        if (event.cancelable) {
+          openSettings(event)
         }
       })
 
-      if (this.isMobile) {
-        settingsModal.addEventListener('touchstart', event => {
-          if (event.target === settingsModal) {
-            event.preventDefault()
-            event.stopPropagation()
-          }
-        })
-        settingsModal.addEventListener('touchend', event => {
-          if (event.target === settingsModal) {
-            event.preventDefault()
-            event.stopPropagation()
-            closeModal()
-          }
-        })
-      }
+      // Unified event handling for close button
+      closeSettings.addEventListener('click', closeModal)
+      closeSettings.addEventListener('touchend', event => {
+        // Only handle touchend if it wasn't already handled by click
+        if (event.cancelable) {
+          closeModal(event)
+        }
+      })
+
+      // Close on background click/touch
+      settingsModal.addEventListener('click', event => {
+        if (event.target === settingsModal) {
+          closeModal(event)
+        }
+      })
+
+      settingsModal.addEventListener('touchend', event => {
+        if (event.target === settingsModal && event.cancelable) {
+          closeModal(event)
+        }
+      })
 
       // Close on escape key
       document.addEventListener('keydown', event => {
