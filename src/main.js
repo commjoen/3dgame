@@ -640,33 +640,13 @@ class OceanAdventure {
         document.body.style.overflow = ''
       }
 
-      // Unified event handling for settings button
+      // Simple event handling - click events work on both desktop and mobile
       settingsButton.addEventListener('click', openSettings)
-      settingsButton.addEventListener('touchend', event => {
-        // Only handle touchend if it wasn't already handled by click
-        if (event.cancelable) {
-          openSettings(event)
-        }
-      })
-
-      // Unified event handling for close button
       closeSettings.addEventListener('click', closeModal)
-      closeSettings.addEventListener('touchend', event => {
-        // Only handle touchend if it wasn't already handled by click
-        if (event.cancelable) {
-          closeModal(event)
-        }
-      })
 
-      // Close on background click/touch
+      // Close on background click - works on both desktop and mobile
       settingsModal.addEventListener('click', event => {
         if (event.target === settingsModal) {
-          closeModal(event)
-        }
-      })
-
-      settingsModal.addEventListener('touchend', event => {
-        if (event.target === settingsModal && event.cancelable) {
           closeModal(event)
         }
       })

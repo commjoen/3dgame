@@ -59,7 +59,7 @@
         }
         
         .hidden {
-            display: none;
+            display: none !important;
         }
         
         /* Mobile Controls */
@@ -169,6 +169,10 @@
             z-index: 300;
             backdrop-filter: blur(4px);
             transition: all 0.3s ease;
+            /* Ensure mobile touch works properly */
+            pointer-events: auto;
+            touch-action: manipulation;
+            user-select: none;
         }
         
         .settings-button:hover {
@@ -264,6 +268,10 @@
             justify-content: center;
             border-radius: 50%;
             transition: background 0.3s ease;
+            /* Ensure mobile touch works properly */
+            pointer-events: auto;
+            touch-action: manipulation;
+            user-select: none;
         }
         
         .close-button:hover {
