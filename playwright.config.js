@@ -31,11 +31,11 @@ export default defineConfig({
     },
     {
       name: 'mobile',
-      use: { ...devices['iPhone 13'] }
+      use: { ...devices['iPhone 13'], hasTouch: true }
     },
     {
       name: 'mobile-android',
-      use: { ...devices['Pixel 5'] }
+      use: { ...devices['Pixel 5'], hasTouch: true }
     }
   ],
   webServer: {

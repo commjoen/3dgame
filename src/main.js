@@ -100,19 +100,36 @@ class OceanAdventure {
   }
 
   setupRenderer() {
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: !this.isMobile, // Disable antialiasing on mobile for performance
-      alpha: false,
-    })
+    try {
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        antialias: !this.isMobile, // Disable antialiasing on mobile for performance
+        alpha: false,
+        powerPreference: this.isMobile ? 'low-power' : 'high-performance',
+        failIfMajorPerformanceCaveat: false, // Allow fallback rendering
+      })
 
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    this.renderer.setClearColor(0x001122, 1) // Deep ocean blue
+      this.renderer.setSize(window.innerWidth, window.innerHeight)
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      this.renderer.setClearColor(0x001122, 1) // Deep ocean blue
 
-    // Enable shadows for better visual quality
-    this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+      // Enable shadows for better visual quality (but not on mobile)
+      if (!this.isMobile) {
+        this.renderer.shadowMap.enabled = true
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+      }
+
+      // Validate WebGL context
+      const gl = this.renderer.getContext()
+      if (!gl) {
+        throw new Error('Failed to get WebGL context')
+      }
+
+      console.log('✅ WebGL Renderer initialized successfully')
+    } catch (error) {
+      console.error('❌ Failed to setup renderer:', error)
+      throw error
+    }
   }
 
   setupScene() {
@@ -275,6 +292,9 @@ class OceanAdventure {
     if (this.isMobile) {
       this.setupTouchControls()
     }
+
+    // Settings modal functionality
+    this.setupSettingsModal()
   }
 
   onKeyDown(event) {
@@ -429,6 +449,10 @@ class OceanAdventure {
         joystickState.currentX = touch.clientX
         joystickState.currentY = touch.clientY
 
+        // Visual feedback - highlight joystick when active
+        joystick.style.borderColor = 'rgba(255, 255, 255, 0.6)'
+        joystick.style.background = 'rgba(0, 17, 34, 0.7)'
+
         this.updateJoystickKnob(knob, joystickState, rect)
       }
     })
@@ -455,9 +479,9 @@ class OceanAdventure {
           const normalizedX = deltaX / maxDistance
           const normalizedY = deltaY / maxDistance
 
-          // Update input state instead of directly moving player
-          this.inputState.joystick.x = normalizedX * 0.8 // Scale down for smoother control
-          this.inputState.joystick.y = normalizedY * 0.8
+          // Update input state with improved sensitivity for mobile
+          this.inputState.joystick.x = Math.max(-1, Math.min(1, normalizedX * 1.2))
+          this.inputState.joystick.y = Math.max(-1, Math.min(1, normalizedY * 1.2))
         } else {
           this.inputState.joystick.x = 0
           this.inputState.joystick.y = 0
@@ -474,6 +498,10 @@ class OceanAdventure {
       joystickState.isActive = false
       this.inputState.joystick.x = 0
       this.inputState.joystick.y = 0
+      
+      // Reset visual feedback
+      joystick.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+      joystick.style.background = 'rgba(0, 17, 34, 0.5)'
       knob.style.transform = 'translate(-50%, -50%)'
     })
 
@@ -484,6 +512,10 @@ class OceanAdventure {
       joystickState.isActive = false
       this.inputState.joystick.x = 0
       this.inputState.joystick.y = 0
+      
+      // Reset visual feedback
+      joystick.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+      joystick.style.background = 'rgba(0, 17, 34, 0.5)'
       knob.style.transform = 'translate(-50%, -50%)'
     })
   }
@@ -509,30 +541,82 @@ class OceanAdventure {
     const swimDownBtn = document.getElementById('swimDownBtn')
 
     if (swimUpBtn) {
+      // Add more responsive event handling
       swimUpBtn.addEventListener('touchstart', event => {
         event.preventDefault()
         event.stopPropagation()
         this.inputState.mobileButtons.swimUp = true
+        swimUpBtn.style.background = 'rgba(255, 255, 255, 0.4)'
       })
 
       swimUpBtn.addEventListener('touchend', event => {
         event.preventDefault()
         event.stopPropagation()
         this.inputState.mobileButtons.swimUp = false
+        swimUpBtn.style.background = 'rgba(0, 17, 34, 0.6)'
+      })
+
+      swimUpBtn.addEventListener('touchcancel', event => {
+        event.preventDefault()
+        event.stopPropagation()
+        this.inputState.mobileButtons.swimUp = false
+        swimUpBtn.style.background = 'rgba(0, 17, 34, 0.6)'
       })
     }
 
     if (swimDownBtn) {
+      // Add more responsive event handling
       swimDownBtn.addEventListener('touchstart', event => {
         event.preventDefault()
         event.stopPropagation()
         this.inputState.mobileButtons.swimDown = true
+        swimDownBtn.style.background = 'rgba(255, 255, 255, 0.4)'
       })
 
       swimDownBtn.addEventListener('touchend', event => {
         event.preventDefault()
         event.stopPropagation()
         this.inputState.mobileButtons.swimDown = false
+        swimDownBtn.style.background = 'rgba(0, 17, 34, 0.6)'
+      })
+
+      swimDownBtn.addEventListener('touchcancel', event => {
+        event.preventDefault()
+        event.stopPropagation()
+        this.inputState.mobileButtons.swimDown = false
+        swimDownBtn.style.background = 'rgba(0, 17, 34, 0.6)'
+      })
+    }
+  }
+
+  setupSettingsModal() {
+    const settingsButton = document.getElementById('settingsButton')
+    const settingsModal = document.getElementById('settingsModal')
+    const closeSettings = document.getElementById('closeSettings')
+
+    if (settingsButton && settingsModal && closeSettings) {
+      // Open settings
+      settingsButton.addEventListener('click', () => {
+        settingsModal.classList.remove('hidden')
+      })
+
+      // Close settings
+      closeSettings.addEventListener('click', () => {
+        settingsModal.classList.add('hidden')
+      })
+
+      // Close on background click
+      settingsModal.addEventListener('click', event => {
+        if (event.target === settingsModal) {
+          settingsModal.classList.add('hidden')
+        }
+      })
+
+      // Close on escape key
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !settingsModal.classList.contains('hidden')) {
+          settingsModal.classList.add('hidden')
+        }
       })
     }
   }
@@ -588,6 +672,9 @@ class OceanAdventure {
 
     // Update camera
     this.updateCamera()
+
+    // Update UI (including depth meter)
+    this.updateUI()
 
     // Animate stars
     this.stars.forEach(starData => {
@@ -662,6 +749,13 @@ class OceanAdventure {
   updateUI() {
     document.getElementById('starCount').textContent = this.starCount
     document.getElementById('levelNumber').textContent = this.levelNumber
+    
+    // Update depth meter based on player Y position
+    if (this.player) {
+      const playerPosition = this.player.getPosition()
+      const depth = Math.max(0, -playerPosition.y) // Negative Y means deeper
+      document.getElementById('depthMeter').textContent = depth.toFixed(1)
+    }
   }
 
   render() {

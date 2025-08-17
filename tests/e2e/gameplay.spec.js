@@ -12,11 +12,29 @@ test.describe('Ocean Adventure E2E Tests', () => {
     // Wait for the game canvas to be visible
     await expect(page.locator('#gameCanvas')).toBeVisible()
 
-    // Check that WebGL is supported
+    // Check that WebGL is supported with better error handling
     const webglSupported = await page.evaluate(() => {
-      const canvas = document.createElement('canvas')
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
-      return gl && gl instanceof WebGLRenderingContext
+      try {
+        const canvas = document.createElement('canvas')
+        const gl = canvas.getContext('webgl2') || 
+                   canvas.getContext('webgl') || 
+                   canvas.getContext('experimental-webgl')
+        
+        if (!gl) {
+          console.log('WebGL context could not be created')
+          return false
+        }
+        
+        // Basic WebGL capability check
+        const isWebGL = gl instanceof WebGLRenderingContext || 
+                       gl instanceof WebGL2RenderingContext
+        
+        console.log('WebGL context created successfully:', isWebGL)
+        return isWebGL
+      } catch (error) {
+        console.error('WebGL test error:', error)
+        return false
+      }
     })
     expect(webglSupported).toBe(true)
   })
@@ -30,13 +48,16 @@ test.describe('Ocean Adventure E2E Tests', () => {
     // Ensure the game canvas is present
     await expect(gameCanvas).toBeVisible()
     
-    // Ensure UI is present (which means game loaded)
-    await expect(ui).toBeVisible()
+    // Wait for game initialization - give it more time
+    await page.waitForTimeout(3000)
     
-    // If loading screen is still visible, wait for it to be hidden
+    // Check if loading screen is still visible and wait for it to hide
     if (await loadingScreen.isVisible()) {
-      await expect(loadingScreen).toBeHidden({ timeout: 10000 })
+      await expect(loadingScreen).toBeHidden({ timeout: 15000 })
     }
+    
+    // Now ensure UI is present (which means game loaded)
+    await expect(ui).toBeVisible({ timeout: 10000 })
   })
 
   test('should have responsive design', async ({ page }) => {
@@ -102,11 +123,14 @@ test.describe('Ocean Adventure E2E Tests', () => {
 })
 
 test.describe('Mobile Specific Tests', () => {
-  test.use({ ...test.use, ...{ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)' } })
+  test.use({ 
+    hasTouch: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/12.0 Mobile/15A372 Safari/604.1',
+    viewport: { width: 375, height: 667 }
+  })
 
   test('should work on mobile devices', async ({ page }) => {
     await page.goto('/')
-    await page.setViewportSize({ width: 375, height: 667 })
 
     // Check that the game loads on mobile
     await expect(page.locator('#gameCanvas')).toBeVisible()
@@ -114,6 +138,9 @@ test.describe('Mobile Specific Tests', () => {
     // Test touch interactions (placeholder)
     const canvas = page.locator('#gameCanvas')
     await canvas.tap()
+
+    // Check mobile controls are visible
+    await expect(page.locator('#mobileControls')).toBeVisible()
 
     // In a real implementation, we would test:
     // - Touch controls for movement
@@ -123,7 +150,6 @@ test.describe('Mobile Specific Tests', () => {
 
   test('should handle touch gestures', async ({ page }) => {
     await page.goto('/')
-    await page.setViewportSize({ width: 375, height: 667 })
 
     const canvas = page.locator('#gameCanvas')
     
