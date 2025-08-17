@@ -116,11 +116,17 @@ class OceanAdventure {
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       this.renderer.setClearColor(0x001122, 1) // Deep ocean blue
 
-      // Enable shadows for better visual quality (but not on mobile)
-      if (!this.isMobile) {
-        this.renderer.shadowMap.enabled = true
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
-      }
+      // Enable shadows with mobile-optimized settings
+      this.renderer.shadowMap.enabled = true
+      this.renderer.shadowMap.type = this.isMobile
+        ? THREE.BasicShadowMap // Faster shadow type for mobile
+        : THREE.PCFSoftShadowMap // Better quality for desktop
+
+      // Enhanced WebGL settings for better lighting
+      this.renderer.physicallyCorrectLights = false // Better performance
+      this.renderer.outputEncoding = THREE.sRGBEncoding
+      this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+      this.renderer.toneMappingExposure = 1.0
 
       // Validate WebGL context
       const gl = this.renderer.getContext()
@@ -131,7 +137,7 @@ class OceanAdventure {
       // Add error handling for WebGL
       gl.getExtension('WEBGL_lose_context')
 
-      console.log('✅ WebGL Renderer initialized successfully')
+      console.log('✅ WebGL Renderer initialized with enhanced lighting')
     } catch (error) {
       console.error('❌ Failed to setup renderer:', error)
       throw error
@@ -172,34 +178,92 @@ class OceanAdventure {
   }
 
   setupLights() {
-    // Ambient light for underwater ambience
-    const ambientLight = new THREE.AmbientLight(0x404080, 0.4)
+    // Enhanced underwater ambient lighting
+    const ambientLight = new THREE.AmbientLight(0x336699, 0.6)
     this.scene.add(ambientLight)
 
-    // Directional light simulating filtered sunlight
-    const directionalLight = new THREE.DirectionalLight(0x87ceeb, 0.8)
-    directionalLight.position.set(0, 50, 0)
+    // Primary directional light simulating filtered sunlight from above
+    const directionalLight = new THREE.DirectionalLight(0x87ceeb, 1.2)
+    directionalLight.position.set(0, 50, 10)
 
-    // Only enable shadows on desktop for better compatibility
-    if (!this.isMobile && this.renderer.shadowMap.enabled) {
+    // Enable shadows with optimized settings for mobile compatibility
+    if (this.renderer.shadowMap.enabled) {
       directionalLight.castShadow = true
-      directionalLight.shadow.mapSize.width = 1024 // Reduced for better compatibility
-      directionalLight.shadow.mapSize.height = 1024
+      // Use smaller shadow map sizes on mobile for better performance
+      const shadowMapSize = this.isMobile ? 512 : 1024
+      directionalLight.shadow.mapSize.width = shadowMapSize
+      directionalLight.shadow.mapSize.height = shadowMapSize
       directionalLight.shadow.camera.near = 0.5
       directionalLight.shadow.camera.far = 500
       directionalLight.shadow.camera.left = -50
       directionalLight.shadow.camera.right = 50
       directionalLight.shadow.camera.top = 50
       directionalLight.shadow.camera.bottom = -50
+      // Use less expensive shadow map type on mobile
+      if (this.isMobile) {
+        directionalLight.shadow.bias = -0.0005
+      }
     }
 
     this.scene.add(directionalLight)
+
+    // Add volumetric underwater lighting with point lights for better WebGL effects
+    this.addUnderwaterVolumetricLights()
+
+    // Add subtle rim lighting to enhance object definition
+    const rimLight = new THREE.DirectionalLight(0x4a9eff, 0.4)
+    rimLight.position.set(-20, 10, -20)
+    this.scene.add(rimLight)
+  }
+
+  addUnderwaterVolumetricLights() {
+    // Create multiple point lights for underwater caustics effect
+    const lightColors = [0x4a9eff, 0x87ceeb, 0x6495ed, 0x00bfff]
+    const lightCount = this.isMobile ? 3 : 5 // Fewer lights on mobile
+
+    for (let i = 0; i < lightCount; i++) {
+      const pointLight = new THREE.PointLight(
+        lightColors[i % lightColors.length],
+        this.isMobile ? 0.6 : 0.8, // Reduced intensity on mobile
+        30, // Distance
+        2 // Decay
+      )
+
+      // Position lights in a scattered pattern above the scene
+      const angle = (i / lightCount) * Math.PI * 2
+      const radius = 15 + Math.random() * 10
+      pointLight.position.set(
+        Math.cos(angle) * radius,
+        8 + Math.random() * 5, // Varying heights
+        Math.sin(angle) * radius
+      )
+
+      // Store animation properties
+      pointLight.userData = {
+        originalPosition: pointLight.position.clone(),
+        animationOffset: Math.random() * Math.PI * 2,
+        animationSpeed: 0.5 + Math.random() * 0.5,
+        animationRadius: 2 + Math.random() * 3,
+      }
+
+      this.scene.add(pointLight)
+
+      // Store reference for animation
+      if (!this.volumetricLights) {
+        this.volumetricLights = []
+      }
+      this.volumetricLights.push(pointLight)
+    }
   }
 
   createUnderwaterEnvironment() {
-    // Create ocean floor
+    // Create ocean floor with enhanced material
     const floorGeometry = new THREE.PlaneGeometry(100, 100)
-    const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 })
+    const floorMaterial = new THREE.MeshPhongMaterial({
+      color: 0x8b4513,
+      shininess: 30,
+      specular: 0x222222,
+    })
     const floor = new THREE.Mesh(floorGeometry, floorMaterial)
     floor.rotation.x = -Math.PI / 2
     floor.position.y = -5
@@ -215,13 +279,22 @@ class OceanAdventure {
     floorPhysicsBody.type = 'environment'
     this.physicsEngine.addRigidBody(floorPhysicsBody)
 
-    // Add coral/rocks with collision detection
+    // Add coral/rocks with enhanced materials and lighting
     for (let i = 0; i < 10; i++) {
       const radius = 0.5 + Math.random() * 1.5
       const geometry = new THREE.SphereGeometry(radius)
-      const material = new THREE.MeshLambertMaterial({
-        color: new THREE.Color().setHSL(Math.random() * 0.3, 0.7, 0.5),
+
+      // Use MeshPhongMaterial for better lighting on all platforms
+      const hue = Math.random() * 0.3
+      const material = new THREE.MeshPhongMaterial({
+        color: new THREE.Color().setHSL(hue, 0.7, 0.5),
+        shininess: 60 + Math.random() * 40,
+        specular: new THREE.Color().setHSL(hue, 0.3, 0.8),
+        // Add slight transparency for underwater effect
+        transparent: true,
+        opacity: 0.9,
       })
+
       const coral = new THREE.Mesh(geometry, material)
 
       const position = new THREE.Vector3(
@@ -231,6 +304,7 @@ class OceanAdventure {
       )
       coral.position.copy(position)
       coral.castShadow = true
+      coral.receiveShadow = true
       this.scene.add(coral)
 
       // Add physics body for collision
@@ -258,13 +332,19 @@ class OceanAdventure {
   createSampleStars() {
     this.stars = []
 
-    // Create glowing star collectibles with physics
+    // Create glowing star collectibles with enhanced materials
     for (let i = 0; i < 5; i++) {
       const starGeometry = new THREE.SphereGeometry(0.3)
-      const starMaterial = new THREE.MeshLambertMaterial({
+
+      // Use MeshPhongMaterial for better lighting effects
+      const starMaterial = new THREE.MeshPhongMaterial({
         color: 0xffd700,
         emissive: 0xffd700,
-        emissiveIntensity: 0.3,
+        emissiveIntensity: 0.4,
+        shininess: 100,
+        specular: 0xffffff,
+        transparent: true,
+        opacity: 0.95,
       })
 
       const star = new THREE.Mesh(starGeometry, starMaterial)
@@ -274,6 +354,7 @@ class OceanAdventure {
         (Math.random() - 0.5) * 20
       )
       star.position.copy(position)
+      star.castShadow = true
 
       // Add physics body for collision detection
       const starPhysicsBody = this.physicsEngine.createSphereBody(
@@ -286,9 +367,12 @@ class OceanAdventure {
       starPhysicsBody.collected = false
       this.physicsEngine.addRigidBody(starPhysicsBody)
 
-      // Add simple rotation animation
+      // Add simple rotation animation and floating effect
       star.userData = {
         rotationSpeed: 0.02 + Math.random() * 0.02,
+        floatSpeed: 0.01 + Math.random() * 0.01,
+        floatOffset: Math.random() * Math.PI * 2,
+        originalY: position.y,
         physicsBody: starPhysicsBody,
       }
 
@@ -718,12 +802,49 @@ class OceanAdventure {
     // Update UI (including depth meter)
     this.updateUI()
 
-    // Animate stars
+    // Animate stars with floating and pulsing effects
     this.stars.forEach(starData => {
       const star = starData.mesh
-      star.rotation.y += star.userData.rotationSpeed
-      star.rotation.x += star.userData.rotationSpeed * 0.5
+      const userData = star.userData
+
+      // Rotation animation
+      star.rotation.y += userData.rotationSpeed
+      star.rotation.x += userData.rotationSpeed * 0.5
+
+      // Floating animation
+      const time = Date.now() * 0.001
+      const floatY =
+        userData.originalY +
+        Math.sin(time * userData.floatSpeed + userData.floatOffset) * 0.3
+      star.position.y = floatY
+
+      // Pulsing emissive effect
+      const pulseFactor = 0.3 + Math.sin(time * 2 + userData.floatOffset) * 0.1
+      star.material.emissiveIntensity = pulseFactor
     })
+
+    // Animate volumetric lights for underwater caustics effect
+    if (this.volumetricLights) {
+      const time = Date.now() * 0.001
+      this.volumetricLights.forEach(light => {
+        const userData = light.userData
+        const animationTime =
+          time * userData.animationSpeed + userData.animationOffset
+
+        // Create gentle swaying motion
+        const offsetX = Math.sin(animationTime) * userData.animationRadius
+        const offsetZ = Math.cos(animationTime * 1.3) * userData.animationRadius
+        const offsetY = Math.sin(animationTime * 0.7) * 1
+
+        light.position.x = userData.originalPosition.x + offsetX
+        light.position.y = userData.originalPosition.y + offsetY
+        light.position.z = userData.originalPosition.z + offsetZ
+
+        // Subtle intensity variation for flickering water caustics
+        const intensityVariation = 0.8 + Math.sin(animationTime * 3) * 0.2
+        light.intensity = (this.isMobile ? 0.6 : 0.8) * intensityVariation
+      })
+    }
 
     // Check star collection using collision detection
     this.checkStarCollection()

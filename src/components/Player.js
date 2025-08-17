@@ -36,10 +36,16 @@ export class Player {
   createPlayerMesh() {
     // Create player geometry (capsule for better collision detection)
     const geometry = new THREE.CapsuleGeometry(0.5, 1.5, 4, 8)
-    const material = new THREE.MeshLambertMaterial({
+
+    // Use MeshPhongMaterial for better lighting effects
+    const material = new THREE.MeshPhongMaterial({
       color: 0x00ff88,
       transparent: true,
       opacity: 0.9,
+      shininess: 50,
+      specular: 0x44aa66,
+      emissive: 0x002211,
+      emissiveIntensity: 0.1,
     })
 
     this.mesh = new THREE.Mesh(geometry, material)
