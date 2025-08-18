@@ -72,23 +72,31 @@ class OceanAdventure {
       { name: 'Player', fn: () => this.createPlayer() },
       { name: 'Sample Stars', fn: () => this.createSampleStars() },
       { name: 'Event Listeners', fn: () => this.setupEventListeners() },
-      { name: 'UI Initialization', fn: () => { this.hideLoading(); this.showUI(); } },
-      { name: 'Game Loop', fn: () => this.startGameLoop() }
+      {
+        name: 'UI Initialization',
+        fn: () => {
+          this.hideLoading()
+          this.showUI()
+        },
+      },
+      { name: 'Game Loop', fn: () => this.startGameLoop() },
     ]
 
     try {
       console.log('🎮 Ocean Adventure - Starting initialization...')
-      
+
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i]
         console.log(`[${i + 1}/${steps.length}] Initializing ${step.name}...`)
-        
+
         try {
           await step.fn()
           console.log(`✅ ${step.name} initialized successfully`)
         } catch (stepError) {
           console.error(`❌ Failed to initialize ${step.name}:`, stepError)
-          throw new Error(`Initialization failed at step "${step.name}": ${stepError.message}`)
+          throw new Error(
+            `Initialization failed at step "${step.name}": ${stepError.message}`
+          )
         }
       }
 
@@ -146,7 +154,7 @@ class OceanAdventure {
 
       // Add error handling for WebGL
       gl.getExtension('WEBGL_lose_context')
-      
+
       console.log('✅ WebGL renderer configured successfully')
     } catch (error) {
       console.error('❌ Failed to setup WebGL renderer:', error)
