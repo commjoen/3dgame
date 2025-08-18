@@ -1,0 +1,50 @@
+services:
+  ocean-adventure:
+    build: .
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    environment:
+      - NGINX_WORKER_PROCESSES=auto
+      - NGINX_WORKER_CONNECTIONS=1024
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ocean-adventure.rule=Host(`ocean-adventure.localhost`)"
+      - "traefik.http.services.ocean-adventure.loadbalancer.server.port=80"
+
+  # Optional: Use with pre-built image from GHCR
+  ocean-adventure-prod:
+    image: ghcr.io/commjoen/3dgame:latest
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+    profiles:
+      - production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+# Optional: For development with live reload
+  ocean-adventure-dev:
+    build:
+      context: .
+      target: builder
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    profiles:
+      - development
+    environment:
+      - VITE_DEV_MODE=true

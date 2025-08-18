@@ -138,6 +138,33 @@ Ocean Adventure uses automated GitHub Actions to provide live previews and deplo
 - View all active PR previews and the main deployment in one place
 - Direct links to both the game and the corresponding GitHub PR
 
+### 🐳 Container Deployment
+- **Automated Builds**: Docker images are automatically built and pushed to GitHub Container Registry (GHCR)
+- **Multi-platform**: Images available for `linux/amd64` and `linux/arm64` architectures
+- **Container Registry**: [ghcr.io/commjoen/3dgame](https://github.com/commjoen/3dgame/pkgs/container/3dgame)
+- **Image Tags**: 
+  - `latest`: Latest stable version from main branch
+  - `main`: Latest build from main branch
+  - `pr-{number}`: Preview builds for pull requests
+  - `{branch}-{sha}`: Specific commit builds
+
+**Quick Start with Docker:**
+```bash
+# Run the latest stable version
+docker run -p 8080:80 ghcr.io/commjoen/3dgame:latest
+
+# Access the game at http://localhost:8080
+```
+
+**Production Deployment:**
+```bash
+# Pull the latest image
+docker pull ghcr.io/commjoen/3dgame:latest
+
+# Run with custom port and name
+docker run -d --name ocean-adventure -p 80:80 ghcr.io/commjoen/3dgame:latest
+```
+
 ## 🤝 Contributing
 
 We welcome contributions from developers of all skill levels! Here's how to get started:
