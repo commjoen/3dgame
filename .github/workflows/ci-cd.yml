@@ -189,13 +189,13 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     permissions:
-      contents: write
+      contents: read
       pages: write
       id-token: write
       
     environment:
       name: github-pages
-      url: https://commjoen.github.io/3dgame/
+      url: ${{ steps.deployment.outputs.page_url }}
       
     steps:
     - name: Checkout code
@@ -215,124 +215,17 @@ jobs:
       env:
         VITE_BASE_PATH: /3dgame/
         
-    - name: Checkout gh-pages branch
-      uses: actions/checkout@v5
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload to GitHub Pages
+      uses: actions/upload-pages-artifact@v3
       with:
-        ref: gh-pages
-        path: gh-pages
-        token: ${{ secrets.GITHUB_TOKEN }}
-      continue-on-error: true
-      
-    - name: Initialize gh-pages branch if needed
-      run: |
-        if [ ! -d "gh-pages" ] || [ ! -d "gh-pages/.git" ]; then
-          echo "Creating new gh-pages branch..."
-          mkdir -p gh-pages
-          cd gh-pages
-          git init
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          echo "# Ocean Adventure - GitHub Pages" > README.md
-          git add README.md
-          git commit -m "Initialize gh-pages branch"
-          git branch -M gh-pages
-          git push --set-upstream origin gh-pages
-          cd ..
-        fi
-      
-    - name: Deploy to gh-pages
-      run: |
-        # Ensure gh-pages directory exists and is properly initialized
-        cd gh-pages
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
+        path: dist
         
-        # Fetch latest changes and reset to remote state
-        git fetch origin gh-pages || echo "No remote gh-pages branch yet"
-        git reset --hard origin/gh-pages 2>/dev/null || echo "Creating new gh-pages content"
-        
-        # Clean main branch files while preserving PR directories
-        find . -maxdepth 1 -type f ! -name '.gitignore' -delete 2>/dev/null || true
-        find . -maxdepth 1 -type d ! -name 'pr-*' ! -name '.git' ! -name '.' -exec rm -rf {} + 2>/dev/null || true
-        
-        # Copy new build files
-        cp -r ../dist/* . 2>/dev/null || echo "No dist files to copy"
-        
-        # Create or update previews index
-        cat > previews.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Ocean Adventure - PR Previews</title>
-            <style>
-                body { 
-                    font-family: Arial, sans-serif; 
-                    margin: 40px; 
-                    background: linear-gradient(to bottom, #1e40af, #0f172a);
-                    color: white;
-                    min-height: 100vh;
-                }
-                .container { max-width: 800px; margin: 0 auto; }
-                .preview-item { 
-                    background: rgba(255,255,255,0.1); 
-                    margin: 20px 0; 
-                    padding: 20px; 
-                    border-radius: 8px;
-                    border: 1px solid rgba(255,255,255,0.2);
-                }
-                .preview-item h3 { margin-top: 0; color: #60a5fa; }
-                .preview-link { 
-                    display: inline-block;
-                    background: #1e40af; 
-                    color: white; 
-                    padding: 10px 20px; 
-                    text-decoration: none; 
-                    border-radius: 4px;
-                    margin: 5px 5px 5px 0;
-                }
-                .preview-link:hover { background: #1d4ed8; }
-                .main-link { background: #059669; }
-                .main-link:hover { background: #047857; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🌊 Ocean Adventure - Preview Deployments</h1>
-                <div class="preview-item">
-                    <h3>🚀 Main Branch (Stable)</h3>
-                    <p>The stable version deployed from the main branch.</p>
-                    <a href="/3dgame/" class="preview-link main-link">Play Main Version</a>
-                </div>
-        EOF
-        
-        # Add any existing PR previews to the index
-        for dir in pr-*/; do
-            if [ -d "$dir" ]; then
-                pr_num=${dir#pr-}
-                pr_num=${pr_num%/}
-                echo "                <div class=\"preview-item\">" >> previews.html
-                echo "                    <h3>🔄 Pull Request #$pr_num</h3>" >> previews.html
-                echo "                    <p>Preview deployment for PR #$pr_num</p>" >> previews.html
-                echo "                    <a href=\"/3dgame/$dir\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
-                echo "                    <a href=\"https://github.com/commjoen/3dgame/pull/$pr_num\" class=\"preview-link\">View PR</a>" >> previews.html
-                echo "                </div>" >> previews.html
-            fi
-        done
-        
-        cat >> previews.html << 'EOF'
-            </div>
-        </body>
-        </html>
-        EOF
-        
-        # Add and commit changes
-        git add .
-        git diff --staged --quiet || git commit -m "Deploy main branch to GitHub Pages"
-        git push origin gh-pages
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
 
   build-and-push-container:
     name: Build and Push Container
@@ -348,8 +241,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
       
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        driver-opts: |
+          image=moby/buildkit:buildx-stable-1
+          network=host
       
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
@@ -367,7 +267,16 @@ jobs:
           type=ref,event=branch
           type=ref,event=pr
           type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value=main,enable={{is_default_branch}}
           type=sha,prefix={{branch}}-
+        labels: |
+          org.opencontainers.image.title=Ocean Adventure
+          org.opencontainers.image.description=A 3D browser-based underwater platform game
+          org.opencontainers.image.url=https://commjoen.github.io/3dgame/
+          org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          org.opencontainers.image.version=${{ github.ref_name }}
+          org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+          org.opencontainers.image.revision=${{ github.sha }}
         
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -379,6 +288,8 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
 
   security-scan:
     name: Security Scan

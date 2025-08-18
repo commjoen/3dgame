@@ -1,38 +1,65 @@
 # GitHub Pages Deployment Fix
 
 ## Problem
-The GitHub Pages deployment at https://commjoen.github.io/3dgame/ was empty because the deployment workflow was failing.
+The GitHub Pages deployment at https://commjoen.github.io/3dgame/ had reliability issues due to complex manual branch management and outdated deployment methods.
 
 ## Root Cause Analysis
-1. The `deploy` job in `.github/workflows/ci-cd.yml` depends on both `build` and `performance-audit` jobs
-2. The `performance-audit` job was failing due to strict Lighthouse checks
-3. Failed audits included:
-   - `csp-xss`: CSP XSS protection (score: 0)
-   - `installable-manifest`: PWA installability (score: 0) 
-   - `splash-screen`: PWA splash screen (score: 0)
-   - `unused-javascript`: Code optimization (1 item found, max 0 allowed)
-   - `uses-passive-event-listeners`: Performance optimization (score: 0)
+1. The `deploy` job used manual gh-pages branch management instead of GitHub's official deployment actions
+2. Complex shell scripts for branch initialization and file management prone to errors
+3. No use of modern GitHub Pages deployment workflow
+4. Container builds lacked proper optimization for multi-architecture support
+5. Missing proper image metadata and labels for better registry management
 
 ## Solution Implemented
-1. **Made performance audit non-blocking**: Removed `performance-audit` from deploy job dependencies
-2. **Allow audit failures**: Added `continue-on-error: true` to performance audit job
-3. **Relaxed lighthouse config**: Updated failing audits to be warnings instead of errors
-4. **Added verification test**: Created unit test to ensure builds generate correct `/3dgame/` paths
+1. **Modernized GitHub Pages deployment**: Replaced manual branch management with official GitHub actions
+2. **Enhanced container builds**: Added QEMU support and improved multi-platform builds  
+3. **Improved caching**: Better build performance for both pages and containers
+4. **Added security headers**: Enhanced nginx configuration with additional security
+5. **Proper image metadata**: Added comprehensive labels for container registry
 
 ## Technical Details
-- Build process correctly sets `VITE_BASE_PATH=/3dgame/` for GitHub Pages
-- Generated HTML includes proper base paths: `/3dgame/favicon.ico`, `/3dgame/assets/...`
-- Performance audits still run but don't block deployment
-- All existing functionality and tests remain unchanged
+### GitHub Pages Deployment
+- **Before**: Manual gh-pages branch management with complex shell scripts
+- **After**: Uses official GitHub actions:
+  - `actions/configure-pages@v4` for setup
+  - `actions/upload-pages-artifact@v3` for artifact upload
+  - `actions/deploy-pages@v4` for deployment
+- **Benefits**: More reliable, faster, and better error handling
+- **Permissions**: Simplified to `contents: read, pages: write, id-token: write`
+
+### Container Builds  
+- **Enhanced multi-platform support**: Added QEMU for cross-platform builds
+- **Better caching**: Improved build times with GitHub Actions cache
+- **Comprehensive metadata**: Added proper OCI labels for better registry display
+- **Tagging strategy**: Includes both `latest` and `main` tags for main branch
+- **Architecture support**: Confirmed support for `linux/amd64` and `linux/arm64`
+
+### Dockerfile Improvements
+- **Optimized dependencies**: Production-only install with ignore scripts
+- **Enhanced security**: Added Referrer-Policy header and improved caching
+- **Better structure**: Cleaner nginx configuration with proper cache settings
+- **Metadata labels**: Proper OCI image labels for registry identification
 
 ## Expected Result
 After merging this PR to main:
-- Deployment workflow will succeed 
-- https://commjoen.github.io/3dgame/ will serve the Ocean Adventure game
-- Performance audits continue running for optimization insights
-- Future deployments won't be blocked by non-critical audit failures
+- ✅ **GitHub Pages deployment** will be more reliable and faster
+- ✅ **Container builds** will have better multi-architecture support
+- ✅ **Performance** improvements from better caching strategies
+- ✅ **Security** enhancements with additional headers
+- ✅ **Monitoring** improvements with proper image metadata
+- ✅ **Future-proof** deployment using recommended GitHub actions
+
+## Container Usage
+```bash
+# Pull and run latest stable version (AMD64/ARM64)
+docker pull ghcr.io/commjoen/3dgame:latest
+docker run -d -p 8080:80 --name ocean-adventure ghcr.io/commjoen/3dgame:latest
+
+# Access the game at http://localhost:8080
+```
 
 ## Files Modified
-- `.github/workflows/ci-cd.yml`: Made performance audit non-blocking
-- `lighthouserc.js`: Converted critical audits to warnings
-- `tests/unit/github-pages-build.test.js`: Added build verification test
+- `.github/workflows/ci-cd.yml`: Modernized deployment workflows
+- `Dockerfile`: Enhanced multi-stage build with better optimization
+- `tests/unit/deployment-config.test.js`: Added validation tests
+- `package.json`: Added js-yaml dev dependency for config validation
