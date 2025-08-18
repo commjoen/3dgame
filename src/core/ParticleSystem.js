@@ -140,6 +140,7 @@ export class ParticleSystem {
       vertexShader: `
         attribute float size;
         attribute float alpha;
+        attribute vec3 color;
         varying float vAlpha;
         varying vec3 vColor;
         
