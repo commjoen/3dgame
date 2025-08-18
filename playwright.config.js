@@ -37,7 +37,8 @@ export default defineConfig({
           use: { 
             ...devices['iPhone 13'], 
             hasTouch: true,
-            // Mobile-specific launch options for CI
+            // Mobile uses chromium in CI since WebKit doesn't support --no-sandbox
+            browserName: 'chromium',
             launchOptions: {
               args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
             }

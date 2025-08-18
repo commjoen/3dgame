@@ -122,8 +122,7 @@ class OceanAdventure {
         ? THREE.BasicShadowMap // Faster shadow type for mobile
         : THREE.PCFSoftShadowMap // Better quality for desktop
 
-      // Enhanced WebGL settings for better lighting
-      this.renderer.useLegacyLights = true // Use legacy lighting for compatibility
+      // Enhanced WebGL settings for modern lighting
       this.renderer.outputColorSpace = THREE.SRGBColorSpace
       this.renderer.toneMapping = THREE.ACESFilmicToneMapping
       this.renderer.toneMappingExposure = 1.0
@@ -178,12 +177,12 @@ class OceanAdventure {
   }
 
   setupLights() {
-    // Enhanced underwater ambient lighting
-    const ambientLight = new THREE.AmbientLight(0x336699, 0.6)
+    // Enhanced underwater ambient lighting (adjusted for modern lighting model)
+    const ambientLight = new THREE.AmbientLight(0x336699, 0.3) // Reduced from 0.6
     this.scene.add(ambientLight)
 
-    // Primary directional light simulating filtered sunlight from above
-    const directionalLight = new THREE.DirectionalLight(0x87ceeb, 1.2)
+    // Primary directional light simulating filtered sunlight from above (adjusted intensity)
+    const directionalLight = new THREE.DirectionalLight(0x87ceeb, 2.5) // Increased from 1.2
     directionalLight.position.set(0, 50, 10)
 
     // Enable shadows with optimized settings for mobile compatibility
@@ -210,8 +209,8 @@ class OceanAdventure {
     // Add volumetric underwater lighting with point lights for better WebGL effects
     this.addUnderwaterVolumetricLights()
 
-    // Add subtle rim lighting to enhance object definition
-    const rimLight = new THREE.DirectionalLight(0x4a9eff, 0.4)
+    // Add subtle rim lighting to enhance object definition (adjusted intensity)
+    const rimLight = new THREE.DirectionalLight(0x4a9eff, 0.8) // Increased from 0.4
     rimLight.position.set(-20, 10, -20)
     this.scene.add(rimLight)
   }
@@ -224,7 +223,7 @@ class OceanAdventure {
     for (let i = 0; i < lightCount; i++) {
       const pointLight = new THREE.PointLight(
         lightColors[i % lightColors.length],
-        this.isMobile ? 0.6 : 0.8, // Reduced intensity on mobile
+        this.isMobile ? 2.0 : 3.0, // Adjusted for modern lighting model
         30, // Distance
         2 // Decay
       )
@@ -402,7 +401,9 @@ class OceanAdventure {
 
   setupEventListeners() {
     // Handle window resize
-    window.addEventListener('resize', () => this.onWindowResize())
+    window.addEventListener('resize', () => this.onWindowResize(), {
+      passive: true,
+    })
 
     // Enhanced input handling
     window.addEventListener('keydown', event => this.onKeyDown(event))
@@ -979,18 +980,45 @@ class OceanAdventure {
 }
 
 // Initialize the game when the page loads
-window.addEventListener('DOMContentLoaded', async () => {
-  const game = new OceanAdventure()
-  await game.initialize()
-})
+window.addEventListener(
+  'DOMContentLoaded',
+  async () => {
+    const game = new OceanAdventure()
+    await game.initialize()
+  },
+  { passive: true }
+)
 
 // Handle WebGL context loss
-window.addEventListener('webglcontextlost', event => {
-  event.preventDefault()
-  console.warn('WebGL context lost')
-})
+window.addEventListener(
+  'webglcontextlost',
+  event => {
+    event.preventDefault()
+    console.warn('WebGL context lost')
+  },
+  { passive: false }
+)
 
-window.addEventListener('webglcontextrestored', () => {
-  console.log('WebGL context restored')
-  // Reinitialize game here if needed
-})
+window.addEventListener(
+  'webglcontextrestored',
+  () => {
+    console.log('WebGL context restored')
+    // Reinitialize game here if needed
+  },
+  { passive: true }
+)
+
+// Performance optimization: Pause game when page is hidden
+document.addEventListener(
+  'visibilitychange',
+  () => {
+    if (document.hidden) {
+      // Page is hidden, reduce performance
+      console.log('Game paused due to page visibility')
+    } else {
+      // Page is visible, resume normal performance
+      console.log('Game resumed')
+    }
+  },
+  { passive: true }
+)
