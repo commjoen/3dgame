@@ -748,9 +748,28 @@ class OceanAdventure {
       settingsButton.addEventListener('click', openSettings)
       closeSettings.addEventListener('click', closeModal)
 
-      // Close on background click - works on both desktop and mobile
+      // Close on background click - improved detection for both desktop and mobile
       settingsModal.addEventListener('click', event => {
-        if (event.target === settingsModal) {
+        // Get the settings content element
+        const settingsContent = settingsModal.querySelector('.settings-content')
+
+        if (settingsContent) {
+          const contentRect = settingsContent.getBoundingClientRect()
+          const clickX = event.clientX
+          const clickY = event.clientY
+
+          // Check if click is outside the content area
+          const isOutsideContent =
+            clickX < contentRect.left ||
+            clickX > contentRect.right ||
+            clickY < contentRect.top ||
+            clickY > contentRect.bottom
+
+          if (isOutsideContent) {
+            closeModal(event)
+          }
+        } else if (event.target === settingsModal) {
+          // Fallback to original method if content element not found
           closeModal(event)
         }
       })
