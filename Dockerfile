@@ -10,6 +10,7 @@ COPY package*.json ./
 
 # Install all dependencies (needed for build)
 RUN npm config set strict-ssl false && \
+    npm ci --only=production --ignore-scripts && \
     npm ci
 
 # Copy source code
@@ -20,6 +21,13 @@ RUN npm run build
 
 # Stage 2: Serve the application with nginx
 FROM nginx:alpine
+
+# Add metadata labels
+LABEL org.opencontainers.image.title="Ocean Adventure"
+LABEL org.opencontainers.image.description="A 3D browser-based underwater platform game"
+LABEL org.opencontainers.image.url="https://commjoen.github.io/3dgame/"
+LABEL org.opencontainers.image.source="https://github.com/commjoen/3dgame"
+LABEL org.opencontainers.image.licenses="GPL-3.0"
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
@@ -42,6 +50,7 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     # Handle SPA routing - fallback to index.html
     location / {
@@ -60,18 +69,23 @@ server {
         add_header Pragma "no-cache";
         add_header Expires "0";
     }
+
+    # Manifest file
+    location /manifest.webmanifest {
+        add_header Cache-Control "public, max-age=86400";
+    }
 }
 EOF
 
 # Expose port 80
 EXPOSE 80
 
+# Add curl for health checks
+RUN apk add --no-cache curl
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/ || exit 1
-
-# Add curl for health checks
-RUN apk add --no-cache curl
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
