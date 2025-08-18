@@ -7,6 +7,9 @@
  */
 
 import * as THREE from 'three'
+import { PhysicsEngine } from './core/Physics.js'
+import { ParticleSystem } from './core/ParticleSystem.js'
+import { Player } from './components/Player.js'
 
 // Game configuration
 const CONFIG = {
@@ -26,9 +29,32 @@ class OceanAdventure {
     this.isLoaded = false
     this.isMobile = this.detectMobile()
 
+    // Core systems
+    this.physicsEngine = null
+    this.particleSystem = null
+    this.player = null
+    this.environmentObjects = []
+
     // Game state
     this.starCount = 0
     this.levelNumber = 1
+
+    // Input state
+    this.inputState = {
+      keys: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+      },
+      joystick: { x: 0, y: 0 },
+      mobileButtons: { swimUp: false, swimDown: false },
+    }
+
+    // Timing
+    this.lastTime = 0
 
     console.log('🌊 Ocean Adventure - Initializing...')
   }
@@ -40,6 +66,16 @@ class OceanAdventure {
       this.setupScene()
       this.setupCamera()
       this.setupLights()
+
+      // Initialize core systems
+      this.initializePhysics()
+      this.initializeParticleSystem()
+
+      // Create game objects
+      this.createUnderwaterEnvironment()
+      this.createPlayer()
+      this.createSampleStars()
+
       this.setupEventListeners()
 
       // Hide loading screen and show UI
@@ -64,28 +100,67 @@ class OceanAdventure {
   }
 
   setupRenderer() {
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: !this.isMobile, // Disable antialiasing on mobile for performance
-      alpha: false,
-    })
+    try {
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        antialias: !this.isMobile, // Disable antialiasing on mobile for performance
+        alpha: false,
+        powerPreference: this.isMobile ? 'low-power' : 'high-performance',
+        failIfMajorPerformanceCaveat: false, // Allow fallback rendering
+        preserveDrawingBuffer: false, // Better performance
+        premultipliedAlpha: false,
+        stencil: false, // Reduce memory usage
+      })
 
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    this.renderer.setClearColor(0x001122, 1) // Deep ocean blue
+      this.renderer.setSize(window.innerWidth, window.innerHeight)
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      this.renderer.setClearColor(0x001122, 1) // Deep ocean blue
 
-    // Enable shadows for better visual quality
-    this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+      // Enable shadows with mobile-optimized settings
+      this.renderer.shadowMap.enabled = true
+      this.renderer.shadowMap.type = this.isMobile
+        ? THREE.BasicShadowMap // Faster shadow type for mobile
+        : THREE.PCFSoftShadowMap // Better quality for desktop
+
+      // Enhanced WebGL settings for modern lighting
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace
+      this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+      this.renderer.toneMappingExposure = 1.0
+
+      // Validate WebGL context
+      const gl = this.renderer.getContext()
+      if (!gl) {
+        throw new Error('Failed to get WebGL context')
+      }
+
+      // Add error handling for WebGL
+      gl.getExtension('WEBGL_lose_context')
+
+      console.log('✅ WebGL Renderer initialized with enhanced lighting')
+    } catch (error) {
+      console.error('❌ Failed to setup renderer:', error)
+      throw error
+    }
   }
 
   setupScene() {
     this.scene = new THREE.Scene()
+  }
 
-    // Add basic underwater environment
-    this.createUnderwaterEnvironment()
-    this.createPlayer()
-    this.createSampleStars()
+  /**
+   * Initialize physics engine
+   */
+  initializePhysics() {
+    this.physicsEngine = new PhysicsEngine()
+    console.log('⚡ Physics engine initialized')
+  }
+
+  /**
+   * Initialize particle system
+   */
+  initializeParticleSystem() {
+    this.particleSystem = new ParticleSystem(this.scene, 500) // Reduced for mobile performance
+    console.log('✨ Particle system initialized')
   }
 
   setupCamera() {
@@ -102,93 +177,299 @@ class OceanAdventure {
   }
 
   setupLights() {
-    // Ambient light for underwater ambience
-    const ambientLight = new THREE.AmbientLight(0x404080, 0.4)
+    // Enhanced underwater ambient lighting (adjusted for modern lighting model)
+    const ambientLight = new THREE.AmbientLight(0x336699, 0.3) // Reduced from 0.6
     this.scene.add(ambientLight)
 
-    // Directional light simulating filtered sunlight
-    const directionalLight = new THREE.DirectionalLight(0x87ceeb, 0.8)
-    directionalLight.position.set(0, 50, 0)
-    directionalLight.castShadow = true
-    directionalLight.shadow.mapSize.width = 2048
-    directionalLight.shadow.mapSize.height = 2048
+    // Primary directional light simulating filtered sunlight from above (adjusted intensity)
+    const directionalLight = new THREE.DirectionalLight(0x87ceeb, 2.5) // Increased from 1.2
+    directionalLight.position.set(0, 50, 10)
+
+    // Enable shadows with optimized settings for mobile compatibility
+    if (this.renderer.shadowMap.enabled) {
+      directionalLight.castShadow = true
+      // Use smaller shadow map sizes on mobile for better performance
+      const shadowMapSize = this.isMobile ? 512 : 1024
+      directionalLight.shadow.mapSize.width = shadowMapSize
+      directionalLight.shadow.mapSize.height = shadowMapSize
+      directionalLight.shadow.camera.near = 0.5
+      directionalLight.shadow.camera.far = 500
+      directionalLight.shadow.camera.left = -50
+      directionalLight.shadow.camera.right = 50
+      directionalLight.shadow.camera.top = 50
+      directionalLight.shadow.camera.bottom = -50
+      // Use less expensive shadow map type on mobile
+      if (this.isMobile) {
+        directionalLight.shadow.bias = -0.0005
+      }
+    }
+
     this.scene.add(directionalLight)
+
+    // Add volumetric underwater lighting with point lights for better WebGL effects
+    this.addUnderwaterVolumetricLights()
+
+    // Add subtle rim lighting to enhance object definition (adjusted intensity)
+    const rimLight = new THREE.DirectionalLight(0x4a9eff, 0.8) // Increased from 0.4
+    rimLight.position.set(-20, 10, -20)
+    this.scene.add(rimLight)
+  }
+
+  addUnderwaterVolumetricLights() {
+    // Create multiple point lights for underwater caustics effect
+    const lightColors = [0x4a9eff, 0x87ceeb, 0x6495ed, 0x00bfff]
+    const lightCount = this.isMobile ? 3 : 5 // Fewer lights on mobile
+
+    for (let i = 0; i < lightCount; i++) {
+      const pointLight = new THREE.PointLight(
+        lightColors[i % lightColors.length],
+        this.isMobile ? 2.0 : 3.0, // Adjusted for modern lighting model
+        30, // Distance
+        2 // Decay
+      )
+
+      // Position lights in a scattered pattern above the scene
+      const angle = (i / lightCount) * Math.PI * 2
+      const radius = 15 + Math.random() * 10
+      pointLight.position.set(
+        Math.cos(angle) * radius,
+        8 + Math.random() * 5, // Varying heights
+        Math.sin(angle) * radius
+      )
+
+      // Store animation properties
+      pointLight.userData = {
+        originalPosition: pointLight.position.clone(),
+        animationOffset: Math.random() * Math.PI * 2,
+        animationSpeed: 0.5 + Math.random() * 0.5,
+        animationRadius: 2 + Math.random() * 3,
+      }
+
+      this.scene.add(pointLight)
+
+      // Store reference for animation
+      if (!this.volumetricLights) {
+        this.volumetricLights = []
+      }
+      this.volumetricLights.push(pointLight)
+    }
   }
 
   createUnderwaterEnvironment() {
-    // Create ocean floor
+    // Create water surface at Y=5 (matches depth meter calculation)
+    const waterSurfaceGeometry = new THREE.PlaneGeometry(200, 200)
+    const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
+      color: 0x006994,
+      transparent: true,
+      opacity: 0.6,
+      shininess: 100,
+      specular: 0x87ceeb,
+      side: THREE.DoubleSide,
+    })
+    const waterSurface = new THREE.Mesh(
+      waterSurfaceGeometry,
+      waterSurfaceMaterial
+    )
+    waterSurface.rotation.x = -Math.PI / 2
+    waterSurface.position.y = 5 // Water surface level used by depth meter
+    waterSurface.receiveShadow = true
+    this.scene.add(waterSurface)
+
+    // Create ocean floor with enhanced material
     const floorGeometry = new THREE.PlaneGeometry(100, 100)
-    const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 })
+    const floorMaterial = new THREE.MeshPhongMaterial({
+      color: 0x8b4513,
+      shininess: 30,
+      specular: 0x222222,
+    })
     const floor = new THREE.Mesh(floorGeometry, floorMaterial)
     floor.rotation.x = -Math.PI / 2
     floor.position.y = -5
     floor.receiveShadow = true
     this.scene.add(floor)
 
-    // Add some basic coral/rocks
+    // Create physics body for floor
+    const floorPhysicsBody = this.physicsEngine.createBoxBody(
+      new THREE.Vector3(0, -5, 0),
+      new THREE.Vector3(100, 0.1, 100),
+      true // Static
+    )
+    floorPhysicsBody.type = 'environment'
+    this.physicsEngine.addRigidBody(floorPhysicsBody)
+
+    // Add coral/rocks with enhanced materials and lighting
     for (let i = 0; i < 10; i++) {
-      const geometry = new THREE.SphereGeometry(0.5 + Math.random() * 1.5)
-      const material = new THREE.MeshLambertMaterial({
-        color: new THREE.Color().setHSL(Math.random() * 0.3, 0.7, 0.5),
+      const radius = 0.5 + Math.random() * 1.5
+      const geometry = new THREE.SphereGeometry(radius)
+
+      // Use MeshPhongMaterial for better lighting on all platforms
+      const hue = Math.random() * 0.3
+      const material = new THREE.MeshPhongMaterial({
+        color: new THREE.Color().setHSL(hue, 0.7, 0.5),
+        shininess: 60 + Math.random() * 40,
+        specular: new THREE.Color().setHSL(hue, 0.3, 0.8),
+        // Add slight transparency for underwater effect
+        transparent: true,
+        opacity: 0.9,
       })
+
       const coral = new THREE.Mesh(geometry, material)
-      coral.position.set(
+
+      const position = new THREE.Vector3(
         (Math.random() - 0.5) * 80,
         -4 + Math.random() * 2,
         (Math.random() - 0.5) * 80
       )
+      coral.position.copy(position)
       coral.castShadow = true
+      coral.receiveShadow = true
       this.scene.add(coral)
+
+      // Add physics body for collision
+      const coralPhysicsBody = this.physicsEngine.createSphereBody(
+        position,
+        radius * 1.2, // Slightly larger for collision detection
+        true // Static
+      )
+      coralPhysicsBody.type = 'environment'
+      coralPhysicsBody.mesh = coral // Reference to visual representation
+      this.physicsEngine.addRigidBody(coralPhysicsBody)
+      this.environmentObjects.push({
+        mesh: coral,
+        physicsBody: coralPhysicsBody,
+      })
     }
   }
 
   createPlayer() {
-    // Simple player representation (will be replaced with proper model)
-    const playerGeometry = new THREE.CapsuleGeometry(0.5, 1.5)
-    const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff88 })
-    this.player = new THREE.Mesh(playerGeometry, playerMaterial)
-    this.player.position.set(0, 0, 0)
-    this.player.castShadow = true
-    this.scene.add(this.player)
+    // Create enhanced player with physics
+    this.player = new Player(this.scene, this.physicsEngine)
+    console.log('🏊 Player created with physics')
   }
 
   createSampleStars() {
     this.stars = []
 
-    // Create glowing star collectibles
+    // Create glowing star collectibles with enhanced materials
     for (let i = 0; i < 5; i++) {
       const starGeometry = new THREE.SphereGeometry(0.3)
-      const starMaterial = new THREE.MeshLambertMaterial({
+
+      // Use MeshPhongMaterial for better lighting effects
+      const starMaterial = new THREE.MeshPhongMaterial({
         color: 0xffd700,
         emissive: 0xffd700,
-        emissiveIntensity: 0.3,
+        emissiveIntensity: 0.4,
+        shininess: 100,
+        specular: 0xffffff,
+        transparent: true,
+        opacity: 0.95,
       })
 
       const star = new THREE.Mesh(starGeometry, starMaterial)
-      star.position.set(
+      const position = new THREE.Vector3(
         (Math.random() - 0.5) * 20,
         Math.random() * 8 - 2,
         (Math.random() - 0.5) * 20
       )
+      star.position.copy(position)
+      star.castShadow = true
 
-      // Add simple rotation animation
-      star.userData = { rotationSpeed: 0.02 + Math.random() * 0.02 }
+      // Add physics body for collision detection
+      const starPhysicsBody = this.physicsEngine.createSphereBody(
+        position,
+        0.5, // Slightly larger for easier collection
+        true // Static - stars don't move
+      )
+      starPhysicsBody.type = 'collectible'
+      starPhysicsBody.mesh = star
+      starPhysicsBody.collected = false
+      this.physicsEngine.addRigidBody(starPhysicsBody)
 
-      this.stars.push(star)
+      // Add simple rotation animation and floating effect
+      star.userData = {
+        rotationSpeed: 0.02 + Math.random() * 0.02,
+        floatSpeed: 0.01 + Math.random() * 0.01,
+        floatOffset: Math.random() * Math.PI * 2,
+        originalY: position.y,
+        physicsBody: starPhysicsBody,
+      }
+
+      this.stars.push({ mesh: star, physicsBody: starPhysicsBody })
       this.scene.add(star)
     }
   }
 
   setupEventListeners() {
     // Handle window resize
-    window.addEventListener('resize', () => this.onWindowResize())
+    window.addEventListener('resize', () => this.onWindowResize(), {
+      passive: true,
+    })
 
-    // Basic movement controls (placeholder)
+    // Enhanced input handling
     window.addEventListener('keydown', event => this.onKeyDown(event))
+    window.addEventListener('keyup', event => this.onKeyUp(event))
 
-    // Touch controls for mobile (placeholder)
+    // Touch controls for mobile
     if (this.isMobile) {
       this.setupTouchControls()
+    }
+
+    // Settings modal functionality
+    this.setupSettingsModal()
+  }
+
+  onKeyDown(event) {
+    switch (event.code) {
+      case 'ArrowUp':
+      case 'KeyW':
+        this.inputState.keys.forward = true
+        break
+      case 'ArrowDown':
+      case 'KeyS':
+        this.inputState.keys.backward = true
+        break
+      case 'ArrowLeft':
+      case 'KeyA':
+        this.inputState.keys.left = true
+        break
+      case 'ArrowRight':
+      case 'KeyD':
+        this.inputState.keys.right = true
+        break
+      case 'Space':
+        this.inputState.keys.up = true
+        event.preventDefault()
+        break
+      case 'ShiftLeft':
+        this.inputState.keys.down = true
+        break
+    }
+  }
+
+  onKeyUp(event) {
+    switch (event.code) {
+      case 'ArrowUp':
+      case 'KeyW':
+        this.inputState.keys.forward = false
+        break
+      case 'ArrowDown':
+      case 'KeyS':
+        this.inputState.keys.backward = false
+        break
+      case 'ArrowLeft':
+      case 'KeyA':
+        this.inputState.keys.left = false
+        break
+      case 'ArrowRight':
+      case 'KeyD':
+        this.inputState.keys.right = false
+        break
+      case 'Space':
+        this.inputState.keys.up = false
+        break
+      case 'ShiftLeft':
+        this.inputState.keys.down = false
+        break
     }
   }
 
@@ -275,8 +556,6 @@ class OceanAdventure {
       currentY: 0,
     }
 
-    const moveSpeed = 0.15
-
     joystick.addEventListener('touchstart', event => {
       event.preventDefault()
       event.stopPropagation()
@@ -290,6 +569,10 @@ class OceanAdventure {
         joystickState.centerY = rect.top + rect.height / 2
         joystickState.currentX = touch.clientX
         joystickState.currentY = touch.clientY
+
+        // Visual feedback - highlight joystick when active
+        joystick.style.borderColor = 'rgba(255, 255, 255, 0.6)'
+        joystick.style.background = 'rgba(0, 17, 34, 0.7)'
 
         this.updateJoystickKnob(knob, joystickState, rect)
       }
@@ -317,11 +600,18 @@ class OceanAdventure {
           const normalizedX = deltaX / maxDistance
           const normalizedY = deltaY / maxDistance
 
-          // Apply movement to player
-          this.player.position.x += normalizedX * moveSpeed * 0.03
-          this.player.position.z += normalizedY * moveSpeed * 0.03
-
-          this.updateCamera()
+          // Update input state with improved sensitivity for mobile
+          this.inputState.joystick.x = Math.max(
+            -1,
+            Math.min(1, normalizedX * 1.2)
+          )
+          this.inputState.joystick.y = Math.max(
+            -1,
+            Math.min(1, normalizedY * 1.2)
+          )
+        } else {
+          this.inputState.joystick.x = 0
+          this.inputState.joystick.y = 0
         }
 
         this.updateJoystickKnob(knob, joystickState, rect)
@@ -333,6 +623,12 @@ class OceanAdventure {
       event.stopPropagation()
 
       joystickState.isActive = false
+      this.inputState.joystick.x = 0
+      this.inputState.joystick.y = 0
+
+      // Reset visual feedback
+      joystick.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+      joystick.style.background = 'rgba(0, 17, 34, 0.5)'
       knob.style.transform = 'translate(-50%, -50%)'
     })
 
@@ -341,6 +637,12 @@ class OceanAdventure {
       event.stopPropagation()
 
       joystickState.isActive = false
+      this.inputState.joystick.x = 0
+      this.inputState.joystick.y = 0
+
+      // Reset visual feedback
+      joystick.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+      joystick.style.background = 'rgba(0, 17, 34, 0.5)'
       knob.style.transform = 'translate(-50%, -50%)'
     })
   }
@@ -366,35 +668,104 @@ class OceanAdventure {
     const swimDownBtn = document.getElementById('swimDownBtn')
 
     if (swimUpBtn) {
+      // Add more responsive event handling
       swimUpBtn.addEventListener('touchstart', event => {
         event.preventDefault()
         event.stopPropagation()
-        this.mobileButtonState = { swimUp: true }
+        this.inputState.mobileButtons.swimUp = true
+        swimUpBtn.style.background = 'rgba(255, 255, 255, 0.4)'
       })
 
       swimUpBtn.addEventListener('touchend', event => {
         event.preventDefault()
         event.stopPropagation()
-        this.mobileButtonState = { swimUp: false }
+        this.inputState.mobileButtons.swimUp = false
+        swimUpBtn.style.background = 'rgba(0, 17, 34, 0.6)'
+      })
+
+      swimUpBtn.addEventListener('touchcancel', event => {
+        event.preventDefault()
+        event.stopPropagation()
+        this.inputState.mobileButtons.swimUp = false
+        swimUpBtn.style.background = 'rgba(0, 17, 34, 0.6)'
       })
     }
 
     if (swimDownBtn) {
+      // Add more responsive event handling
       swimDownBtn.addEventListener('touchstart', event => {
         event.preventDefault()
         event.stopPropagation()
-        this.mobileButtonState = { swimDown: true }
+        this.inputState.mobileButtons.swimDown = true
+        swimDownBtn.style.background = 'rgba(255, 255, 255, 0.4)'
       })
 
       swimDownBtn.addEventListener('touchend', event => {
         event.preventDefault()
         event.stopPropagation()
-        this.mobileButtonState = { swimDown: false }
+        this.inputState.mobileButtons.swimDown = false
+        swimDownBtn.style.background = 'rgba(0, 17, 34, 0.6)'
+      })
+
+      swimDownBtn.addEventListener('touchcancel', event => {
+        event.preventDefault()
+        event.stopPropagation()
+        this.inputState.mobileButtons.swimDown = false
+        swimDownBtn.style.background = 'rgba(0, 17, 34, 0.6)'
       })
     }
+  }
 
-    // Initialize mobile button state
-    this.mobileButtonState = { swimUp: false, swimDown: false }
+  setupSettingsModal() {
+    const settingsButton = document.getElementById('settingsButton')
+    const settingsModal = document.getElementById('settingsModal')
+    const closeSettings = document.getElementById('closeSettings')
+
+    if (settingsButton && settingsModal && closeSettings) {
+      // Open settings
+      const openSettings = event => {
+        if (event) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+        settingsModal.classList.remove('hidden')
+        // Prevent body scrolling when modal is open
+        document.body.style.overflow = 'hidden'
+      }
+
+      // Close settings
+      const closeModal = event => {
+        if (event) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+        settingsModal.classList.add('hidden')
+        // Restore body scrolling
+        document.body.style.overflow = ''
+      }
+
+      // Simple event handling - click events work on both desktop and mobile
+      settingsButton.addEventListener('click', openSettings)
+      closeSettings.addEventListener('click', closeModal)
+
+      // Close on background click - simplified and more reliable detection
+      settingsModal.addEventListener('click', event => {
+        // Check if the click target is the modal background itself (not a child element)
+        if (event.target === settingsModal) {
+          closeModal(event)
+        }
+      })
+
+      // Close on escape key
+      document.addEventListener('keydown', event => {
+        if (
+          event.key === 'Escape' &&
+          !settingsModal.classList.contains('hidden')
+        ) {
+          closeModal()
+        }
+      })
+    }
   }
 
   onWindowResize() {
@@ -403,102 +774,152 @@ class OceanAdventure {
     this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
-  onKeyDown(event) {
-    // Basic movement controls (placeholder)
-    const moveSpeed = 0.2
-
-    switch (event.code) {
-      case 'ArrowUp':
-      case 'KeyW':
-        this.player.position.z -= moveSpeed
-        break
-      case 'ArrowDown':
-      case 'KeyS':
-        this.player.position.z += moveSpeed
-        break
-      case 'ArrowLeft':
-      case 'KeyA':
-        this.player.position.x -= moveSpeed
-        break
-      case 'ArrowRight':
-      case 'KeyD':
-        this.player.position.x += moveSpeed
-        break
-      case 'Space':
-        this.player.position.y += moveSpeed * 0.5
-        break
-      case 'ShiftLeft':
-        this.player.position.y -= moveSpeed * 0.5
-        break
-    }
-
-    // Update camera to follow player
-    this.updateCamera()
-  }
-
   updateCamera() {
-    // Simple camera follow logic (will be improved)
+    // Enhanced camera follow logic
+    const playerPosition = this.player.getPosition()
     const offset = new THREE.Vector3(0, 5, 10)
-    const targetPosition = this.player.position.clone().add(offset)
+    const targetPosition = playerPosition.clone().add(offset)
+
     this.camera.position.lerp(targetPosition, 0.1)
-    this.camera.lookAt(this.player.position)
+    this.camera.lookAt(playerPosition)
   }
 
   startGameLoop() {
-    const animate = () => {
+    const animate = currentTime => {
       requestAnimationFrame(animate)
-      this.update()
+
+      // Calculate delta time
+      const deltaTime =
+        this.lastTime > 0 ? (currentTime - this.lastTime) / 1000 : 0.016
+      this.lastTime = currentTime
+
+      this.update(deltaTime)
       this.render()
     }
-    animate()
+    animate(0)
   }
 
-  update() {
+  update(deltaTime) {
     if (!this.isLoaded) {
       return
     }
 
-    // Handle mobile button states
-    if (this.isMobile && this.mobileButtonState) {
-      const moveSpeed = 0.2
-      if (this.mobileButtonState.swimUp) {
-        this.player.position.y += moveSpeed * 0.5
-        this.updateCamera()
-      }
-      if (this.mobileButtonState.swimDown) {
-        this.player.position.y -= moveSpeed * 0.5
-        this.updateCamera()
-      }
-    }
+    // Clamp delta time to prevent large jumps
+    deltaTime = Math.min(deltaTime, 0.033) // Max 30fps equivalent
 
-    // Animate stars
-    this.stars.forEach(star => {
-      star.rotation.y += star.userData.rotationSpeed
-      star.rotation.x += star.userData.rotationSpeed * 0.5
+    // Update physics engine
+    this.physicsEngine.update(deltaTime)
+
+    // Update player with input
+    this.player.handleInput(this.inputState)
+    this.player.update()
+
+    // Update particle system
+    this.particleSystem.update(deltaTime)
+
+    // Update camera
+    this.updateCamera()
+
+    // Update UI (including depth meter)
+    this.updateUI()
+
+    // Animate stars with floating and pulsing effects
+    this.stars.forEach(starData => {
+      const star = starData.mesh
+      const userData = star.userData
+
+      // Rotation animation
+      star.rotation.y += userData.rotationSpeed
+      star.rotation.x += userData.rotationSpeed * 0.5
+
+      // Floating animation
+      const time = Date.now() * 0.001
+      const floatY =
+        userData.originalY +
+        Math.sin(time * userData.floatSpeed + userData.floatOffset) * 0.3
+      star.position.y = floatY
+
+      // Pulsing emissive effect
+      const pulseFactor = 0.3 + Math.sin(time * 2 + userData.floatOffset) * 0.1
+      star.material.emissiveIntensity = pulseFactor
     })
 
-    // Check star collection (simple distance check)
+    // Animate volumetric lights for underwater caustics effect
+    if (this.volumetricLights) {
+      const time = Date.now() * 0.001
+      this.volumetricLights.forEach(light => {
+        const userData = light.userData
+        const animationTime =
+          time * userData.animationSpeed + userData.animationOffset
+
+        // Create gentle swaying motion
+        const offsetX = Math.sin(animationTime) * userData.animationRadius
+        const offsetZ = Math.cos(animationTime * 1.3) * userData.animationRadius
+        const offsetY = Math.sin(animationTime * 0.7) * 1
+
+        light.position.x = userData.originalPosition.x + offsetX
+        light.position.y = userData.originalPosition.y + offsetY
+        light.position.z = userData.originalPosition.z + offsetZ
+
+        // Subtle intensity variation for flickering water caustics
+        const intensityVariation = 0.8 + Math.sin(animationTime * 3) * 0.2
+        light.intensity = (this.isMobile ? 0.6 : 0.8) * intensityVariation
+      })
+    }
+
+    // Check star collection using collision detection
     this.checkStarCollection()
   }
 
   checkStarCollection() {
-    this.stars.forEach((star, index) => {
-      const distance = this.player.position.distanceTo(star.position)
-      if (distance < 1.0) {
+    // Get player collisions from physics engine
+    const playerCollisions = this.physicsEngine.collisionSystem.checkCollisions(
+      this.player.physicsBody
+    )
+
+    for (const collision of playerCollisions) {
+      if (collision.type === 'collectible' && !collision.collected) {
         // Collect star
-        this.scene.remove(star)
-        this.stars.splice(index, 1)
-        this.starCount++
-        this.updateUI()
+        collision.collected = true
 
-        console.log(`⭐ Star collected! Total: ${this.starCount}`)
+        // Find and remove the star from scene and physics
+        const starData = this.stars.find(s => s.physicsBody === collision)
+        if (starData) {
+          // Remove from scene
+          this.scene.remove(starData.mesh)
 
-        // Check if level is complete
-        if (this.stars.length === 0) {
-          this.levelComplete()
+          // Remove from physics
+          this.physicsEngine.removeRigidBody(starData.physicsBody)
+
+          // Remove from stars array
+          const index = this.stars.indexOf(starData)
+          if (index !== -1) {
+            this.stars.splice(index, 1)
+          }
+
+          // Update game state
+          this.starCount++
+          this.updateUI()
+
+          // Create collection effect
+          this.particleSystem.createBurst(starData.mesh.position, {
+            count: 15,
+            life: 1.5,
+            velocity: new THREE.Vector3(0, 2, 0),
+            velocityVariation: new THREE.Vector3(3, 3, 3),
+            color: new THREE.Color(0xffd700),
+            size: { min: 3, max: 8 },
+          })
+
+          console.log(`⭐ Star collected! Total: ${this.starCount}`)
+
+          // Check if level is complete
+          if (this.stars.length === 0) {
+            this.levelComplete()
+          }
         }
       }
-    })
+    }
   }
 
   levelComplete() {
@@ -512,11 +933,28 @@ class OceanAdventure {
   updateUI() {
     document.getElementById('starCount').textContent = this.starCount
     document.getElementById('levelNumber').textContent = this.levelNumber
+
+    // Update depth meter based on player Y position
+    if (this.player) {
+      const playerPosition = this.player.getPosition()
+      // Water surface is at Y=5, so depth = surface level - current Y position
+      const waterSurface = 5.0
+      const depth = Math.max(0, waterSurface - playerPosition.y)
+      document.getElementById('depthMeter').textContent = depth.toFixed(1)
+    }
   }
 
   render() {
-    if (this.renderer && this.scene && this.camera) {
-      this.renderer.render(this.scene, this.camera)
+    try {
+      if (this.renderer && this.scene && this.camera) {
+        this.renderer.render(this.scene, this.camera)
+      }
+    } catch (error) {
+      // Silently handle WebGL render errors to prevent spam
+      if (this.webglErrorCount < 5) {
+        console.warn('WebGL render error:', error)
+        this.webglErrorCount = (this.webglErrorCount || 0) + 1
+      }
     }
   }
 
@@ -543,18 +981,45 @@ class OceanAdventure {
 }
 
 // Initialize the game when the page loads
-window.addEventListener('DOMContentLoaded', async () => {
-  const game = new OceanAdventure()
-  await game.initialize()
-})
+window.addEventListener(
+  'DOMContentLoaded',
+  async () => {
+    const game = new OceanAdventure()
+    await game.initialize()
+  },
+  { passive: true }
+)
 
 // Handle WebGL context loss
-window.addEventListener('webglcontextlost', event => {
-  event.preventDefault()
-  console.warn('WebGL context lost')
-})
+window.addEventListener(
+  'webglcontextlost',
+  event => {
+    event.preventDefault()
+    console.warn('WebGL context lost')
+  },
+  { passive: false }
+)
 
-window.addEventListener('webglcontextrestored', () => {
-  console.log('WebGL context restored')
-  // Reinitialize game here if needed
-})
+window.addEventListener(
+  'webglcontextrestored',
+  () => {
+    console.log('WebGL context restored')
+    // Reinitialize game here if needed
+  },
+  { passive: true }
+)
+
+// Performance optimization: Pause game when page is hidden
+document.addEventListener(
+  'visibilitychange',
+  () => {
+    if (document.hidden) {
+      // Page is hidden, reduce performance
+      console.log('Game paused due to page visibility')
+    } else {
+      // Page is visible, resume normal performance
+      console.log('Game resumed')
+    }
+  },
+  { passive: true }
+)

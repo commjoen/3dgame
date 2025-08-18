@@ -20,7 +20,9 @@ export default [
         navigator: 'readonly',
         performance: 'readonly',
         requestAnimationFrame: 'readonly',
-        cancelAnimationFrame: 'readonly'
+        cancelAnimationFrame: 'readonly',
+        WebGLRenderingContext: 'readonly',
+        WebGL2RenderingContext: 'readonly'
       }
     },
     plugins: {
@@ -36,6 +38,31 @@ export default [
       'no-var': 'error',
       'eqeqeq': 'error',
       'curly': 'error'
+    }
+  },
+  {
+    files: ['tests/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        performance: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        WebGLRenderingContext: 'readonly',
+        WebGL2RenderingContext: 'readonly',
+        global: 'writable',
+        HTMLCanvasElement: 'readonly',
+        Event: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        vi: 'readonly'
+      }
     }
   }
 ]
