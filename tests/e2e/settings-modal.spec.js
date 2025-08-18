@@ -42,8 +42,12 @@ test.describe('Settings Modal Tests', () => {
     await settingsButton.click()
     await expect(settingsModal).toBeVisible()
 
-    // Click on modal background (not content)
-    await settingsModal.click()
+    // Click on modal background (outside the content area)
+    // Get the modal bounding box and click near the top-left corner (outside content)
+    const modalBox = await settingsModal.boundingBox()
+    if (modalBox) {
+      await page.mouse.click(modalBox.x + 50, modalBox.y + 50)
+    }
 
     // Modal should close
     await expect(settingsModal).toBeHidden()
@@ -139,8 +143,12 @@ test.describe('Settings Modal Mobile Tests', () => {
     await settingsButton.click()
     await expect(settingsModal).toBeVisible()
 
-    // Click on modal background
-    await settingsModal.click()
+    // Click on modal background (outside the content area)
+    // Get the modal bounding box and click near the top-left corner (outside content)
+    const modalBox = await settingsModal.boundingBox()
+    if (modalBox) {
+      await page.mouse.click(modalBox.x + 50, modalBox.y + 50)
+    }
 
     // Modal should close
     await expect(settingsModal).toBeHidden()

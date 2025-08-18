@@ -31,6 +31,17 @@ export default defineConfig({
               args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
             }
           }
+        },
+        {
+          name: 'mobile',
+          use: { 
+            ...devices['iPhone 13'], 
+            hasTouch: true,
+            // Mobile-specific launch options for CI
+            launchOptions: {
+              args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            }
+          }
         }
       ]
     : [
