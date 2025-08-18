@@ -292,10 +292,11 @@ jobs:
         images: ghcr.io/${{ github.repository }}
         tags: |
           type=ref,event=branch
-          type=ref,event=pr
+          type=ref,event=pr,prefix=pr-
           type=raw,value=latest,enable={{is_default_branch}}
           type=raw,value=main,enable={{is_default_branch}}
-          type=sha,prefix={{branch}}-
+          type=sha,prefix={{branch}}-,enable={{is_default_branch}}
+          type=sha,prefix=commit-,enable=${{ github.event_name == 'pull_request' }}
         labels: |
           org.opencontainers.image.title=Ocean Adventure
           org.opencontainers.image.description=A 3D browser-based underwater platform game
