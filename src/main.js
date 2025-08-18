@@ -60,33 +60,40 @@ class OceanAdventure {
   }
 
   async initialize() {
+    const steps = [
+      { name: 'Canvas Setup', fn: () => this.setupCanvas() },
+      { name: 'WebGL Renderer', fn: () => this.setupRenderer() },
+      { name: '3D Scene', fn: () => this.setupScene() },
+      { name: 'Camera', fn: () => this.setupCamera() },
+      { name: 'Lighting', fn: () => this.setupLights() },
+      { name: 'Physics Engine', fn: () => this.initializePhysics() },
+      { name: 'Particle System', fn: () => this.initializeParticleSystem() },
+      { name: 'Environment', fn: () => this.createUnderwaterEnvironment() },
+      { name: 'Player', fn: () => this.createPlayer() },
+      { name: 'Sample Stars', fn: () => this.createSampleStars() },
+      { name: 'Event Listeners', fn: () => this.setupEventListeners() },
+      { name: 'UI Initialization', fn: () => { this.hideLoading(); this.showUI(); } },
+      { name: 'Game Loop', fn: () => this.startGameLoop() }
+    ]
+
     try {
-      this.setupCanvas()
-      this.setupRenderer()
-      this.setupScene()
-      this.setupCamera()
-      this.setupLights()
-
-      // Initialize core systems
-      this.initializePhysics()
-      this.initializeParticleSystem()
-
-      // Create game objects
-      this.createUnderwaterEnvironment()
-      this.createPlayer()
-      this.createSampleStars()
-
-      this.setupEventListeners()
-
-      // Hide loading screen and show UI
-      this.hideLoading()
-      this.showUI()
-
-      // Start game loop
-      this.startGameLoop()
+      console.log('🎮 Ocean Adventure - Starting initialization...')
+      
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i]
+        console.log(`[${i + 1}/${steps.length}] Initializing ${step.name}...`)
+        
+        try {
+          await step.fn()
+          console.log(`✅ ${step.name} initialized successfully`)
+        } catch (stepError) {
+          console.error(`❌ Failed to initialize ${step.name}:`, stepError)
+          throw new Error(`Initialization failed at step "${step.name}": ${stepError.message}`)
+        }
+      }
 
       this.isLoaded = true
-      console.log('🎮 Ocean Adventure - Ready to play!')
+      console.log('🎉 Ocean Adventure - Ready to play!')
     } catch (error) {
       console.error('❌ Failed to initialize game:', error)
       this.showError('Failed to initialize game: ' + error.message)
@@ -94,13 +101,16 @@ class OceanAdventure {
   }
 
   setupCanvas() {
+    console.log('🎮 Setting up canvas...')
     this.canvas = document.getElementById(CONFIG.canvasId)
     if (!this.canvas) {
       throw new Error('Game canvas not found')
     }
+    console.log('✅ Canvas found and configured')
   }
 
   setupRenderer() {
+    console.log('🎨 Setting up WebGL renderer...')
     try {
       this.renderer = new THREE.WebGLRenderer({
         canvas: this.canvas,
@@ -136,16 +146,18 @@ class OceanAdventure {
 
       // Add error handling for WebGL
       gl.getExtension('WEBGL_lose_context')
-
-      console.log('✅ WebGL Renderer initialized with enhanced lighting')
+      
+      console.log('✅ WebGL renderer configured successfully')
     } catch (error) {
-      console.error('❌ Failed to setup renderer:', error)
-      throw error
+      console.error('❌ Failed to setup WebGL renderer:', error)
+      throw new Error(`WebGL initialization failed: ${error.message}`)
     }
   }
 
   setupScene() {
+    console.log('🌊 Setting up 3D scene...')
     this.scene = new THREE.Scene()
+    console.log('✅ 3D scene created successfully')
   }
 
   /**
