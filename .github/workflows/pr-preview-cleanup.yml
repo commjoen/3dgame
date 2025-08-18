@@ -123,8 +123,10 @@ jobs:
             issue_number: pr_number,
             body: `## 🧹 PR Preview Cleaned Up
             
-            The preview deployment for this PR has been automatically removed.
+            The GitHub Pages preview deployment for this PR has been automatically removed.
             
             **📋 View remaining previews:** https://commjoen.github.io/3dgame/previews.html
+            
+            **📦 Container Note:** PR container images (\`pr-${pr_number}\`) remain available in the [GitHub Container Registry](https://github.com/commjoen/3dgame/pkgs/container/3dgame) and will be automatically cleaned up based on retention policies.
             `
           });

@@ -231,7 +231,8 @@ jobs:
     name: Build and Push Container
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    # Ensure containers are built on every main branch commit and all PRs
+    if: (github.event_name == 'push' && contains(github.ref, 'refs/heads/main')) || (github.event_name == 'push' && contains(github.ref, 'refs/heads/develop')) || github.event_name == 'pull_request'
     
     permissions:
       contents: read

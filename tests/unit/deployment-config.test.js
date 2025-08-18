@@ -79,4 +79,36 @@ describe('Deployment Configuration', () => {
     expect(labels).toContain('org.opencontainers.image.title=Ocean Adventure')
     expect(labels).toContain('org.opencontainers.image.description=A 3D browser-based underwater platform game')
   })
+
+  it('should build containers on every main branch commit', async () => {
+    const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
+    const workflowContent = await fs.readFile(workflowPath, 'utf-8')
+    const workflow = yaml.load(workflowContent)
+    
+    const containerJob = workflow.jobs['build-and-push-container']
+    expect(containerJob).toBeDefined()
+    
+    // Check that the condition explicitly mentions main branch
+    const ifCondition = containerJob.if
+    expect(ifCondition).toContain('refs/heads/main')
+    expect(ifCondition).toContain('github.event_name == \'push\'')
+    expect(ifCondition).toContain('github.event_name == \'pull_request\'')
+  })
+
+  it('should have PR tagging for containers', async () => {
+    const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
+    const workflowContent = await fs.readFile(workflowPath, 'utf-8')
+    const workflow = yaml.load(workflowContent)
+    
+    const metadataStep = workflow.jobs['build-and-push-container'].steps.find(
+      step => step.uses === 'docker/metadata-action@v5'
+    )
+    
+    expect(metadataStep).toBeDefined()
+    
+    // Check tags include PR tagging
+    const tags = metadataStep.with.tags
+    expect(tags).toContain('type=ref,event=pr')
+    expect(tags).toContain('type=sha,prefix={{branch}}-')
+  })
 })
