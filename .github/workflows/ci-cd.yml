@@ -189,6 +189,8 @@ jobs:
     
     permissions:
       contents: write
+      pages: write
+      id-token: write
       
     environment:
       name: github-pages
@@ -227,7 +229,7 @@ jobs:
           mkdir -p gh-pages
           cd gh-pages
           git init
-          git remote add origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           echo "# Ocean Adventure - GitHub Pages" > README.md
@@ -240,16 +242,25 @@ jobs:
       
     - name: Deploy to gh-pages
       run: |
-        # Copy built files to gh-pages root (excluding PR directories)
-        find gh-pages -maxdepth 1 -type f -delete
-        find gh-pages -maxdepth 1 -type d ! -name 'pr-*' ! -name '.git' ! -name 'gh-pages' -exec rm -rf {} +
+        # Ensure gh-pages directory exists and is properly initialized
+        cd gh-pages
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
         
-        # Copy new build
-        cp -r dist/* gh-pages/
+        # Fetch latest changes and reset to remote state
+        git fetch origin gh-pages || echo "No remote gh-pages branch yet"
+        git reset --hard origin/gh-pages 2>/dev/null || echo "Creating new gh-pages content"
         
-        # Create or update previews index if it doesn't exist
-        if [ ! -f gh-pages/previews.html ]; then
-          cat > gh-pages/previews.html << 'EOF'
+        # Clean main branch files while preserving PR directories
+        find . -maxdepth 1 -type f ! -name '.gitignore' -delete 2>/dev/null || true
+        find . -maxdepth 1 -type d ! -name 'pr-*' ! -name '.git' ! -name '.' -exec rm -rf {} + 2>/dev/null || true
+        
+        # Copy new build files
+        cp -r ../dist/* . 2>/dev/null || echo "No dist files to copy"
+        
+        # Create or update previews index
+        cat > previews.html << 'EOF'
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -295,19 +306,78 @@ jobs:
                     <p>The stable version deployed from the main branch.</p>
                     <a href="/3dgame/" class="preview-link main-link">Play Main Version</a>
                 </div>
+        EOF
+        
+        # Add any existing PR previews to the index
+        for dir in pr-*/; do
+            if [ -d "$dir" ]; then
+                pr_num=${dir#pr-}
+                pr_num=${pr_num%/}
+                echo "                <div class=\"preview-item\">" >> previews.html
+                echo "                    <h3>🔄 Pull Request #$pr_num</h3>" >> previews.html
+                echo "                    <p>Preview deployment for PR #$pr_num</p>" >> previews.html
+                echo "                    <a href=\"/3dgame/$dir\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
+                echo "                    <a href=\"https://github.com/commjoen/3dgame/pull/$pr_num\" class=\"preview-link\">View PR</a>" >> previews.html
+                echo "                </div>" >> previews.html
+            fi
+        done
+        
+        cat >> previews.html << 'EOF'
             </div>
         </body>
         </html>
         EOF
-        fi
         
-        cd gh-pages
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
+        # Add and commit changes
         git add .
         git diff --staged --quiet || git commit -m "Deploy main branch to GitHub Pages"
         git push origin gh-pages
+
+  build-and-push-container:
+    name: Build and Push Container
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=sha,prefix={{branch}}-
+        
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   security-scan:
     name: Security Scan

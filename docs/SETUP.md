@@ -41,6 +41,28 @@ npm install
 npm run test
 ```
 
+### 4. Alternative Setup with Docker
+If you prefer using Docker, you can get started quickly:
+
+```bash
+# Using Docker Compose (recommended)
+docker-compose up ocean-adventure
+
+# Or build and run manually
+docker build -t ocean-adventure .
+docker run -p 8080:80 ocean-adventure
+
+# Access the game at http://localhost:8080
+```
+
+**Docker Development Setup:**
+```bash
+# Run with development profile for live reload
+docker-compose --profile development up ocean-adventure-dev
+
+# Access development server at http://localhost:3000
+```
+
 ## Development Environment
 
 ### Project Structure
@@ -340,10 +362,87 @@ npm run test:e2e
 ## Deployment
 
 ### GitHub Pages Deployment
+The project automatically deploys to GitHub Pages when changes are pushed to the main branch.
+
 ```bash
-# Build and deploy to GitHub Pages
+# Manual build (optional - automated in CI)
 npm run build
-npm run deploy
+```
+
+### Container Deployment
+
+**Using Docker:**
+```bash
+# Build the container
+docker build -t ocean-adventure .
+
+# Run locally
+docker run -p 8080:80 ocean-adventure
+
+# Push to your registry (replace with your registry)
+docker tag ocean-adventure your-registry/ocean-adventure:latest
+docker push your-registry/ocean-adventure:latest
+```
+
+**Using Docker Compose:**
+```bash
+# Production deployment
+docker-compose up ocean-adventure-prod
+
+# Local development with live reload
+docker-compose --profile development up ocean-adventure-dev
+```
+
+**Using Pre-built Images:**
+```bash
+# Pull and run the latest stable version
+docker pull ghcr.io/commjoen/3dgame:latest
+docker run -d -p 80:80 --name ocean-adventure ghcr.io/commjoen/3dgame:latest
+```
+
+### Kubernetes Deployment
+For production Kubernetes deployments:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ocean-adventure
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ocean-adventure
+  template:
+    metadata:
+      labels:
+        app: ocean-adventure
+    spec:
+      containers:
+      - name: ocean-adventure
+        image: ghcr.io/commjoen/3dgame:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ocean-adventure-service
+spec:
+  selector:
+    app: ocean-adventure
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
 ```
 
 ### Custom Domain Setup
