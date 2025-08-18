@@ -67,7 +67,7 @@
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
     "eslint": "^9.33.0",
-    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.0.0",
     "jsdom": "^26.1.0",
     "lighthouse": "^12.8.1",
