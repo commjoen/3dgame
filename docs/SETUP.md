@@ -362,43 +362,49 @@ npm run test:e2e
 ## Deployment
 
 ### GitHub Pages Deployment
-The project automatically deploys to GitHub Pages when changes are pushed to the main branch.
+The project automatically deploys to GitHub Pages when changes are pushed to the main branch using modern GitHub deployment actions.
+
+**Deployment Features:**
+- ✅ **Automatic deployment** on main branch pushes
+- ✅ **Modern GitHub Actions** for reliable deployment
+- ✅ **Proper base path handling** for GitHub Pages (`/3dgame/`)
+- ✅ **Fast deployment** with optimized artifact upload
+- ✅ **Error handling** and deployment status reporting
 
 ```bash
-# Manual build (optional - automated in CI)
-npm run build
+# Manual build for GitHub Pages (optional - automated in CI)
+VITE_BASE_PATH=/3dgame/ npm run build
 ```
+
+**Deployment URL:** https://commjoen.github.io/3dgame/
 
 ### Container Deployment
 
-**Using Docker:**
-```bash
-# Build the container
-docker build -t ocean-adventure .
-
-# Run locally
-docker run -p 8080:80 ocean-adventure
-
-# Push to your registry (replace with your registry)
-docker tag ocean-adventure your-registry/ocean-adventure:latest
-docker push your-registry/ocean-adventure:latest
-```
-
-**Using Docker Compose:**
-```bash
-# Production deployment
-docker-compose up ocean-adventure-prod
-
-# Local development with live reload
-docker-compose --profile development up ocean-adventure-dev
-```
+**Multi-Architecture Support:**
+The project builds Docker containers for both `linux/amd64` and `linux/arm64` architectures automatically.
 
 **Using Pre-built Images:**
 ```bash
-# Pull and run the latest stable version
+# Pull and run the latest stable version (supports AMD64 and ARM64)
 docker pull ghcr.io/commjoen/3dgame:latest
 docker run -d -p 80:80 --name ocean-adventure ghcr.io/commjoen/3dgame:latest
+
+# Access the game at http://localhost
 ```
+
+**Available Image Tags:**
+- `latest`: Latest stable version from main branch
+- `main`: Latest build from main branch  
+- `pr-{number}`: Preview builds for pull requests
+- `{branch}-{sha}`: Specific commit builds
+
+**Image Features:**
+- ✅ **Multi-platform** support (AMD64/ARM64)
+- ✅ **Optimized** multi-stage builds
+- ✅ **Security headers** configured in nginx
+- ✅ **Health checks** for container monitoring
+- ✅ **Proper caching** for static assets
+- ✅ **PWA support** with service worker handling
 
 ### Kubernetes Deployment
 For production Kubernetes deployments:
