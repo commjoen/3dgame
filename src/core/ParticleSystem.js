@@ -141,6 +141,7 @@ export class ParticleSystem {
         attribute float size;
         attribute float alpha;
         attribute vec3 color;
+        
         varying float vAlpha;
         varying vec3 vColor;
         
@@ -155,6 +156,7 @@ export class ParticleSystem {
       `,
       fragmentShader: `
         uniform sampler2D pointTexture;
+        
         varying float vAlpha;
         varying vec3 vColor;
         
