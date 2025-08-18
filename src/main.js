@@ -89,6 +89,7 @@ class OceanAdventure {
       console.log('🎮 Ocean Adventure - Ready to play!')
     } catch (error) {
       console.error('❌ Failed to initialize game:', error)
+      this.showError('Failed to initialize game: ' + error.message)
     }
   }
 
@@ -973,6 +974,22 @@ class OceanAdventure {
     this.updateUI()
   }
 
+  showError(message) {
+    const loadingElement = document.getElementById(CONFIG.loadingId)
+    if (loadingElement) {
+      loadingElement.innerHTML = `
+        <div style="color: #ff4444; text-align: center;">
+          <h3>⚠️ Error Loading Game</h3>
+          <p>${message}</p>
+          <p style="margin-top: 20px; font-size: 14px; color: #ccc;">
+            Please check the browser console for more details and try refreshing the page.
+          </p>
+        </div>
+      `
+      loadingElement.classList.remove('hidden')
+    }
+  }
+
   detectMobile() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
@@ -984,8 +1001,26 @@ class OceanAdventure {
 window.addEventListener(
   'DOMContentLoaded',
   async () => {
-    const game = new OceanAdventure()
-    await game.initialize()
+    try {
+      console.log('🌊 Ocean Adventure - Starting initialization...')
+      const game = new OceanAdventure()
+      await game.initialize()
+    } catch (error) {
+      console.error('❌ Critical error during game initialization:', error)
+      // Show error in loading div if game initialization fails
+      const loadingElement = document.getElementById('loading')
+      if (loadingElement) {
+        loadingElement.innerHTML = `
+          <div style="color: #ff4444; text-align: center;">
+            <h3>⚠️ Critical Error</h3>
+            <p>Failed to initialize Ocean Adventure: ${error.message}</p>
+            <p style="margin-top: 20px; font-size: 14px; color: #ccc;">
+              Please check the browser console for more details and try refreshing the page.
+            </p>
+          </div>
+        `
+      }
+    }
   },
   { passive: true }
 )
