@@ -123,8 +123,8 @@ class OceanAdventure {
         : THREE.PCFSoftShadowMap // Better quality for desktop
 
       // Enhanced WebGL settings for better lighting
-      this.renderer.physicallyCorrectLights = false // Better performance
-      this.renderer.outputEncoding = THREE.sRGBEncoding
+      this.renderer.useLegacyLights = true // Use legacy lighting for compatibility
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace
       this.renderer.toneMapping = THREE.ACESFilmicToneMapping
       this.renderer.toneMappingExposure = 1.0
 
