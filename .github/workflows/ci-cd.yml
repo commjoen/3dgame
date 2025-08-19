@@ -236,7 +236,7 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
-    - name: Build application
+    - name: Build application for GitHub Pages
       run: npm run build
       env:
         VITE_BASE_PATH: /3dgame/
