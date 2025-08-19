@@ -54,14 +54,14 @@ jobs:
         # Get current date
         CURRENT_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
         
-        # Generate the enhanced previews index with audio testing capabilities
+        # Generate the previews index
         cat > previews.html << EOF
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Ocean Adventure - PR Previews & Audio Test</title>
+            <title>Ocean Adventure - PR Previews</title>
             <style>
                 body { 
                     font-family: Arial, sans-serif; 
@@ -70,7 +70,7 @@ jobs:
                     color: white;
                     min-height: 100vh;
                 }
-                .container { max-width: 1000px; margin: 0 auto; }
+                .container { max-width: 800px; margin: 0 auto; }
                 .preview-item { 
                     background: rgba(255,255,255,0.1); 
                     margin: 20px 0; 
@@ -98,66 +98,6 @@ jobs:
                     margin: 20px 0;
                     border-left: 4px solid #60a5fa;
                 }
-                .audio-test-section {
-                    background: rgba(34, 197, 94, 0.1);
-                    border: 1px solid rgba(34, 197, 94, 0.3);
-                    border-left: 4px solid #22c55e;
-                }
-                .status-indicator {
-                    display: inline-block;
-                    width: 12px;
-                    height: 12px;
-                    border-radius: 50%;
-                    margin-right: 8px;
-                }
-                .status-unknown { background: #6b7280; }
-                .status-loading { background: #f59e0b; animation: pulse 2s infinite; }
-                .status-working { background: #22c55e; }
-                .status-error { background: #ef4444; }
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.5; }
-                }
-                .test-button {
-                    background: #22c55e;
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    margin: 5px;
-                    font-size: 14px;
-                }
-                .test-button:hover { background: #16a34a; }
-                .test-button:disabled { 
-                    background: #6b7280; 
-                    cursor: not-allowed; 
-                }
-                .game-preview {
-                    background: rgba(255,255,255,0.05);
-                    border-radius: 8px;
-                    padding: 20px;
-                    margin: 20px 0;
-                }
-                .game-preview iframe {
-                    width: 100%;
-                    height: 400px;
-                    border: none;
-                    border-radius: 8px;
-                    background: #000;
-                }
-                #status-log {
-                    background: rgba(0,0,0,0.3);
-                    color: #e5e7eb;
-                    padding: 15px;
-                    border-radius: 8px;
-                    font-family: monospace;
-                    font-size: 14px;
-                    max-height: 200px;
-                    overflow-y: auto;
-                    white-space: pre-wrap;
-                    margin: 15px 0;
-                }
             </style>
         </head>
         <body>
@@ -166,48 +106,14 @@ jobs:
                 
                 <div class="regenerate-info">
                     <p><strong>Last updated:</strong> ${CURRENT_DATE}</p>
-                    <p>This page shows all active PR previews, deployment status, and includes audio testing capabilities.</p>
-                </div>
-
-                <!-- Audio Test Section -->
-                <div class="preview-item audio-test-section">
-                    <h3>🔊 Audio System Test</h3>
-                    <p>Test audio functionality for Ocean Adventure deployments:</p>
-                    <button class="test-button" onclick="testWebAudio()">Test Web Audio API</button>
-                    <button class="test-button" onclick="testOceanAudio()" id="oceanBtn" disabled>Test Ocean Sounds</button>
-                    <button class="test-button" onclick="testGameDeployments()" id="deployBtn">Test All Deployments</button>
-                    
-                    <div id="status-log">Ready to test audio systems...</div>
-                </div>
-
-                <!-- Game Preview Section -->
-                <div class="preview-item">
-                    <h3>🎮 Live Game Preview</h3>
-                    <p>Try the game directly here (main branch deployment):</p>
-                    <div class="game-preview">
-                        <iframe src="/3dgame/" 
-                                title="Ocean Adventure Game"
-                                id="game-iframe"
-                                allow="autoplay; fullscreen; gamepad; microphone; camera"
-                                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-pointer-lock">
-                        </iframe>
-                    </div>
-                    <p><small>💡 Click in the game area and use WASD or arrow keys to move. Press any key to initialize audio.<br>
-                    ⚠️ If the game doesn't work properly in the preview, <a href="/3dgame/" target="_blank" style="color: #60a5fa;">open it in a new tab</a> for the full experience.</small></p>
+                    <p>This page is automatically regenerated daily and when PR previews are deployed.</p>
                 </div>
                 
-                <!-- Main Deployment -->
                 <div class="preview-item">
                     <h3>🚀 Main Branch (Stable)</h3>
                     <p>The stable version deployed from the main branch.</p>
-                    <div id="main-status" style="margin: 10px 0;">
-                        <span class="status-indicator status-unknown" id="main-indicator"></span>
-                        <span id="main-status-text">Status unknown</span>
-                    </div>
                     <a href="/3dgame/" class="preview-link main-link">Play Main Version</a>
-                    <a href="/3dgame/" target="_blank" class="preview-link">Open in New Tab</a>
                     <a href="https://github.com/commjoen/3dgame" class="preview-link">View Repository</a>
-                    <button class="test-button" onclick="testDeployment('main', '/3dgame/')">Test Audio</button>
                 </div>
         EOF
         
@@ -220,13 +126,8 @@ jobs:
                 echo "                <div class=\"preview-item\">" >> previews.html
                 echo "                    <h3>🔄 Pull Request #$pr_num</h3>" >> previews.html
                 echo "                    <p>Preview deployment for PR #$pr_num</p>" >> previews.html
-                echo "                    <div id=\"pr${pr_num}-status\" style=\"margin: 10px 0;\">" >> previews.html
-                echo "                        <span class=\"status-indicator status-unknown\" id=\"pr${pr_num}-indicator\"></span>" >> previews.html
-                echo "                        <span id=\"pr${pr_num}-status-text\">Status unknown</span>" >> previews.html
-                echo "                    </div>" >> previews.html
                 echo "                    <a href=\"/3dgame/$dir\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
                 echo "                    <a href=\"https://github.com/commjoen/3dgame/pull/$pr_num\" class=\"preview-link\">View PR</a>" >> previews.html
-                echo "                    <button class=\"test-button\" onclick=\"testDeployment('pr$pr_num', '/3dgame/$dir')\">Test Audio</button>" >> previews.html
                 echo "                </div>" >> previews.html
                 pr_count=$((pr_count + 1))
             fi
@@ -243,209 +144,11 @@ jobs:
         EOF
         fi
         
-        # Add closing HTML and JavaScript
-        cat >> previews.html << 'EOF'
+        cat >> previews.html << EOF
             </div>
-
-            <script>
-                // Status logging
-                function log(message) {
-                    const statusLog = document.getElementById('status-log');
-                    const timestamp = new Date().toLocaleTimeString();
-                    statusLog.textContent += `${timestamp}: ${message}\n`;
-                    statusLog.scrollTop = statusLog.scrollHeight;
-                    console.log(message);
-                }
-
-                // Update deployment status
-                function updateStatus(deployment, status, message) {
-                    const indicator = document.getElementById(`${deployment}-indicator`);
-                    const statusText = document.getElementById(`${deployment}-status-text`);
-                    
-                    if (indicator) {
-                        indicator.className = `status-indicator status-${status}`;
-                    }
-                    if (statusText) {
-                        statusText.textContent = message;
-                    }
-                }
-
-                // Test Web Audio API
-                window.testWebAudio = async function() {
-                    log('Testing Web Audio API support...');
-                    try {
-                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        log('✅ Web Audio API supported');
-                        log(`Audio context state: ${audioContext.state}`);
-                        
-                        // Test basic sound
-                        const oscillator = audioContext.createOscillator();
-                        const gainNode = audioContext.createGain();
-                        
-                        oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-                        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                        gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.1);
-                        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
-                        
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioContext.destination);
-                        oscillator.start();
-                        oscillator.stop(audioContext.currentTime + 0.5);
-                        
-                        log('🔊 Played test sound successfully');
-                        document.getElementById('oceanBtn').disabled = false;
-                        window.audioContext = audioContext;
-                        
-                    } catch (error) {
-                        log(`❌ Web Audio API test failed: ${error.message}`);
-                    }
-                }
-
-                // Test Ocean-style sounds
-                window.testOceanAudio = function() {
-                    if (!window.audioContext) {
-                        log('❌ Audio context not initialized - run Web Audio test first');
-                        return;
-                    }
-
-                    log('🌊 Testing Ocean Adventure audio effects...');
-                    
-                    try {
-                        // Create underwater ambient sound
-                        const oscillator = window.audioContext.createOscillator();
-                        const gainNode = window.audioContext.createGain();
-                        const filter = window.audioContext.createBiquadFilter();
-                        
-                        // Configure underwater sound
-                        oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(60, window.audioContext.currentTime);
-                        
-                        filter.type = 'lowpass';
-                        filter.frequency.setValueAtTime(800, window.audioContext.currentTime);
-                        filter.Q.setValueAtTime(1, window.audioContext.currentTime);
-                        
-                        gainNode.gain.setValueAtTime(0, window.audioContext.currentTime);
-                        gainNode.gain.linearRampToValueAtTime(0.1, window.audioContext.currentTime + 2);
-                        
-                        oscillator.connect(gainNode);
-                        gainNode.connect(filter);
-                        filter.connect(window.audioContext.destination);
-                        
-                        oscillator.start();
-                        log('🔊 Started underwater ambient sound');
-                        
-                        // Test star collection sound
-                        setTimeout(() => {
-                            const starOsc = window.audioContext.createOscillator();
-                            const starGain = window.audioContext.createGain();
-                            
-                            starOsc.type = 'sine';
-                            starOsc.frequency.setValueAtTime(880, window.audioContext.currentTime);
-                            starGain.gain.setValueAtTime(0, window.audioContext.currentTime);
-                            starGain.gain.linearRampToValueAtTime(0.3, window.audioContext.currentTime + 0.1);
-                            starGain.gain.linearRampToValueAtTime(0, window.audioContext.currentTime + 0.3);
-                            
-                            starOsc.connect(starGain);
-                            starGain.connect(filter);
-                            starOsc.start();
-                            starOsc.stop(window.audioContext.currentTime + 0.3);
-                            
-                            log('⭐ Played star collection sound');
-                        }, 1000);
-                        
-                        // Stop ambient after 5 seconds
-                        setTimeout(() => {
-                            gainNode.gain.linearRampToValueAtTime(0, window.audioContext.currentTime + 1);
-                            oscillator.stop(window.audioContext.currentTime + 1);
-                            log('🔇 Stopped ambient sound');
-                        }, 5000);
-                        
-                    } catch (error) {
-                        log(`❌ Ocean audio test failed: ${error.message}`);
-                    }
-                }
-
-                // Test specific deployment
-                window.testDeployment = async function(name, url) {
-                    log(`Testing deployment: ${name} (${url})`);
-                    updateStatus(name, 'loading', 'Testing...');
-                    
-                    try {
-                        // Test if the deployment is accessible
-                        const response = await fetch(url, { method: 'HEAD' });
-                        if (response.ok) {
-                            updateStatus(name, 'working', 'Deployment accessible');
-                            log(`✅ ${name} deployment is accessible`);
-                            
-                            // Test if audio would work (check if we can create audio context)
-                            try {
-                                if (window.audioContext || new (window.AudioContext || window.webkitAudioContext)()) {
-                                    log(`✅ ${name} should support audio`);
-                                    updateStatus(name, 'working', 'Accessible with audio support');
-                                }
-                            } catch (audioError) {
-                                log(`⚠️ ${name} audio support unknown: ${audioError.message}`);
-                                updateStatus(name, 'working', 'Accessible, audio unknown');
-                            }
-                        } else {
-                            updateStatus(name, 'error', 'Deployment not accessible');
-                            log(`❌ ${name} deployment returned status: ${response.status}`);
-                        }
-                    } catch (error) {
-                        updateStatus(name, 'error', 'Connection failed');
-                        log(`❌ ${name} deployment test failed: ${error.message}`);
-                    }
-                }
-
-                // Test all deployments
-                window.testGameDeployments = async function() {
-                    log('Testing all game deployments...');
-                    
-                    // Test main deployment
-                    await testDeployment('main', '/3dgame/');
-                    
-                    // Test PR deployments
-                    const prElements = document.querySelectorAll('[id^="pr"][id$="-status"]');
-                    for (const element of prElements) {
-                        const prId = element.id.replace('-status', '');
-                        const prNum = prId.replace('pr', '');
-                        await testDeployment(prId, `/3dgame/pr-${prNum}/`);
-                    }
-                    
-                    log('Deployment testing completed');
-                }
-
-                // Initialize page
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Test main deployment on load
-                    testDeployment('main', '/3dgame/');
-                    
-                    log('🌊 Ocean Adventure Preview Manager loaded');
-                    log('Click "Test Web Audio API" to begin audio testing');
-                });
-
-                // Handle iframe load events and provide user guidance
-                const gameIframe = document.getElementById('game-iframe');
-                
-                gameIframe.onerror = function() {
-                    log('❌ Failed to load game preview iframe');
-                };
-                
-                gameIframe.onload = function() {
-                    log('✅ Game preview iframe loaded successfully');
-                    log('💡 If you experience issues with controls or audio in the preview, try opening the game in a new tab');
-                };
-                
-                // Add click handler to focus iframe for better input handling
-                gameIframe.addEventListener('click', function() {
-                    gameIframe.focus();
-                    log('🎯 Game preview focused - controls should now work properly');
-                });
-            </script>
         </body>
         </html>
-EOF
+        EOF
         
         echo "Generated previews.html with $pr_count PR preview(s)"
         
