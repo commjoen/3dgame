@@ -187,9 +187,13 @@ jobs:
                     <div class="game-preview">
                         <iframe src="/3dgame/" 
                                 title="Ocean Adventure Game"
-                                id="game-iframe"></iframe>
+                                id="game-iframe"
+                                allow="autoplay; fullscreen; gamepad; microphone; camera"
+                                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-pointer-lock">
+                        </iframe>
                     </div>
-                    <p><small>💡 Click in the game area and use WASD or arrow keys to move. Press any key to initialize audio.</small></p>
+                    <p><small>💡 Click in the game area and use WASD or arrow keys to move. Press any key to initialize audio.<br>
+                    ⚠️ If the game doesn't work properly in the preview, <a href="/3dgame/" target="_blank" style="color: #60a5fa;">open it in a new tab</a> for the full experience.</small></p>
                 </div>
                 
                 <!-- Main Deployment -->
@@ -201,6 +205,7 @@ jobs:
                         <span id="main-status-text">Status unknown</span>
                     </div>
                     <a href="/3dgame/" class="preview-link main-link">Play Main Version</a>
+                    <a href="/3dgame/" target="_blank" class="preview-link">Open in New Tab</a>
                     <a href="https://github.com/commjoen/3dgame" class="preview-link">View Repository</a>
                     <button class="test-button" onclick="testDeployment('main', '/3dgame/')">Test Audio</button>
                 </div>
@@ -420,14 +425,23 @@ jobs:
                     log('Click "Test Web Audio API" to begin audio testing');
                 });
 
-                // Handle iframe load errors
-                document.getElementById('game-iframe').onerror = function() {
+                // Handle iframe load events and provide user guidance
+                const gameIframe = document.getElementById('game-iframe');
+                
+                gameIframe.onerror = function() {
                     log('❌ Failed to load game preview iframe');
                 };
                 
-                document.getElementById('game-iframe').onload = function() {
+                gameIframe.onload = function() {
                     log('✅ Game preview iframe loaded successfully');
+                    log('💡 If you experience issues with controls or audio in the preview, try opening the game in a new tab');
                 };
+                
+                // Add click handler to focus iframe for better input handling
+                gameIframe.addEventListener('click', function() {
+                    gameIframe.focus();
+                    log('🎯 Game preview focused - controls should now work properly');
+                });
             </script>
         </body>
         </html>
