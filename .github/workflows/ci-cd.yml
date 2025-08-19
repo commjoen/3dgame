@@ -241,6 +241,19 @@ jobs:
       env:
         VITE_BASE_PATH: /3dgame/
         
+    - name: Verify build output
+      run: |
+        echo "Checking dist directory contents:"
+        ls -la dist/
+        echo "Verifying index.html exists and has correct paths:"
+        if [ -f "dist/index.html" ]; then
+          echo "✓ index.html exists"
+          head -20 dist/index.html
+        else
+          echo "✗ index.html not found"
+          exit 1
+        fi
+        
     - name: Setup Pages
       uses: actions/configure-pages@v4
       
