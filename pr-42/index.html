@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ocean Adventure - 3D underwater platform game" />
+    <meta name="theme-color" content="#1e40af" />
+    <link rel="icon" type="image/x-icon" href="/3dgame/pr-42/favicon.ico" />
+    <link rel="manifest" href="/3dgame/pr-42/manifest.json" />
+    <title>Ocean Adventure</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #1e40af, #0f172a);
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            z-index: 1000;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Mobile Controls */
+        #mobileControls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 150px;
+            pointer-events: none;
+            z-index: 200;
+        }
+        
+        .virtual-joystick {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 120px;
+            height: 120px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            background: rgba(0, 17, 34, 0.5);
+            pointer-events: auto;
+            touch-action: none;
+            backdrop-filter: blur(4px);
+        }
+        
+        .joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease-out;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .mobile-buttons {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .mobile-btn {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            background: rgba(0, 17, 34, 0.6);
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            touch-action: none;
+            backdrop-filter: blur(4px);
+            user-select: none;
+        }
+        
+        .mobile-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.95);
+        }
+        
+        /* Mobile-specific UI adjustments */
+        @media (max-width: 768px) {
+            #ui {
+                font-size: 16px;
+                top: 15px;
+                left: 15px;
+            }
+            
+            #mobileControls {
+                display: block;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            #mobileControls {
+                display: none;
+            }
+        }
+        
+        /* Settings Button */
+        .settings-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 17, 34, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 300;
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            /* Ensure mobile touch works properly */
+            pointer-events: auto;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        
+        .settings-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        /* Mobile-specific touch styles for settings button */
+        @media (hover: none) and (pointer: coarse) {
+            .settings-button:active {
+                background: rgba(255, 255, 255, 0.4);
+                transform: scale(0.95);
+            }
+        }
+        
+        /* Settings Modal */
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            /* Ensure modal is interactive */
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
+        
+        .settings-content {
+            background: rgba(0, 17, 34, 0.95);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            margin: 20px;
+            box-sizing: border-box;
+            /* Prevent content from receiving background events */
+            pointer-events: auto;
+        }
+        
+        /* Mobile responsive settings modal */
+        @media (max-width: 768px) {
+            .settings-content {
+                margin: 10px;
+                padding: 20px;
+                max-height: 90vh;
+                border-radius: 10px;
+            }
+            
+            .settings-button {
+                top: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        .settings-header h2 {
+            margin: 0;
+            color: #87ceeb;
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+            /* Ensure mobile touch works properly */
+            pointer-events: auto;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Mobile-specific touch styles for close button */
+        @media (hover: none) and (pointer: coarse) {
+            .close-button:active {
+                background: rgba(255, 255, 255, 0.4);
+                transform: scale(0.9);
+            }
+        }
+        
+        .settings-body h3 {
+            color: #87ceeb;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .settings-body ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .settings-body li {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .settings-body li:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-body strong {
+            color: #ffd700;
+            display: inline-block;
+            min-width: 100px;
+        }
+        
+        .settings-body p {
+            margin-top: 15px;
+            line-height: 1.5;
+            color: #b0c4de;
+        }
+    </style>
+  <script type="module" crossorigin src="/3dgame/pr-42/assets/index-Bobq9uQM.js"></script>
+  <link rel="modulepreload" crossorigin href="/3dgame/pr-42/assets/three-C_ISzkYX.js">
+  <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();window.__vite_is_modern_browser=true</script>
+  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+<link rel="manifest" href="/3dgame/pr-42/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/3dgame/pr-42/registerSW.js"></script></head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Loading Ocean Adventure...</p>
+    </div>
+    
+    <div id="ui" class="hidden">
+        <div>Stars: <span id="starCount">0</span></div>
+        <div>Level: <span id="levelNumber">1</span></div>
+        <div>Depth: <span id="depthMeter">0</span>m</div>
+    </div>
+    
+    <!-- Settings Button -->
+    <div id="settingsButton" class="settings-button">⚙️</div>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-modal hidden">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2>Controls</h2>
+                <button id="closeSettings" class="close-button">×</button>
+            </div>
+            <div class="settings-body">
+                <h3>Desktop Controls:</h3>
+                <ul>
+                    <li><strong>W/↑:</strong> Swim forward</li>
+                    <li><strong>S/↓:</strong> Swim backward</li>
+                    <li><strong>A/←:</strong> Turn left</li>
+                    <li><strong>D/→:</strong> Turn right</li>
+                    <li><strong>Space:</strong> Swim up</li>
+                    <li><strong>Shift:</strong> Swim down</li>
+                </ul>
+                
+                <h3>Mobile Controls:</h3>
+                <ul>
+                    <li><strong>Virtual Joystick:</strong> Move around</li>
+                    <li><strong>↑ Button:</strong> Swim up</li>
+                    <li><strong>↓ Button:</strong> Swim down</li>
+                    <li><strong>Swipe:</strong> Look around</li>
+                </ul>
+                
+                <h3>Objective:</h3>
+                <p>Collect all the golden stars to complete each level. Watch your depth and explore the underwater world!</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="mobileControls">
+        <div class="virtual-joystick" id="virtualJoystick">
+            <div class="joystick-knob" id="joystickKnob"></div>
+        </div>
+        <div class="mobile-buttons">
+            <div class="mobile-btn" id="swimUpBtn">↑</div>
+            <div class="mobile-btn" id="swimDownBtn">↓</div>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+    
+  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+  <script nomodule crossorigin id="vite-legacy-polyfill" src="/3dgame/pr-42/assets/polyfills-legacy-nlYFTw8r.js"></script>
+  <script nomodule crossorigin id="vite-legacy-entry" data-src="/3dgame/pr-42/assets/index-legacy-BZg-zIGL.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+</body>
+</html>
