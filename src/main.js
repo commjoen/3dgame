@@ -482,7 +482,7 @@ class OceanAdventure {
   onKeyDown(event) {
     // Initialize audio on first user interaction
     this.tryInitializeAudio()
-    
+
     switch (event.code) {
       case 'ArrowUp':
       case 'KeyW':
@@ -556,10 +556,10 @@ class OceanAdventure {
     // General canvas touch events (for swipe gestures)
     this.canvas.addEventListener('touchstart', event => {
       event.preventDefault()
-      
+
       // Initialize audio on first touch
       this.tryInitializeAudio()
-      
+
       if (event.touches.length > 0) {
         const touch = event.touches[0]
         this.touchState.startX = touch.clientX
@@ -1017,12 +1017,12 @@ class OceanAdventure {
   activateGate() {
     if (this.gate && !this.gate.getIsActivated()) {
       this.gate.activate()
-      
+
       // Play gate activation sound
       if (this.audioEngine) {
         this.audioEngine.playSound('gateActivate', this.gate.getPosition())
       }
-      
+
       console.log('🚪 Gate activated! Swim through to complete level!')
     }
   }
@@ -1031,7 +1031,9 @@ class OceanAdventure {
    * Check for gate collision and level completion
    */
   checkGateCollision() {
-    if (!this.gate || !this.gate.getIsActivated()) return
+    if (!this.gate || !this.gate.getIsActivated()) {
+      return
+    }
 
     // Get player collisions from physics engine
     const playerCollisions = this.physicsEngine.collisionSystem.checkCollisions(
@@ -1051,19 +1053,19 @@ class OceanAdventure {
 
   levelComplete() {
     console.log('🎉 Level Complete!')
-    
+
     // Play level completion sound
     if (this.audioEngine) {
       this.audioEngine.playSound('levelComplete')
     }
-    
+
     this.levelNumber++
-    
+
     // Reset gate for next level
     if (this.gate) {
       this.gate.reset()
     }
-    
+
     // Reset level with new stars
     this.createSampleStars()
     this.updateUI()

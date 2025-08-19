@@ -25,6 +25,10 @@ const mockAudioContext = {
   })),
   createPanner: vi.fn(() => ({
     panningModel: 'HRTF',
+    distanceModel: 'inverse',
+    positionX: { setValueAtTime: vi.fn(), value: 0 },
+    positionY: { setValueAtTime: vi.fn(), value: 0 },
+    positionZ: { setValueAtTime: vi.fn(), value: 0 },
     setPosition: vi.fn(),
     connect: vi.fn()
   })),
@@ -89,16 +93,24 @@ describe('AudioEngine (Stage 3)', () => {
     })
 
     it('should handle initialization errors gracefully', async () => {
+      const originalAudioContext = global.AudioContext
       global.AudioContext = vi.fn(() => { throw new Error('Audio not supported') })
       
+      // Create a new audio engine instance for this test
+      const testAudioEngine = new AudioEngine()
+      
       // Should not throw error
-      await expect(audioEngine.initialize()).resolves.toBeUndefined()
-      expect(audioEngine.isInitialized).toBe(false)
+      await expect(testAudioEngine.initialize()).resolves.toBeUndefined()
+      expect(testAudioEngine.isInitialized).toBe(false)
+      
+      // Restore original mock
+      global.AudioContext = originalAudioContext
     })
   })
 
   describe('Sound Effects', () => {
     beforeEach(async () => {
+      vi.clearAllMocks()
       await audioEngine.initialize()
     })
 
@@ -150,6 +162,7 @@ describe('AudioEngine (Stage 3)', () => {
 
   describe('3D Spatial Audio', () => {
     beforeEach(async () => {
+      vi.clearAllMocks()
       await audioEngine.initialize()
     })
 
@@ -176,6 +189,7 @@ describe('AudioEngine (Stage 3)', () => {
 
   describe('Ambient Sound', () => {
     beforeEach(async () => {
+      vi.clearAllMocks()
       await audioEngine.initialize()
     })
 
@@ -207,6 +221,7 @@ describe('AudioEngine (Stage 3)', () => {
 
   describe('Volume and Mute Controls', () => {
     beforeEach(async () => {
+      vi.clearAllMocks()
       await audioEngine.initialize()
     })
 
@@ -256,6 +271,7 @@ describe('AudioEngine (Stage 3)', () => {
 
   describe('Resource Disposal', () => {
     beforeEach(async () => {
+      vi.clearAllMocks()
       await audioEngine.initialize()
     })
 

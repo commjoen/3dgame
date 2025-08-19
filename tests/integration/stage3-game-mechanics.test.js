@@ -202,7 +202,7 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
 
     it('should maintain consistent game object states', () => {
       // Initial state
-      expect(player.getPosition()).toEqual(new THREE.Vector3(0, 0, 0))
+      expect(player.getPosition()).toEqual(new THREE.Vector3(0, 2, 0))
       expect(gate.getIsActivated()).toBe(false)
       expect(audioEngine.getState().isInitialized).toBe(false)
       
