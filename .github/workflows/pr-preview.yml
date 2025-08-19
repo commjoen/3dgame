@@ -168,8 +168,15 @@ jobs:
       with:
         script: |
           const pr_number = context.payload.pull_request.number;
+          const commit_sha = context.payload.pull_request.head.sha.substring(0, 7);
+          const branch_name = context.payload.pull_request.head.ref;
+          
+          // URLs for different deployment options
           const preview_url = `https://commjoen.github.io/3dgame/pr-${pr_number}/`;
           const previews_url = `https://commjoen.github.io/3dgame/previews.html`;
+          const container_registry_url = `https://github.com/commjoen/3dgame/pkgs/container/3dgame`;
+          const pr_container_tag = `ghcr.io/commjoen/3dgame:pr-${pr_number}`;
+          const commit_container_tag = `ghcr.io/commjoen/3dgame:${branch_name}-${commit_sha}`;
           
           // Find existing preview comment
           const comments = await github.rest.issues.listComments({
@@ -185,13 +192,30 @@ jobs:
           
           const body = `## 🎮 PR Preview Deployed
           
-          Your PR has been deployed to a preview environment!
+          Your PR has been deployed to a preview environment with multiple deployment options!
           
+          ### 🌐 Web Preview (GitHub Pages)
           **🌊 Play the preview:** ${preview_url}
-          
           **📋 All previews:** ${previews_url}
           
-          The preview will be automatically updated when you push new commits to this PR.
+          ### 🐳 Container Preview (GHCR)
+          Run the PR preview locally using Docker:
+          \`\`\`bash
+          # Option 1: PR-specific tag
+          docker run -p 8080:80 ${pr_container_tag}
+          
+          # Option 2: Commit-specific tag  
+          docker run -p 8080:80 ${commit_container_tag}
+          
+          # Then visit: http://localhost:8080
+          \`\`\`
+          
+          **📦 Container Registry:** [View all tags](${container_registry_url})
+          
+          ---
+          
+          Both previews will be automatically updated when you push new commits to this PR.
+          The container images support both \`linux/amd64\` and \`linux/arm64\` architectures.
           `;
           
           if (existingComment) {

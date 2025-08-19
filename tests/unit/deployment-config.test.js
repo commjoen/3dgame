@@ -79,4 +79,74 @@ describe('Deployment Configuration', () => {
     expect(labels).toContain('org.opencontainers.image.title=Ocean Adventure')
     expect(labels).toContain('org.opencontainers.image.description=A 3D browser-based underwater platform game')
   })
+
+  it('should build containers on every main branch commit', async () => {
+    const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
+    const workflowContent = await fs.readFile(workflowPath, 'utf-8')
+    const workflow = yaml.load(workflowContent)
+    
+    const containerJob = workflow.jobs['build-and-push-container']
+    expect(containerJob).toBeDefined()
+    
+    // Check that the condition explicitly mentions main branch
+    const ifCondition = containerJob.if
+    expect(ifCondition).toContain('refs/heads/main')
+    expect(ifCondition).toContain('github.event_name == \'push\'')
+    expect(ifCondition).toContain('github.event_name == \'pull_request\'')
+  })
+
+  it('should allow container builds even when comprehensive tests fail', async () => {
+    const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
+    const workflowContent = await fs.readFile(workflowPath, 'utf-8')
+    const workflow = yaml.load(workflowContent)
+    
+    // Container builds should only depend on basic validation, not comprehensive tests
+    const containerJob = workflow.jobs['build-and-push-container']
+    const buildJob = workflow.jobs['build']
+    
+    expect(containerJob.needs).toEqual(['build'])
+    expect(buildJob.needs).toEqual(['validate'])
+    
+    // Comprehensive tests should be allowed to fail
+    const testJob = workflow.jobs['test']
+    const e2eJob = workflow.jobs['e2e-tests']
+    const mobileJob = workflow.jobs['mobile-compatibility']
+    
+    expect(testJob['continue-on-error']).toBe(true)
+    expect(e2eJob['continue-on-error']).toBe(true)
+    expect(mobileJob['continue-on-error']).toBe(true)
+  })
+
+  it('should have separate validate job for basic quality checks', async () => {
+    const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
+    const workflowContent = await fs.readFile(workflowPath, 'utf-8')
+    const workflow = yaml.load(workflowContent)
+    
+    const validateJob = workflow.jobs['validate']
+    expect(validateJob).toBeDefined()
+    expect(validateJob.name).toBe('Validate Code Quality')
+    
+    // Check that validation includes essential checks
+    const steps = validateJob.steps.map(step => step.name)
+    expect(steps).toContain('Run linter')
+    expect(steps).toContain('Check code formatting')
+    expect(steps).toContain('Type check')
+  })
+
+  it('should have PR tagging for containers', async () => {
+    const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
+    const workflowContent = await fs.readFile(workflowPath, 'utf-8')
+    const workflow = yaml.load(workflowContent)
+    
+    const metadataStep = workflow.jobs['build-and-push-container'].steps.find(
+      step => step.uses === 'docker/metadata-action@v5'
+    )
+    
+    expect(metadataStep).toBeDefined()
+    
+    // Check tags include PR tagging
+    const tags = metadataStep.with.tags
+    expect(tags).toContain('type=ref,event=pr')
+    expect(tags).toContain('type=sha,prefix={{branch}}-')
+  })
 })
