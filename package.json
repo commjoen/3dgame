@@ -15,6 +15,7 @@
     "test:mobile": "playwright test --project=mobile",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "validate:github-pages": "./scripts/validate-github-pages.sh",
     "lint": "npx eslint src/ --ext .js,.ts",
     "lint:fix": "npx eslint src/ --ext .js,.ts --fix",
     "format": "npx prettier --write src/",

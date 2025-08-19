@@ -36,10 +36,18 @@
 
 ### Testing
 To test if the issue is resolved:
-1. Push changes to main branch
-2. Check workflow run status
-3. Verify deploy job runs with debug output
-4. Check if GitHub Pages site updates
+1. Run the validation script: `./scripts/validate-github-pages.sh`
+2. Push changes to main branch
+3. Check workflow run status
+4. Verify deploy job runs with debug output
+5. Check if GitHub Pages site updates
+
+### Validation Script
+The repository includes a validation script at `scripts/validate-github-pages.sh` that:
+- Tests the build configuration
+- Validates GitHub Pages build output
+- Checks asset paths and required files
+- Provides step-by-step setup instructions
 
 ## Current Status
 - Workflow uses modern GitHub Pages deployment actions
