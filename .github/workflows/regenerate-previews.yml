@@ -1,67 +1,32 @@
-name: PR Preview
+name: Regenerate Previews Page
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main]
+  workflow_dispatch: # Allow manual triggering
+  schedule:
+    - cron: '0 6 * * *' # Daily at 6 AM UTC to ensure previews page stays updated
 
 permissions:
   contents: write
   pages: write
   id-token: write
-  pull-requests: write
 
 jobs:
-  deploy-preview:
-    name: Deploy PR Preview
+  regenerate-previews:
+    name: Regenerate Previews Page
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.repo.full_name == github.repository
-    
-    environment:
-      name: pr-preview-${{ github.event.number }}
-      url: ${{ steps.deploy.outputs.page_url }}pr-${{ github.event.number }}/
     
     steps:
-    - name: Checkout PR code
-      uses: actions/checkout@v5
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '24'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run tests
-      run: |
-        npm run lint
-        npm run test:unit
-        npm run type-check
-      
-    - name: Build application for preview
-      run: npm run build
-      env:
-        # Set base path for PR preview
-        VITE_BASE_PATH: /3dgame/pr-${{ github.event.number }}/
-      
     - name: Checkout gh-pages branch
       uses: actions/checkout@v5
       with:
         ref: gh-pages
-        path: gh-pages
         token: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
       
     - name: Initialize gh-pages branch if needed
       run: |
-        if [ ! -d "gh-pages" ] || [ ! -d "gh-pages/.git" ]; then
+        if [ ! -d ".git" ]; then
           echo "Creating new gh-pages branch..."
-          mkdir -p gh-pages
-          cd gh-pages
           git init
           git remote add origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
           git config user.name "github-actions[bot]"
@@ -71,27 +36,25 @@ jobs:
           git commit -m "Initialize gh-pages branch"
           git branch -M gh-pages
           git push --set-upstream origin gh-pages
-          cd ..
         fi
       
-    - name: Commit preview deployment
+    - name: Configure git
       run: |
-        cd gh-pages
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
         
-        # Fetch latest changes and reset to remote state
-        git fetch origin gh-pages
-        git reset --hard origin/gh-pages
+    - name: Fetch latest changes
+      run: |
+        git fetch origin gh-pages || echo "Branch may not exist yet"
+        git reset --hard origin/gh-pages || echo "No remote branch to reset to"
         
-        # Recreate the PR preview directory and files
-        mkdir -p pr-${{ github.event.number }}
-        cp -r ../dist/* pr-${{ github.event.number }}/
-        
-        # Regenerate the previews index
+    - name: Generate previews.html
+      run: |
+        # Get current date
         CURRENT_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
         
+        # Generate the previews index
         cat > previews.html << EOF
         <!DOCTYPE html>
         <html lang="en">
@@ -143,7 +106,7 @@ jobs:
                 
                 <div class="regenerate-info">
                     <p><strong>Last updated:</strong> ${CURRENT_DATE}</p>
-                    <p>This page is automatically updated when PR previews are deployed.</p>
+                    <p>This page is automatically regenerated daily and when PR previews are deployed.</p>
                 </div>
                 
                 <div class="preview-item">
@@ -155,6 +118,7 @@ jobs:
         EOF
         
         # Add current PR previews
+        pr_count=0
         for dir in pr-*/; do
             if [ -d "$dir" ]; then
                 pr_num=${dir#pr-}
@@ -165,8 +129,20 @@ jobs:
                 echo "                    <a href=\"/3dgame/$dir\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
                 echo "                    <a href=\"https://github.com/commjoen/3dgame/pull/$pr_num\" class=\"preview-link\">View PR</a>" >> previews.html
                 echo "                </div>" >> previews.html
+                pr_count=$((pr_count + 1))
             fi
         done
+        
+        # Add message if no PR previews exist
+        if [ $pr_count -eq 0 ]; then
+            cat >> previews.html << EOF
+                <div class="preview-item">
+                    <h3>📝 No Active PR Previews</h3>
+                    <p>PR previews will appear here when pull requests are opened against the main branch.</p>
+                    <a href="https://github.com/commjoen/3dgame/pulls" class="preview-link">View Open PRs</a>
+                </div>
+        EOF
+        fi
         
         cat >> previews.html << EOF
             </div>
@@ -174,78 +150,15 @@ jobs:
         </html>
         EOF
         
-        # Add and commit changes
-        git add .
-        git diff --staged --quiet || git commit -m "Deploy PR #${{ github.event.number }} preview"
-        git push origin gh-pages
-    
-    - name: Comment on PR
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const pr_number = context.payload.pull_request.number;
-          const commit_sha = context.payload.pull_request.head.sha.substring(0, 7);
-          const branch_name = context.payload.pull_request.head.ref;
-          
-          // URLs for different deployment options
-          const preview_url = `https://commjoen.github.io/3dgame/pr-${pr_number}/`;
-          const previews_url = `https://commjoen.github.io/3dgame/previews.html`;
-          const container_registry_url = `https://github.com/commjoen/3dgame/pkgs/container/3dgame`;
-          const pr_container_tag = `ghcr.io/commjoen/3dgame:pr-${pr_number}`;
-          const commit_container_tag = `ghcr.io/commjoen/3dgame:${branch_name}-${commit_sha}`;
-          
-          // Find existing preview comment
-          const comments = await github.rest.issues.listComments({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: pr_number,
-          });
-          
-          const existingComment = comments.data.find(comment => 
-            comment.user.login === 'github-actions[bot]' && 
-            comment.body.includes('🎮 PR Preview Deployed')
-          );
-          
-          const body = `## 🎮 PR Preview Deployed
-          
-          Your PR has been deployed to a preview environment with multiple deployment options!
-          
-          ### 🌐 Web Preview (GitHub Pages)
-          **🌊 Play the preview:** ${preview_url}
-          **📋 All previews:** ${previews_url}
-          
-          ### 🐳 Container Preview (GHCR)
-          Run the PR preview locally using Docker:
-          \`\`\`bash
-          # Option 1: PR-specific tag
-          docker run -p 8080:80 ${pr_container_tag}
-          
-          # Option 2: Commit-specific tag  
-          docker run -p 8080:80 ${commit_container_tag}
-          
-          # Then visit: http://localhost:8080
-          \`\`\`
-          
-          **📦 Container Registry:** [View all tags](${container_registry_url})
-          
-          ---
-          
-          Both previews will be automatically updated when you push new commits to this PR.
-          The container images support both \`linux/amd64\` and \`linux/arm64\` architectures.
-          `;
-          
-          if (existingComment) {
-            await github.rest.issues.updateComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: existingComment.id,
-              body: body
-            });
-          } else {
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr_number,
-              body: body
-            });
-          }
+        echo "Generated previews.html with $pr_count PR preview(s)"
+        
+    - name: Commit and push changes
+      run: |
+        git add previews.html
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Regenerate previews.html - $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          git push origin gh-pages
+          echo "Successfully updated previews.html"
+        fi

@@ -9,7 +9,9 @@
 import * as THREE from 'three'
 import { PhysicsEngine } from './core/Physics.js'
 import { ParticleSystem } from './core/ParticleSystem.js'
+import { AudioEngine } from './core/AudioEngine.js'
 import { Player } from './components/Player.js'
+import { Gate } from './components/Gate.js'
 
 // Game configuration
 const CONFIG = {
@@ -32,7 +34,9 @@ class OceanAdventure {
     // Core systems
     this.physicsEngine = null
     this.particleSystem = null
+    this.audioEngine = null
     this.player = null
+    this.gate = null
     this.environmentObjects = []
 
     // Game state
@@ -68,9 +72,11 @@ class OceanAdventure {
       { name: 'Lighting', fn: () => this.setupLights() },
       { name: 'Physics Engine', fn: () => this.initializePhysics() },
       { name: 'Particle System', fn: () => this.initializeParticleSystem() },
+      { name: 'Audio Engine', fn: () => this.initializeAudio() },
       { name: 'Environment', fn: () => this.createUnderwaterEnvironment() },
       { name: 'Player', fn: () => this.createPlayer() },
       { name: 'Sample Stars', fn: () => this.createSampleStars() },
+      { name: 'Gate', fn: () => this.createGate() },
       { name: 'Event Listeners', fn: () => this.setupEventListeners() },
       {
         name: 'UI Initialization',
@@ -182,6 +188,30 @@ class OceanAdventure {
   initializeParticleSystem() {
     this.particleSystem = new ParticleSystem(this.scene, 500) // Reduced for mobile performance
     console.log('✨ Particle system initialized')
+  }
+
+  /**
+   * Initialize audio engine
+   */
+  initializeAudio() {
+    this.audioEngine = new AudioEngine()
+    // Note: Audio will be initialized on first user interaction due to browser policies
+    console.log('🔊 Audio engine created (will initialize on user interaction)')
+  }
+
+  /**
+   * Try to initialize audio on first user interaction
+   */
+  async tryInitializeAudio() {
+    if (this.audioEngine && !this.audioEngine.isInitialized) {
+      try {
+        await this.audioEngine.initialize()
+        this.audioEngine.startAmbientSound()
+        console.log('🌊 Audio initialized and ambient sound started')
+      } catch (error) {
+        console.warn('Audio initialization failed:', error)
+      }
+    }
   }
 
   setupCamera() {
@@ -368,6 +398,16 @@ class OceanAdventure {
     console.log('🏊 Player created with physics')
   }
 
+  /**
+   * Create the level completion gate
+   */
+  createGate() {
+    // Position gate at the back of the level
+    const gatePosition = new THREE.Vector3(0, 2, -20)
+    this.gate = new Gate(this.scene, this.physicsEngine, gatePosition)
+    console.log('🚪 Gate created')
+  }
+
   createSampleStars() {
     this.stars = []
 
@@ -440,6 +480,9 @@ class OceanAdventure {
   }
 
   onKeyDown(event) {
+    // Initialize audio on first user interaction
+    this.tryInitializeAudio()
+
     switch (event.code) {
       case 'ArrowUp':
       case 'KeyW':
@@ -513,6 +556,10 @@ class OceanAdventure {
     // General canvas touch events (for swipe gestures)
     this.canvas.addEventListener('touchstart', event => {
       event.preventDefault()
+
+      // Initialize audio on first touch
+      this.tryInitializeAudio()
+
       if (event.touches.length > 0) {
         const touch = event.touches[0]
         this.touchState.startX = touch.clientX
@@ -838,6 +885,19 @@ class OceanAdventure {
     // Update particle system
     this.particleSystem.update(deltaTime)
 
+    // Update gate animations
+    if (this.gate) {
+      this.gate.update(deltaTime)
+    }
+
+    // Update audio system
+    if (this.audioEngine && this.audioEngine.isInitialized) {
+      const playerPos = this.player.getPosition()
+      const forward = this.camera.getWorldDirection(new THREE.Vector3())
+      const up = this.camera.up
+      this.audioEngine.updateListenerPosition(playerPos, forward, up)
+    }
+
     // Update camera
     this.updateCamera()
 
@@ -890,6 +950,9 @@ class OceanAdventure {
 
     // Check star collection using collision detection
     this.checkStarCollection()
+
+    // Check gate collision
+    this.checkGateCollision()
   }
 
   checkStarCollection() {
@@ -922,6 +985,11 @@ class OceanAdventure {
           this.starCount++
           this.updateUI()
 
+          // Play collection sound
+          if (this.audioEngine) {
+            this.audioEngine.playSound('starCollect', starData.mesh.position)
+          }
+
           // Create collection effect
           this.particleSystem.createBurst(starData.mesh.position, {
             count: 15,
@@ -934,10 +1002,50 @@ class OceanAdventure {
 
           console.log(`⭐ Star collected! Total: ${this.starCount}`)
 
-          // Check if level is complete
+          // Check if all stars collected - activate gate
           if (this.stars.length === 0) {
-            this.levelComplete()
+            this.activateGate()
           }
+        }
+      }
+    }
+  }
+
+  /**
+   * Activate the gate when all stars are collected
+   */
+  activateGate() {
+    if (this.gate && !this.gate.getIsActivated()) {
+      this.gate.activate()
+
+      // Play gate activation sound
+      if (this.audioEngine) {
+        this.audioEngine.playSound('gateActivate', this.gate.getPosition())
+      }
+
+      console.log('🚪 Gate activated! Swim through to complete level!')
+    }
+  }
+
+  /**
+   * Check for gate collision and level completion
+   */
+  checkGateCollision() {
+    if (!this.gate || !this.gate.getIsActivated()) {
+      return
+    }
+
+    // Get player collisions from physics engine
+    const playerCollisions = this.physicsEngine.collisionSystem.checkCollisions(
+      this.player.physicsBody
+    )
+
+    for (const collision of playerCollisions) {
+      if (collision.type === 'gate' && collision.gate) {
+        const levelCompleted = collision.gate.onPlayerEnter()
+        if (levelCompleted) {
+          this.levelComplete()
+          break
         }
       }
     }
@@ -945,7 +1053,19 @@ class OceanAdventure {
 
   levelComplete() {
     console.log('🎉 Level Complete!')
+
+    // Play level completion sound
+    if (this.audioEngine) {
+      this.audioEngine.playSound('levelComplete')
+    }
+
     this.levelNumber++
+
+    // Reset gate for next level
+    if (this.gate) {
+      this.gate.reset()
+    }
+
     // Reset level with new stars
     this.createSampleStars()
     this.updateUI()
