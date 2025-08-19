@@ -127,6 +127,13 @@ Ocean Adventure uses automated GitHub Actions to provide live previews and deplo
 - Automatically deployed when changes are merged to `main`
 - Always represents the latest stable version
 
+> **🔧 Setup Required**: For GitHub Pages deployment to work, ensure:
+> 1. Go to Repository Settings > Pages
+> 2. Set **Source** to "**GitHub Actions**" (not "Deploy from a branch")
+> 3. Save settings and push to main branch
+> 
+> Run `./scripts/validate-github-pages.sh` to test your setup locally.
+
 ### 🔄 Pull Request Previews
 - **Automatic Previews**: Every PR automatically gets its own preview deployment
 - **Unique URLs**: Each PR gets a dedicated URL at `https://commjoen.github.io/3dgame/pr-{number}/`

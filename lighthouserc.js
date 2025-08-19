@@ -1,10 +1,9 @@
 export default {
   ci: {
     collect: {
-      url: ['http://localhost:4173'],
-      startServerCommand: 'npm run preview -- --port 4173',
-      startServerReadyPattern: 'Local:.*:4173',
-      startServerReadyTimeout: 60000
+      // When using staticDistDir, test the main page with the correct base path
+      url: ['http://localhost:{PORT}/3dgame/'],
+      staticDistDir: './dist'
     },
     assert: {
       assertions: {

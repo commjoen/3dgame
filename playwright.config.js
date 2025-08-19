@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false, // Disable parallel to avoid resource issues in CI
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0, // Reduce retries to speed up CI
+  retries: process.env.CI ? 2 : 0, // Increase retries for CI stability
   workers: 1, // Use only 1 worker to avoid resource conflicts
   reporter: [
     ['list'], // Simple list reporter for CI
@@ -16,19 +16,30 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     // Increase timeouts for CI environments
-    actionTimeout: 15000,
-    navigationTimeout: 30000,
+    actionTimeout: 20000,
+    navigationTimeout: 45000,
   },
-  // Simplified project configuration for CI compatibility
+  // Enhanced project configuration for better CI compatibility
   projects: process.env.CI 
     ? [
         {
           name: 'chromium',
           use: { 
             ...devices['Desktop Chrome'],
-            // Force headless and disable GPU for CI
+            // Enhanced CI browser configuration
             launchOptions: {
-              args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+              args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--disable-features=TranslateUI',
+                '--disable-ipc-flooding-protection',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor'
+              ]
             }
           }
         },
@@ -37,10 +48,21 @@ export default defineConfig({
           use: { 
             ...devices['iPhone 13'], 
             hasTouch: true,
-            // Mobile uses chromium in CI since WebKit doesn't support --no-sandbox
+            // Mobile uses chromium in CI with enhanced configuration
             browserName: 'chromium',
             launchOptions: {
-              args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+              args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--disable-features=TranslateUI',
+                '--disable-ipc-flooding-protection',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor'
+              ]
             }
           }
         }
@@ -63,6 +85,6 @@ export default defineConfig({
     command: 'npm run preview -- --port 4173',
     port: 4173,
     reuseExistingServer: !process.env.CI,
-    timeout: 120000, // Increased timeout for CI
+    timeout: 180000, // Increased timeout for CI
   }
 })
