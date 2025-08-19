@@ -224,6 +224,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
       
     steps:
+    - name: Debug deployment context
+      run: |
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Event: ${{ github.event_name }}"
+        echo "Actor: ${{ github.actor }}"
+        echo "Environment: github-pages"
+        
     - name: Checkout code
       uses: actions/checkout@v5
       
