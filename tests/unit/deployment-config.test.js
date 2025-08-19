@@ -9,18 +9,25 @@ describe('Deployment Configuration', () => {
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
     const workflow = yaml.load(workflowContent)
     
-    // Check deploy job exists
+    // Check both prepare-pages and deploy jobs exist
+    expect(workflow.jobs['prepare-pages']).toBeDefined()
     expect(workflow.jobs.deploy).toBeDefined()
     
-    // Check it uses modern GitHub Pages deployment
+    // Check prepare-pages job has the setup and upload actions
+    const preparePagesSteps = workflow.jobs['prepare-pages'].steps
+    const hasSetupPages = preparePagesSteps.some(step => step.uses === 'actions/configure-pages@v4')
+    const hasUploadArtifact = preparePagesSteps.some(step => step.uses === 'actions/upload-pages-artifact@v3')
+    
+    // Check deploy job has the deploy action
     const deploySteps = workflow.jobs.deploy.steps
-    const hasSetupPages = deploySteps.some(step => step.uses === 'actions/configure-pages@v4')
-    const hasUploadArtifact = deploySteps.some(step => step.uses === 'actions/upload-pages-artifact@v3')
     const hasDeployPages = deploySteps.some(step => step.uses === 'actions/deploy-pages@v4')
     
     expect(hasSetupPages).toBe(true)
     expect(hasUploadArtifact).toBe(true)
     expect(hasDeployPages).toBe(true)
+    
+    // Check deploy job has continue-on-error for graceful failure handling
+    expect(workflow.jobs.deploy['continue-on-error']).toBe(true)
     
     // Check permissions are correct
     expect(workflow.jobs.deploy.permissions).toMatchObject({
