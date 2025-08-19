@@ -12,7 +12,9 @@
     "test:unit": "vitest run --reporter=verbose tests/unit",
     "test:integration": "vitest run --reporter=verbose tests/integration",
     "test:e2e": "playwright test",
+    "test:e2e:fallback": "node scripts/test-fallback.js",
     "test:mobile": "playwright test --project=mobile",
+    "test:mobile:fallback": "node scripts/test-fallback.js",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "validate:github-pages": "./scripts/validate-github-pages.sh",
@@ -60,7 +62,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
-    "@playwright/test": "^1.40.0",
+    "@playwright/test": "^1.54.2",
     "@types/three": "^0.158.0",
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",
