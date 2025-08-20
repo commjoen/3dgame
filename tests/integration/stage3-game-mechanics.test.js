@@ -37,6 +37,13 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
         Q: { setValueAtTime: vi.fn() },
         connect: vi.fn()
       })),
+      createPanner: vi.fn(() => ({
+        positionX: { setValueAtTime: vi.fn() },
+        positionY: { setValueAtTime: vi.fn() },
+        positionZ: { setValueAtTime: vi.fn() },
+        setPosition: vi.fn(),
+        connect: vi.fn()
+      })),
       currentTime: 0,
       destination: {},
       listener: {
@@ -75,8 +82,9 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
       gate.activate()
       expect(gate.getIsActivated()).toBe(true)
       
-      // Move player into gate collision zone
-      player.setPosition(new THREE.Vector3(0, 2, -15))
+      // Move player into gate collision zone - at the gate frame, not center
+      // Gate has collision bodies around radius 4, so move player to that area
+      player.setPosition(new THREE.Vector3(3.5, 2, -15))
       
       // Check for gate collision
       const playerCollisions = physicsEngine.collisionSystem.checkCollisions(
@@ -148,8 +156,10 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
       // Activate gate
       gate.activate()
       
-      // Position player at gate location
-      player.setPosition(gate.getPosition())
+      // Position player at gate frame location (not center - that's the hole)
+      // Gate collision bodies are around radius 4 from center
+      const gatePos = gate.getPosition()
+      player.setPosition(new THREE.Vector3(gatePos.x + 3.5, gatePos.y, gatePos.z))
       
       // Check collisions
       const collisions = physicsEngine.collisionSystem.checkCollisions(
