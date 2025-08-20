@@ -20,7 +20,7 @@ jobs:
     
     environment:
       name: pr-preview-${{ github.event.number }}
-      url: ${{ steps.deploy.outputs.page_url }}pr-${{ github.event.number }}/
+      url: https://commjoen.github.io/3dgame/pr-${{ github.event.number }}/
     
     steps:
     - name: Checkout PR code
@@ -83,24 +83,36 @@ jobs:
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/commjoen/3dgame.git
         
-        # Fetch latest changes and reset to remote state
-        git fetch origin gh-pages
-        git reset --hard origin/gh-pages
-        
-        # Recreate the PR preview directory and files
-        mkdir -p pr-${{ github.event.number }}
-        cp -r ../dist/* pr-${{ github.event.number }}/
-        
-        # Create main deployment if it doesn't exist
-        if [ ! -f "index.html" ]; then
-          echo "Creating placeholder main deployment..."
-          echo "<html><head><title>Ocean Adventure</title></head><body><h1>Main deployment coming soon</h1><p><a href='previews.html'>View PR Previews</a></p></body></html>" > index.html
-        fi
-        
-        # Regenerate the previews index
-        CURRENT_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-        
-        cat > previews.html << EOF
+        # Function to retry git operations with exponential backoff
+        retry_git_operation() {
+          local max_attempts=5
+          local delay=2
+          local attempt=1
+          
+          while [ $attempt -le $max_attempts ]; do
+            if [ $attempt -gt 1 ]; then
+              echo "Attempt $attempt/$max_attempts (waiting ${delay}s)..."
+              sleep $delay
+            fi
+            
+            # Fetch latest changes and reset to remote state
+            git fetch origin gh-pages
+            git reset --hard origin/gh-pages
+            
+            # Recreate the PR preview directory and files
+            mkdir -p pr-${{ github.event.number }}
+            cp -r ../dist/* pr-${{ github.event.number }}/
+            
+            # Create main deployment if it doesn't exist
+            if [ ! -f "index.html" ]; then
+              echo "Creating placeholder main deployment..."
+              echo "<html><head><title>Ocean Adventure</title></head><body><h1>Main deployment coming soon</h1><p><a href='previews.html'>View PR Previews</a></p></body></html>" > index.html
+            fi
+            
+            # Regenerate the previews index
+            CURRENT_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            
+            cat > previews.html << EOF
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -161,37 +173,63 @@ jobs:
                     <a href="https://github.com/commjoen/3dgame" class="preview-link">View Repository</a>
                 </div>
         EOF
-        
-        # Add current PR previews
-        for dir in pr-*/; do
-            if [ -d "$dir" ]; then
-                pr_num=${dir#pr-}
-                pr_num=${pr_num%/}
-                echo "                <div class=\"preview-item\">" >> previews.html
-                echo "                    <h3>🔄 Pull Request #$pr_num</h3>" >> previews.html
-                echo "                    <p>Preview deployment for PR #$pr_num</p>" >> previews.html
-                echo "                    <a href=\"/3dgame/pr-$pr_num/\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
-                echo "                    <a href=\"https://github.com/commjoen/3dgame/pull/$pr_num\" class=\"preview-link\">View PR</a>" >> previews.html
-                echo "                </div>" >> previews.html
-            fi
-        done
-        
-        cat >> previews.html << EOF
+            
+            # Add current PR previews
+            for dir in pr-*/; do
+                if [ -d "$dir" ]; then
+                    pr_num=${dir#pr-}
+                    pr_num=${pr_num%/}
+                    echo "                <div class=\"preview-item\">" >> previews.html
+                    echo "                    <h3>🔄 Pull Request #$pr_num</h3>" >> previews.html
+                    echo "                    <p>Preview deployment for PR #$pr_num</p>" >> previews.html
+                    echo "                    <a href=\"/3dgame/pr-$pr_num/\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
+                    echo "                    <a href=\"https://github.com/commjoen/3dgame/pull/$pr_num\" class=\"preview-link\">View PR</a>" >> previews.html
+                    echo "                </div>" >> previews.html
+                fi
+            done
+            
+            cat >> previews.html << EOF
             </div>
         </body>
         </html>
         EOF
+            
+            # Add and commit changes
+            git add .
+            if git diff --staged --quiet; then
+              echo "No changes to commit"
+              return 0
+            fi
+            
+            git commit -m "Deploy PR #${{ github.event.number }} preview"
+            
+            # Try to push with lease (safe push that fails if remote changed)
+            if git push --force-with-lease origin gh-pages; then
+              echo "Successfully pushed changes"
+              return 0
+            else
+              echo "Push failed, remote branch was updated. Retrying..."
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            fi
+          done
+          
+          echo "Failed to push after $max_attempts attempts"
+          return 1
+        }
         
-        # Add and commit changes
-        git add .
-        git diff --staged --quiet || git commit -m "Deploy PR #${{ github.event.number }} preview"
-        git push origin gh-pages
+        # Execute the retry function
+        retry_git_operation
         
-        # Trigger GitHub Pages deployment by creating a small update
-        echo "# Last updated: ${CURRENT_DATE}" >> .pages-trigger
-        git add .pages-trigger
-        git commit -m "Trigger GitHub Pages refresh for PR #${{ github.event.number }}" || true
-        git push origin gh-pages || true
+        # Optional: Trigger GitHub Pages deployment by creating a small update
+        # This is separate from the main deployment to avoid conflicts
+        if retry_git_operation; then
+          CURRENT_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          echo "# Last updated: ${CURRENT_DATE}" >> .pages-trigger
+          git add .pages-trigger
+          git commit -m "Trigger GitHub Pages refresh for PR #${{ github.event.number }}" || true
+          git push --force-with-lease origin gh-pages || echo "Pages trigger push failed, but main deployment succeeded"
+        fi
     
     - name: Comment on PR
       uses: actions/github-script@v7
