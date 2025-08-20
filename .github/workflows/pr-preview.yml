@@ -190,6 +190,12 @@ jobs:
         git add .
         git diff --staged --quiet || git commit -m "Deploy PR #${{ github.event.number }} preview"
         git push origin gh-pages
+        
+        # Trigger GitHub Pages deployment by creating a small update
+        echo "# Last updated: ${CURRENT_DATE}" >> .pages-trigger
+        git add .pages-trigger
+        git commit -m "Trigger GitHub Pages refresh for PR #${{ github.event.number }}" || true
+        git push origin gh-pages || true
     
     - name: Comment on PR
       uses: actions/github-script@v7
