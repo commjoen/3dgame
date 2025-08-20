@@ -22,7 +22,10 @@ export default [
         requestAnimationFrame: 'readonly',
         cancelAnimationFrame: 'readonly',
         WebGLRenderingContext: 'readonly',
-        WebGL2RenderingContext: 'readonly'
+        WebGL2RenderingContext: 'readonly',
+        localStorage: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly'
       }
     },
     plugins: {
@@ -61,6 +64,7 @@ export default [
         Event: 'readonly',
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
+        localStorage: 'readonly',
         vi: 'readonly'
       }
     }

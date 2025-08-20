@@ -401,7 +401,7 @@ class OceanAdventure {
    */
   createLevelBoundaries() {
     console.log('🧱 Creating level boundaries...')
-    
+
     // Level size should match the floor size (100x100)
     const levelSize = 50 // Half the floor size (radius from center)
     const wallHeight = 15 // Height of boundary walls
@@ -410,29 +410,29 @@ class OceanAdventure {
     // Create four walls around the level perimeter
     const wallConfigs = [
       // North wall (positive Z)
-      { 
-        position: new THREE.Vector3(0, wallHeight / 2, levelSize), 
+      {
+        position: new THREE.Vector3(0, wallHeight / 2, levelSize),
         size: new THREE.Vector3(levelSize * 2, wallHeight, wallThickness),
-        name: 'North Wall'
+        name: 'North Wall',
       },
       // South wall (negative Z)
-      { 
-        position: new THREE.Vector3(0, wallHeight / 2, -levelSize), 
+      {
+        position: new THREE.Vector3(0, wallHeight / 2, -levelSize),
         size: new THREE.Vector3(levelSize * 2, wallHeight, wallThickness),
-        name: 'South Wall'
+        name: 'South Wall',
       },
       // East wall (positive X)
-      { 
-        position: new THREE.Vector3(levelSize, wallHeight / 2, 0), 
+      {
+        position: new THREE.Vector3(levelSize, wallHeight / 2, 0),
         size: new THREE.Vector3(wallThickness, wallHeight, levelSize * 2),
-        name: 'East Wall'
+        name: 'East Wall',
       },
       // West wall (negative X)
-      { 
-        position: new THREE.Vector3(-levelSize, wallHeight / 2, 0), 
+      {
+        position: new THREE.Vector3(-levelSize, wallHeight / 2, 0),
         size: new THREE.Vector3(wallThickness, wallHeight, levelSize * 2),
-        name: 'West Wall'
-      }
+        name: 'West Wall',
+      },
     ]
 
     wallConfigs.forEach(config => {
@@ -446,7 +446,9 @@ class OceanAdventure {
       wallPhysicsBody.name = config.name
       this.physicsEngine.addRigidBody(wallPhysicsBody)
 
-      console.log(`🧱 Created ${config.name} at position (${config.position.x.toFixed(1)}, ${config.position.y.toFixed(1)}, ${config.position.z.toFixed(1)})`)
+      console.log(
+        `🧱 Created ${config.name} at position (${config.position.x.toFixed(1)}, ${config.position.y.toFixed(1)}, ${config.position.z.toFixed(1)})`
+      )
     })
 
     console.log('✅ Level boundaries created successfully')
@@ -859,7 +861,7 @@ class OceanAdventure {
         settingsModal.classList.remove('hidden')
         // Prevent body scrolling when modal is open
         document.body.style.overflow = 'hidden'
-        
+
         // Update sliders with current audio values
         this.updateAudioSliders()
       }
@@ -906,7 +908,7 @@ class OceanAdventure {
     const masterVolumeSlider = document.getElementById('masterVolumeSlider')
     const musicVolumeSlider = document.getElementById('musicVolumeSlider')
     const sfxVolumeSlider = document.getElementById('sfxVolumeSlider')
-    
+
     const masterVolumeValue = document.getElementById('masterVolumeValue')
     const musicVolumeValue = document.getElementById('musicVolumeValue')
     const sfxVolumeValue = document.getElementById('sfxVolumeValue')
@@ -943,14 +945,16 @@ class OceanAdventure {
   }
 
   updateAudioSliders() {
-    if (!this.audioEngine) return
+    if (!this.audioEngine) {
+      return
+    }
 
     const state = this.audioEngine.getState()
-    
+
     const masterVolumeSlider = document.getElementById('masterVolumeSlider')
     const musicVolumeSlider = document.getElementById('musicVolumeSlider')
     const sfxVolumeSlider = document.getElementById('sfxVolumeSlider')
-    
+
     const masterVolumeValue = document.getElementById('masterVolumeValue')
     const musicVolumeValue = document.getElementById('musicVolumeValue')
     const sfxVolumeValue = document.getElementById('sfxVolumeValue')
@@ -958,19 +962,25 @@ class OceanAdventure {
     if (masterVolumeSlider) {
       const value = Math.round(state.masterVolume * 100)
       masterVolumeSlider.value = value
-      if (masterVolumeValue) masterVolumeValue.textContent = `${value}%`
+      if (masterVolumeValue) {
+        masterVolumeValue.textContent = `${value}%`
+      }
     }
 
     if (musicVolumeSlider) {
       const value = Math.round(state.musicVolume * 100)
       musicVolumeSlider.value = value
-      if (musicVolumeValue) musicVolumeValue.textContent = `${value}%`
+      if (musicVolumeValue) {
+        musicVolumeValue.textContent = `${value}%`
+      }
     }
 
     if (sfxVolumeSlider) {
       const value = Math.round(state.sfxVolume * 100)
       sfxVolumeSlider.value = value
-      if (sfxVolumeValue) sfxVolumeValue.textContent = `${value}%`
+      if (sfxVolumeValue) {
+        sfxVolumeValue.textContent = `${value}%`
+      }
     }
   }
 
@@ -1242,7 +1252,7 @@ class OceanAdventure {
     // Create transition effect particles
     if (this.particleSystem && this.gate) {
       const gatePosition = this.gate.getPosition()
-      
+
       // Create swirling portal particles
       this.particleSystem.createParticles({
         position: gatePosition,
@@ -1252,7 +1262,7 @@ class OceanAdventure {
         lifetime: { min: 1.5, max: 3 },
         size: { min: 4, max: 12 },
         color: new THREE.Color(0x87ceeb), // Light blue
-        behavior: 'swirl'
+        behavior: 'swirl',
       })
 
       // Create golden sparkles for completion
@@ -1264,7 +1274,7 @@ class OceanAdventure {
         lifetime: { min: 2, max: 4 },
         size: { min: 2, max: 6 },
         color: new THREE.Color(0xffd700), // Gold
-        behavior: 'sparkle'
+        behavior: 'sparkle',
       })
     }
 
@@ -1309,7 +1319,7 @@ class OceanAdventure {
     }
 
     document.body.appendChild(flash)
-    
+
     // Remove flash element after animation
     setTimeout(() => {
       if (flash.parentNode) {
@@ -1322,7 +1332,9 @@ class OceanAdventure {
    * Start camera shake effect
    */
   startCameraShake(intensity = 0.2, duration = 0.5) {
-    if (!this.camera) return
+    if (!this.camera) {
+      return
+    }
 
     const originalPosition = this.camera.position.clone()
     const startTime = Date.now()
@@ -1334,7 +1346,7 @@ class OceanAdventure {
       if (progress < 1) {
         // Decreasing intensity over time
         const currentIntensity = intensity * (1 - progress)
-        
+
         // Random shake offset
         const shakeX = (Math.random() - 0.5) * currentIntensity * 2
         const shakeY = (Math.random() - 0.5) * currentIntensity * 2

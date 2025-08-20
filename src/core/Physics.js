@@ -319,8 +319,8 @@ export class PhysicsEngine {
   resolveCollisions(body, collisions, previousPosition) {
     // Check if any collisions are with collectibles or gates that should not block movement
     const blockingCollisions = collisions.filter(
-      collision => 
-        (collision.type !== 'collectible' || collision.collected) && 
+      collision =>
+        (collision.type !== 'collectible' || collision.collected) &&
         collision.type !== 'gate'
     )
 

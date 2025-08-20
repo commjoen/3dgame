@@ -52,7 +52,7 @@ export class AudioEngine {
       // Create separate gain nodes for music and sound effects
       this.musicGain = this.audioContext.createGain()
       this.sfxGain = this.audioContext.createGain()
-      
+
       this.musicGain.gain.setValueAtTime(
         this.musicVolume,
         this.audioContext.currentTime
@@ -61,7 +61,7 @@ export class AudioEngine {
         this.sfxVolume,
         this.audioContext.currentTime
       )
-      
+
       this.musicGain.connect(this.masterGain)
       this.sfxGain.connect(this.masterGain)
 
@@ -528,7 +528,7 @@ export class AudioEngine {
         this.audioContext.currentTime
       )
     }
-    
+
     this.saveSettings()
   }
 
@@ -544,7 +544,7 @@ export class AudioEngine {
         this.audioContext.currentTime
       )
     }
-    
+
     this.saveSettings()
   }
 
@@ -560,7 +560,7 @@ export class AudioEngine {
         this.audioContext.currentTime
       )
     }
-    
+
     this.saveSettings()
   }
 
@@ -620,7 +620,10 @@ export class AudioEngine {
         musicVolume: this.musicVolume,
         sfxVolume: this.sfxVolume,
       }
-      localStorage.setItem('oceanAdventure_audioSettings', JSON.stringify(settings))
+      localStorage.setItem(
+        'oceanAdventure_audioSettings',
+        JSON.stringify(settings)
+      )
     } catch (error) {
       console.warn('Failed to save audio settings:', error)
     }
