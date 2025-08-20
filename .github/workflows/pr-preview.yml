@@ -93,12 +93,8 @@ jobs:
         
         # Create main deployment if it doesn't exist
         if [ ! -f "index.html" ]; then
-          echo "Creating main deployment..."
-          cp -r ../dist/* .
-          # Don't overwrite existing previews.html
-          if [ -f "previews.html" ]; then
-            rm index.html && mv previews.html index.html.temp && cp -r ../dist/* . && mv index.html.temp previews.html
-          fi
+          echo "Creating placeholder main deployment..."
+          echo "<html><head><title>Ocean Adventure</title></head><body><h1>Main deployment coming soon</h1><p><a href='previews.html'>View PR Previews</a></p></body></html>" > index.html
         fi
         
         # Regenerate the previews index
@@ -174,7 +170,7 @@ jobs:
                 echo "                <div class=\"preview-item\">" >> previews.html
                 echo "                    <h3>🔄 Pull Request #$pr_num</h3>" >> previews.html
                 echo "                    <p>Preview deployment for PR #$pr_num</p>" >> previews.html
-                echo "                    <a href=\"/3dgame/$dir\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
+                echo "                    <a href=\"/3dgame/pr-$pr_num/\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
                 echo "                    <a href=\"https://github.com/commjoen/3dgame/pull/$pr_num\" class=\"preview-link\">View PR</a>" >> previews.html
                 echo "                </div>" >> previews.html
             fi
