@@ -464,10 +464,10 @@ class OceanAdventure {
    * Create the level completion gate
    */
   createGate() {
-    // Position gate at the back of the level
-    const gatePosition = new THREE.Vector3(0, 2, -20)
+    // Position gate at a reasonable distance from player
+    const gatePosition = new THREE.Vector3(0, 2, -15) // Reasonable distance for gameplay
     this.gate = new Gate(this.scene, this.physicsEngine, gatePosition)
-    console.log('🚪 Gate created')
+    console.log(`🚪 Gate created at position: (${gatePosition.x}, ${gatePosition.y}, ${gatePosition.z})`)
   }
 
   createSampleStars() {
@@ -495,7 +495,7 @@ class OceanAdventure {
       // Add physics body for collision detection
       const starPhysicsBody = this.physicsEngine.createSphereBody(
         position,
-        0.5, // Slightly larger for easier collection
+        1.0, // Increased from 0.5 to 1.0 for easier collection
         true // Static - stars don't move
       )
       starPhysicsBody.type = 'collectible'
@@ -520,6 +520,8 @@ class OceanAdventure {
       this.stars.push({ mesh: star, physicsBody: starPhysicsBody })
       this.scene.add(star)
     }
+
+    console.log(`✨ Created ${this.stars.length} sample stars`)
   }
 
   setupEventListeners() {
@@ -1211,8 +1213,10 @@ class OceanAdventure {
 
     for (const collision of playerCollisions) {
       if (collision.type === 'gate' && collision.gate) {
+        console.log('🎯 Gate collision detected!')
         const levelCompleted = collision.gate.onPlayerEnter()
         if (levelCompleted) {
+          console.log('🎉 Level completed via gate collision!')
           this.levelComplete()
           break
         }
