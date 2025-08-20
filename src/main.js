@@ -800,6 +800,9 @@ class OceanAdventure {
         settingsModal.classList.remove('hidden')
         // Prevent body scrolling when modal is open
         document.body.style.overflow = 'hidden'
+        
+        // Update sliders with current audio values
+        this.updateAudioSliders()
       }
 
       // Close settings
@@ -834,6 +837,81 @@ class OceanAdventure {
           closeModal()
         }
       })
+    }
+
+    // Setup audio controls
+    this.setupAudioControls()
+  }
+
+  setupAudioControls() {
+    const masterVolumeSlider = document.getElementById('masterVolumeSlider')
+    const musicVolumeSlider = document.getElementById('musicVolumeSlider')
+    const sfxVolumeSlider = document.getElementById('sfxVolumeSlider')
+    
+    const masterVolumeValue = document.getElementById('masterVolumeValue')
+    const musicVolumeValue = document.getElementById('musicVolumeValue')
+    const sfxVolumeValue = document.getElementById('sfxVolumeValue')
+
+    if (masterVolumeSlider && this.audioEngine) {
+      masterVolumeSlider.addEventListener('input', event => {
+        const volume = parseInt(event.target.value) / 100
+        this.audioEngine.setMasterVolume(volume)
+        if (masterVolumeValue) {
+          masterVolumeValue.textContent = `${event.target.value}%`
+        }
+      })
+    }
+
+    if (musicVolumeSlider && this.audioEngine) {
+      musicVolumeSlider.addEventListener('input', event => {
+        const volume = parseInt(event.target.value) / 100
+        this.audioEngine.setMusicVolume(volume)
+        if (musicVolumeValue) {
+          musicVolumeValue.textContent = `${event.target.value}%`
+        }
+      })
+    }
+
+    if (sfxVolumeSlider && this.audioEngine) {
+      sfxVolumeSlider.addEventListener('input', event => {
+        const volume = parseInt(event.target.value) / 100
+        this.audioEngine.setSfxVolume(volume)
+        if (sfxVolumeValue) {
+          sfxVolumeValue.textContent = `${event.target.value}%`
+        }
+      })
+    }
+  }
+
+  updateAudioSliders() {
+    if (!this.audioEngine) return
+
+    const state = this.audioEngine.getState()
+    
+    const masterVolumeSlider = document.getElementById('masterVolumeSlider')
+    const musicVolumeSlider = document.getElementById('musicVolumeSlider')
+    const sfxVolumeSlider = document.getElementById('sfxVolumeSlider')
+    
+    const masterVolumeValue = document.getElementById('masterVolumeValue')
+    const musicVolumeValue = document.getElementById('musicVolumeValue')
+    const sfxVolumeValue = document.getElementById('sfxVolumeValue')
+
+    if (masterVolumeSlider) {
+      const value = Math.round(state.masterVolume * 100)
+      masterVolumeSlider.value = value
+      if (masterVolumeValue) masterVolumeValue.textContent = `${value}%`
+    }
+
+    if (musicVolumeSlider) {
+      const value = Math.round(state.musicVolume * 100)
+      musicVolumeSlider.value = value
+      if (musicVolumeValue) musicVolumeValue.textContent = `${value}%`
+    }
+
+    if (sfxVolumeSlider) {
+      const value = Math.round(state.sfxVolume * 100)
+      sfxVolumeSlider.value = value
+      if (sfxVolumeValue) sfxVolumeValue.textContent = `${value}%`
     }
   }
 
