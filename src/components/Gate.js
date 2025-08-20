@@ -88,7 +88,7 @@ export class Gate {
       )
       rimLight.userData = {
         originalAngle: angle,
-        animationOffset: Math.random() * Math.PI * 2
+        animationOffset: Math.random() * Math.PI * 2,
       }
       this.rimLights.push(rimLight)
     }
@@ -105,19 +105,19 @@ export class Gate {
     // Create multiple collision bodies around the ring
     // This allows detection when player touches the gate frame but can swim through the center
     this.physicsBody = []
-    
+
     const ringRadius = this.width
     const segments = 8
-    
+
     for (let i = 0; i < segments; i++) {
       const angle = (i / segments) * Math.PI * 2
       const x = Math.cos(angle) * ringRadius
       const y = Math.sin(angle) * ringRadius * 0.7 // Make it more oval for height
-      
+
       const segmentPosition = this.position.clone()
       segmentPosition.x += x
       segmentPosition.y += y
-      
+
       const segmentBody = this.physicsEngine.createSphereBody(
         segmentPosition,
         0.8, // Collision radius for each segment
@@ -144,7 +144,7 @@ export class Gate {
     // Enhanced activation effects
     this.gateMesh.material.emissiveIntensity = 0.8
     this.gateLight.intensity = 1.5
-    
+
     // Activate rim lights
     this.rimLights.forEach(light => {
       light.intensity = 0.4
@@ -161,7 +161,7 @@ export class Gate {
     this.setVisibility(false)
     this.gateMesh.material.emissiveIntensity = 0.5
     this.gateLight.intensity = 1.0
-    
+
     // Deactivate rim lights
     this.rimLights.forEach(light => {
       light.intensity = 0.1
@@ -232,17 +232,19 @@ export class Gate {
     this.rimLights.forEach((light, index) => {
       const userData = light.userData
       const animationTime = this.time * 0.5 + userData.animationOffset
-      
+
       // Create pulsing effect with phase offset for each light
       const pulseFactor = 0.2 + Math.sin(animationTime + index * 0.5) * 0.2
       light.intensity = pulseFactor
-      
+
       // Slight movement for dynamic effect
       const lightRadius = this.width * 1.2
       const wobble = Math.sin(animationTime * 2) * 0.1
       light.position.set(
-        this.position.x + Math.cos(userData.originalAngle) * (lightRadius + wobble),
-        this.position.y + Math.sin(userData.originalAngle) * (lightRadius + wobble) * 0.7,
+        this.position.x +
+          Math.cos(userData.originalAngle) * (lightRadius + wobble),
+        this.position.y +
+          Math.sin(userData.originalAngle) * (lightRadius + wobble) * 0.7,
         this.position.z + Math.sin(animationTime * 3) * 0.5
       )
     })

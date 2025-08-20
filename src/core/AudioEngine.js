@@ -96,7 +96,10 @@ export class AudioEngine {
         duration: 0.4,
         volume: 0.3,
         envelope: { attack: 0.01, decay: 0.1, sustain: 0.8, release: 0.3 },
-        harmonics: [{ frequency: 1320, volume: 0.5 }, { frequency: 1760, volume: 0.3 }]
+        harmonics: [
+          { frequency: 1320, volume: 0.5 },
+          { frequency: 1760, volume: 0.3 },
+        ],
       },
       gateActivate: {
         type: 'triangle',
@@ -104,7 +107,7 @@ export class AudioEngine {
         duration: 1.5,
         volume: 0.4,
         envelope: { attack: 0.2, decay: 0.3, sustain: 0.7, release: 0.5 },
-        modulation: { frequency: 4, depth: 20 }
+        modulation: { frequency: 4, depth: 20 },
       },
       levelComplete: {
         type: 'square',
@@ -112,14 +115,14 @@ export class AudioEngine {
         duration: 2.5,
         volume: 0.5,
         envelope: { attack: 0.1, decay: 0.2, sustain: 0.8, release: 0.4 },
-        melody: [440, 554.37, 659.25, 880] // A4, C#5, E5, A5
+        melody: [440, 554.37, 659.25, 880], // A4, C#5, E5, A5
       },
       swimming: {
         type: 'sine',
         frequency: 200,
         duration: 0.2,
         volume: 0.15,
-        envelope: { attack: 0.05, decay: 0.1, sustain: 0.5, release: 0.05 }
+        envelope: { attack: 0.05, decay: 0.1, sustain: 0.5, release: 0.05 },
       },
       underwater: {
         type: 'sine',
@@ -127,7 +130,7 @@ export class AudioEngine {
         duration: -1, // Continuous
         volume: 0.12,
         envelope: { attack: 2.0, decay: 0, sustain: 1.0, release: 2.0 },
-        modulation: { frequency: 0.3, depth: 5 }
+        modulation: { frequency: 0.3, depth: 5 },
       },
     }
 
@@ -180,11 +183,17 @@ export class AudioEngine {
       }
 
       // Configure ADSR envelope
-      const envelope = config.envelope || { attack: 0.01, decay: 0.1, sustain: 0.8, release: 0.2 }
+      const envelope = config.envelope || {
+        attack: 0.01,
+        decay: 0.1,
+        sustain: 0.8,
+        release: 0.2,
+      }
       const attackTime = currentTime + envelope.attack
       const decayTime = attackTime + envelope.decay
       const sustainLevel = config.volume * envelope.sustain
-      const releaseTime = config.duration > 0 ? currentTime + config.duration : currentTime + 1
+      const releaseTime =
+        config.duration > 0 ? currentTime + config.duration : currentTime + 1
 
       gainNode.gain.setValueAtTime(0, currentTime)
       gainNode.gain.linearRampToValueAtTime(config.volume, attackTime)
@@ -201,16 +210,19 @@ export class AudioEngine {
         config.harmonics.forEach(harmonic => {
           const harmonicOsc = this.audioContext.createOscillator()
           const harmonicGain = this.audioContext.createGain()
-          
+
           harmonicOsc.type = config.type
           harmonicOsc.frequency.setValueAtTime(harmonic.frequency, currentTime)
-          harmonicGain.gain.setValueAtTime(harmonic.volume * config.volume, currentTime)
+          harmonicGain.gain.setValueAtTime(
+            harmonic.volume * config.volume,
+            currentTime
+          )
           harmonicGain.gain.linearRampToValueAtTime(0, releaseTime)
-          
+
           harmonicOsc.connect(harmonicGain)
           harmonicGain.connect(gainNode)
           harmonicOsc.start(currentTime)
-          
+
           if (config.duration > 0) {
             harmonicOsc.stop(releaseTime)
           }
@@ -246,22 +258,22 @@ export class AudioEngine {
    */
   playMelody(config, position = null) {
     const noteDuration = config.duration / config.melody.length
-    
+
     config.melody.forEach((frequency, index) => {
-      const startTime = this.audioContext.currentTime + (index * noteDuration)
-      
+      const startTime = this.audioContext.currentTime + index * noteDuration
+
       const oscillator = this.audioContext.createOscillator()
       const gainNode = this.audioContext.createGain()
-      
+
       oscillator.type = config.type
       oscillator.frequency.setValueAtTime(frequency, startTime)
-      
+
       gainNode.gain.setValueAtTime(0, startTime)
       gainNode.gain.linearRampToValueAtTime(config.volume, startTime + 0.05)
       gainNode.gain.linearRampToValueAtTime(0, startTime + noteDuration - 0.05)
-      
+
       oscillator.connect(gainNode)
-      
+
       if (position) {
         const panner = this.audioContext.createPanner()
         panner.panningModel = 'HRTF'
@@ -271,7 +283,7 @@ export class AudioEngine {
       } else {
         gainNode.connect(this.underwaterFilter)
       }
-      
+
       oscillator.start(startTime)
       oscillator.stop(startTime + noteDuration)
     })
@@ -330,10 +342,10 @@ export class AudioEngine {
 
     // Musical notes in the key of A minor (underwater/mysterious feel)
     const musicNotes = [
-      { frequency: 110, volume: 0.03, type: 'sine' },      // A2
-      { frequency: 146.83, volume: 0.025, type: 'sine' },  // D3
+      { frequency: 110, volume: 0.03, type: 'sine' }, // A2
+      { frequency: 146.83, volume: 0.025, type: 'sine' }, // D3
       { frequency: 164.81, volume: 0.02, type: 'triangle' }, // E3
-      { frequency: 220, volume: 0.015, type: 'sine' },     // A3
+      { frequency: 220, volume: 0.015, type: 'sine' }, // A3
     ]
 
     musicNotes.forEach((note, index) => {
@@ -344,11 +356,17 @@ export class AudioEngine {
 
       // Setup main oscillator
       oscillator.type = note.type
-      oscillator.frequency.setValueAtTime(note.frequency, this.audioContext.currentTime)
+      oscillator.frequency.setValueAtTime(
+        note.frequency,
+        this.audioContext.currentTime
+      )
 
       // Setup LFO for subtle frequency modulation
       lfo.type = 'sine'
-      lfo.frequency.setValueAtTime(0.1 + index * 0.05, this.audioContext.currentTime) // Different rates for each layer
+      lfo.frequency.setValueAtTime(
+        0.1 + index * 0.05,
+        this.audioContext.currentTime
+      ) // Different rates for each layer
       lfoGain.gain.setValueAtTime(2, this.audioContext.currentTime) // Small modulation depth
 
       // Connect modulation

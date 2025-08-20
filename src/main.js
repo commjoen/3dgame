@@ -453,7 +453,7 @@ class OceanAdventure {
           Math.random() - 0.5,
           Math.random() - 0.5,
           Math.random() - 0.5
-        ).normalize()
+        ).normalize(),
       }
 
       this.stars.push({ mesh: star, physicsBody: starPhysicsBody })
@@ -883,16 +883,17 @@ class OceanAdventure {
     const previousPosition = this.player.getPosition().clone()
     this.player.handleInput(this.inputState)
     this.player.update()
-    
+
     // Play swimming sounds when player is moving
     if (this.audioEngine && this.audioEngine.isInitialized) {
       const currentPosition = this.player.getPosition()
       const movementDistance = previousPosition.distanceTo(currentPosition)
-      
+
       // Play swimming sound if moving fast enough
       if (movementDistance > 0.01) {
         // Only play swimming sound occasionally to avoid spam
-        if (Math.random() < 0.05) { // 5% chance per frame when moving
+        if (Math.random() < 0.05) {
+          // 5% chance per frame when moving
           this.audioEngine.playSound('swimming', currentPosition)
         }
       }
