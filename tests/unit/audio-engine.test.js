@@ -59,6 +59,10 @@ describe('AudioEngine (Stage 3)', () => {
   let audioEngine
 
   beforeEach(() => {
+    // Clear any existing localStorage data to ensure test isolation
+    if (typeof Storage !== 'undefined') {
+      localStorage.clear()
+    }
     audioEngine = new AudioEngine()
     vi.clearAllMocks()
   })
@@ -264,7 +268,9 @@ describe('AudioEngine (Stage 3)', () => {
       expect(state).toEqual({
         isInitialized: false,
         isMuted: false,
-        masterVolume: 0.5
+        masterVolume: 0.5,
+        musicVolume: 0.5,
+        sfxVolume: 0.5
       })
     })
   })

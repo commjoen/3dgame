@@ -16,6 +16,11 @@ module.exports = {
   plugins: [
     'prettier'
   ],
+  globals: {
+    localStorage: 'readonly',
+    setTimeout: 'readonly',
+    clearTimeout: 'readonly'
+  },
   rules: {
     'prettier/prettier': 'error',
     'no-unused-vars': 'error',

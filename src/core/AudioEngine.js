@@ -14,9 +14,16 @@ export class AudioEngine {
     this.isMuted = false
     this.masterVolume = 0.5
 
+    // Separate volume controls
+    this.musicVolume = 0.5
+    this.sfxVolume = 0.5
+
     // Audio settings
     this.underwaterFilterFrequency = 800 // Low-pass filter for underwater effect
     this.reverbAmount = 0.3
+
+    // Load saved settings
+    this.loadSettings()
 
     console.log('🔊 AudioEngine created')
   }
@@ -41,6 +48,22 @@ export class AudioEngine {
         this.audioContext.currentTime
       )
       this.masterGain.connect(this.audioContext.destination)
+
+      // Create separate gain nodes for music and sound effects
+      this.musicGain = this.audioContext.createGain()
+      this.sfxGain = this.audioContext.createGain()
+
+      this.musicGain.gain.setValueAtTime(
+        this.musicVolume,
+        this.audioContext.currentTime
+      )
+      this.sfxGain.gain.setValueAtTime(
+        this.sfxVolume,
+        this.audioContext.currentTime
+      )
+
+      this.musicGain.connect(this.masterGain)
+      this.sfxGain.connect(this.masterGain)
 
       // Create underwater effect chain
       this.createUnderwaterEffects()
@@ -237,8 +260,10 @@ export class AudioEngine {
         panner.setPosition(position.x, position.y, position.z)
         gainNode.connect(panner)
         panner.connect(this.underwaterFilter)
+        this.underwaterFilter.connect(this.sfxGain)
       } else {
         gainNode.connect(this.underwaterFilter)
+        this.underwaterFilter.connect(this.sfxGain)
       }
 
       // Start and stop the sound
@@ -280,8 +305,10 @@ export class AudioEngine {
         panner.setPosition(position.x, position.y, position.z)
         gainNode.connect(panner)
         panner.connect(this.underwaterFilter)
+        this.underwaterFilter.connect(this.sfxGain)
       } else {
         gainNode.connect(this.underwaterFilter)
+        this.underwaterFilter.connect(this.sfxGain)
       }
 
       oscillator.start(startTime)
@@ -322,6 +349,7 @@ export class AudioEngine {
 
       this.ambientOscillator.connect(this.ambientGain)
       this.ambientGain.connect(this.underwaterFilter)
+      this.underwaterFilter.connect(this.musicGain)
 
       this.ambientOscillator.start()
 
@@ -383,6 +411,7 @@ export class AudioEngine {
       // Connect audio chain
       oscillator.connect(gainNode)
       gainNode.connect(this.underwaterFilter)
+      this.underwaterFilter.connect(this.musicGain)
 
       // Start oscillators
       oscillator.start()
@@ -499,6 +528,40 @@ export class AudioEngine {
         this.audioContext.currentTime
       )
     }
+
+    this.saveSettings()
+  }
+
+  /**
+   * Set music volume
+   */
+  setMusicVolume(volume) {
+    this.musicVolume = Math.max(0, Math.min(1, volume))
+
+    if (this.musicGain && this.audioContext) {
+      this.musicGain.gain.setValueAtTime(
+        this.musicVolume,
+        this.audioContext.currentTime
+      )
+    }
+
+    this.saveSettings()
+  }
+
+  /**
+   * Set sound effects volume
+   */
+  setSfxVolume(volume) {
+    this.sfxVolume = Math.max(0, Math.min(1, volume))
+
+    if (this.sfxGain && this.audioContext) {
+      this.sfxGain.gain.setValueAtTime(
+        this.sfxVolume,
+        this.audioContext.currentTime
+      )
+    }
+
+    this.saveSettings()
   }
 
   /**
@@ -525,6 +588,44 @@ export class AudioEngine {
       isInitialized: this.isInitialized,
       isMuted: this.isMuted,
       masterVolume: this.masterVolume,
+      musicVolume: this.musicVolume,
+      sfxVolume: this.sfxVolume,
+    }
+  }
+
+  /**
+   * Load audio settings from localStorage
+   */
+  loadSettings() {
+    try {
+      const savedSettings = localStorage.getItem('oceanAdventure_audioSettings')
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings)
+        this.masterVolume = settings.masterVolume ?? 0.5
+        this.musicVolume = settings.musicVolume ?? 0.5
+        this.sfxVolume = settings.sfxVolume ?? 0.5
+      }
+    } catch (error) {
+      console.warn('Failed to load audio settings:', error)
+    }
+  }
+
+  /**
+   * Save audio settings to localStorage
+   */
+  saveSettings() {
+    try {
+      const settings = {
+        masterVolume: this.masterVolume,
+        musicVolume: this.musicVolume,
+        sfxVolume: this.sfxVolume,
+      }
+      localStorage.setItem(
+        'oceanAdventure_audioSettings',
+        JSON.stringify(settings)
+      )
+    } catch (error) {
+      console.warn('Failed to save audio settings:', error)
     }
   }
 

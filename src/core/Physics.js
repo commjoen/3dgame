@@ -317,9 +317,11 @@ export class PhysicsEngine {
    * @param {THREE.Vector3} previousPosition - Position before collision
    */
   resolveCollisions(body, collisions, previousPosition) {
-    // Check if any collisions are with collectibles that should not block movement
+    // Check if any collisions are with collectibles or gates that should not block movement
     const blockingCollisions = collisions.filter(
-      collision => collision.type !== 'collectible' || collision.collected
+      collision =>
+        (collision.type !== 'collectible' || collision.collected) &&
+        collision.type !== 'gate'
     )
 
     // Only revert position and stop movement for blocking collisions
