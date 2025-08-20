@@ -349,6 +349,9 @@ class OceanAdventure {
     floorPhysicsBody.type = 'environment'
     this.physicsEngine.addRigidBody(floorPhysicsBody)
 
+    // Add invisible boundary walls to prevent falling off the platform
+    this.createLevelBoundaries()
+
     // Add coral/rocks with enhanced materials and lighting
     for (let i = 0; i < 10; i++) {
       const radius = 0.5 + Math.random() * 1.5
@@ -391,6 +394,62 @@ class OceanAdventure {
         physicsBody: coralPhysicsBody,
       })
     }
+  }
+
+  /**
+   * Create invisible boundary walls around the level
+   */
+  createLevelBoundaries() {
+    console.log('🧱 Creating level boundaries...')
+    
+    // Level size should match the floor size (100x100)
+    const levelSize = 50 // Half the floor size (radius from center)
+    const wallHeight = 15 // Height of boundary walls
+    const wallThickness = 2 // Thickness of walls
+
+    // Create four walls around the level perimeter
+    const wallConfigs = [
+      // North wall (positive Z)
+      { 
+        position: new THREE.Vector3(0, wallHeight / 2, levelSize), 
+        size: new THREE.Vector3(levelSize * 2, wallHeight, wallThickness),
+        name: 'North Wall'
+      },
+      // South wall (negative Z)
+      { 
+        position: new THREE.Vector3(0, wallHeight / 2, -levelSize), 
+        size: new THREE.Vector3(levelSize * 2, wallHeight, wallThickness),
+        name: 'South Wall'
+      },
+      // East wall (positive X)
+      { 
+        position: new THREE.Vector3(levelSize, wallHeight / 2, 0), 
+        size: new THREE.Vector3(wallThickness, wallHeight, levelSize * 2),
+        name: 'East Wall'
+      },
+      // West wall (negative X)
+      { 
+        position: new THREE.Vector3(-levelSize, wallHeight / 2, 0), 
+        size: new THREE.Vector3(wallThickness, wallHeight, levelSize * 2),
+        name: 'West Wall'
+      }
+    ]
+
+    wallConfigs.forEach(config => {
+      // Create invisible physics wall (no visual mesh needed)
+      const wallPhysicsBody = this.physicsEngine.createBoxBody(
+        config.position,
+        config.size,
+        true // Static
+      )
+      wallPhysicsBody.type = 'environment'
+      wallPhysicsBody.name = config.name
+      this.physicsEngine.addRigidBody(wallPhysicsBody)
+
+      console.log(`🧱 Created ${config.name} at position (${config.position.x.toFixed(1)}, ${config.position.y.toFixed(1)}, ${config.position.z.toFixed(1)})`)
+    })
+
+    console.log('✅ Level boundaries created successfully')
   }
 
   createPlayer() {
@@ -1154,6 +1213,9 @@ class OceanAdventure {
   levelComplete() {
     console.log('🎉 Level Complete!')
 
+    // Add portal transition animation
+    this.startPortalTransition()
+
     // Play level completion sound
     if (this.audioEngine) {
       this.audioEngine.playSound('levelComplete')
@@ -1169,6 +1231,126 @@ class OceanAdventure {
     // Reset level with new stars
     this.createSampleStars()
     this.updateUI()
+  }
+
+  /**
+   * Start portal transition animation when passing through gate
+   */
+  startPortalTransition() {
+    console.log('🌊 Starting portal transition...')
+
+    // Create transition effect particles
+    if (this.particleSystem && this.gate) {
+      const gatePosition = this.gate.getPosition()
+      
+      // Create swirling portal particles
+      this.particleSystem.createParticles({
+        position: gatePosition,
+        count: 50,
+        spread: 2,
+        velocity: { min: 3, max: 8 },
+        lifetime: { min: 1.5, max: 3 },
+        size: { min: 4, max: 12 },
+        color: new THREE.Color(0x87ceeb), // Light blue
+        behavior: 'swirl'
+      })
+
+      // Create golden sparkles for completion
+      this.particleSystem.createParticles({
+        position: gatePosition,
+        count: 30,
+        spread: 3,
+        velocity: { min: 2, max: 6 },
+        lifetime: { min: 2, max: 4 },
+        size: { min: 2, max: 6 },
+        color: new THREE.Color(0xffd700), // Gold
+        behavior: 'sparkle'
+      })
+    }
+
+    // Camera shake effect for impact
+    if (this.camera) {
+      this.startCameraShake(0.3, 1.0) // intensity, duration
+    }
+
+    // Temporary screen flash effect
+    this.createScreenFlash()
+  }
+
+  /**
+   * Create a brief screen flash effect for portal transition
+   */
+  createScreenFlash() {
+    const flash = document.createElement('div')
+    flash.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(135, 206, 235, 0.3) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 1000;
+      animation: portalFlash 1.2s ease-out forwards;
+    `
+
+    // Add CSS animation for flash effect
+    if (!document.querySelector('#portalFlashStyle')) {
+      const style = document.createElement('style')
+      style.id = 'portalFlashStyle'
+      style.textContent = `
+        @keyframes portalFlash {
+          0% { opacity: 0; }
+          20% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `
+      document.head.appendChild(style)
+    }
+
+    document.body.appendChild(flash)
+    
+    // Remove flash element after animation
+    setTimeout(() => {
+      if (flash.parentNode) {
+        flash.parentNode.removeChild(flash)
+      }
+    }, 1200)
+  }
+
+  /**
+   * Start camera shake effect
+   */
+  startCameraShake(intensity = 0.2, duration = 0.5) {
+    if (!this.camera) return
+
+    const originalPosition = this.camera.position.clone()
+    const startTime = Date.now()
+
+    const shakeAnimation = () => {
+      const elapsed = (Date.now() - startTime) / 1000
+      const progress = elapsed / duration
+
+      if (progress < 1) {
+        // Decreasing intensity over time
+        const currentIntensity = intensity * (1 - progress)
+        
+        // Random shake offset
+        const shakeX = (Math.random() - 0.5) * currentIntensity * 2
+        const shakeY = (Math.random() - 0.5) * currentIntensity * 2
+        const shakeZ = (Math.random() - 0.5) * currentIntensity * 2
+
+        this.camera.position.copy(originalPosition)
+        this.camera.position.add(new THREE.Vector3(shakeX, shakeY, shakeZ))
+
+        requestAnimationFrame(shakeAnimation)
+      } else {
+        // Reset to original position
+        this.camera.position.copy(originalPosition)
+      }
+    }
+
+    shakeAnimation()
   }
 
   updateUI() {
