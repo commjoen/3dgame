@@ -39,13 +39,13 @@ export class Gate {
     // Create gate frame (torus shape for portal effect)
     const gateGeometry = new THREE.TorusGeometry(this.width, 0.3, 8, 32)
 
-    // Glowing material with emissive properties
+    // Enhanced glowing material with stronger emissive properties
     const gateMaterial = new THREE.MeshPhongMaterial({
       color: 0x00ffff,
       emissive: 0x006666,
-      emissiveIntensity: 0.3,
+      emissiveIntensity: 0.5,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.9,
       shininess: 100,
     })
 
@@ -54,7 +54,7 @@ export class Gate {
     this.gateMesh.castShadow = true
     this.gateMesh.receiveShadow = true
 
-    // Create inner portal effect
+    // Create inner portal effect with enhanced materials
     const portalGeometry = new THREE.PlaneGeometry(
       this.width * 1.5,
       this.height
@@ -62,17 +62,36 @@ export class Gate {
     const portalMaterial = new THREE.MeshBasicMaterial({
       color: 0x0088ff,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.3,
       side: THREE.DoubleSide,
     })
 
     this.portalMesh = new THREE.Mesh(portalGeometry, portalMaterial)
     this.portalMesh.position.copy(this.position)
 
-    // Create gate light source
-    this.gateLight = new THREE.PointLight(0x00ffff, 0.5, 20)
+    // Create multiple enhanced light sources for better illumination
+    this.gateLight = new THREE.PointLight(0x00ffff, 1.0, 25)
     this.gateLight.position.copy(this.position)
     this.gateLight.position.z += 1
+
+    // Add secondary lights for rim lighting effect
+    this.rimLights = []
+    const numRimLights = 6
+    for (let i = 0; i < numRimLights; i++) {
+      const angle = (i / numRimLights) * Math.PI * 2
+      const rimLight = new THREE.PointLight(0x0088ff, 0.3, 10)
+      const lightRadius = this.width * 1.2
+      rimLight.position.set(
+        this.position.x + Math.cos(angle) * lightRadius,
+        this.position.y + Math.sin(angle) * lightRadius * 0.7,
+        this.position.z + (Math.random() - 0.5) * 2
+      )
+      rimLight.userData = {
+        originalAngle: angle,
+        animationOffset: Math.random() * Math.PI * 2,
+      }
+      this.rimLights.push(rimLight)
+    }
 
     // Add to scene (initially invisible until activated)
     this.setVisibility(false)
@@ -80,17 +99,35 @@ export class Gate {
 
   /**
    * Create physics body for collision detection
+   * Using a ring shape instead of a solid box to allow swimming through
    */
   createPhysicsBody() {
-    const gateSize = new THREE.Vector3(this.width * 2, this.height, this.depth)
-    this.physicsBody = this.physicsEngine.createBoxBody(
-      this.position,
-      gateSize,
-      true // Static - gates don't move
-    )
-    this.physicsBody.type = 'gate'
-    this.physicsBody.gate = this
-    this.physicsEngine.addRigidBody(this.physicsBody)
+    // Create multiple collision bodies around the ring
+    // This allows detection when player touches the gate frame but can swim through the center
+    this.physicsBody = []
+
+    const ringRadius = this.width
+    const segments = 8
+
+    for (let i = 0; i < segments; i++) {
+      const angle = (i / segments) * Math.PI * 2
+      const x = Math.cos(angle) * ringRadius
+      const y = Math.sin(angle) * ringRadius * 0.7 // Make it more oval for height
+
+      const segmentPosition = this.position.clone()
+      segmentPosition.x += x
+      segmentPosition.y += y
+
+      const segmentBody = this.physicsEngine.createSphereBody(
+        segmentPosition,
+        0.8, // Collision radius for each segment
+        true // Static - gates don't move
+      )
+      segmentBody.type = 'gate'
+      segmentBody.gate = this
+      this.physicsEngine.addRigidBody(segmentBody)
+      this.physicsBody.push(segmentBody)
+    }
   }
 
   /**
@@ -105,8 +142,13 @@ export class Gate {
     this.setVisibility(true)
 
     // Enhanced activation effects
-    this.gateMesh.material.emissiveIntensity = 0.6
-    this.gateLight.intensity = 1.0
+    this.gateMesh.material.emissiveIntensity = 0.8
+    this.gateLight.intensity = 1.5
+
+    // Activate rim lights
+    this.rimLights.forEach(light => {
+      light.intensity = 0.4
+    })
 
     console.log('✨ Gate activated!')
   }
@@ -117,8 +159,13 @@ export class Gate {
   deactivate() {
     this.isActivated = false
     this.setVisibility(false)
-    this.gateMesh.material.emissiveIntensity = 0.3
-    this.gateLight.intensity = 0.5
+    this.gateMesh.material.emissiveIntensity = 0.5
+    this.gateLight.intensity = 1.0
+
+    // Deactivate rim lights
+    this.rimLights.forEach(light => {
+      light.intensity = 0.1
+    })
   }
 
   /**
@@ -129,10 +176,14 @@ export class Gate {
       this.scene.add(this.gateMesh)
       this.scene.add(this.portalMesh)
       this.scene.add(this.gateLight)
+      // Add rim lights
+      this.rimLights.forEach(light => this.scene.add(light))
     } else {
       this.scene.remove(this.gateMesh)
       this.scene.remove(this.portalMesh)
       this.scene.remove(this.gateLight)
+      // Remove rim lights
+      this.rimLights.forEach(light => this.scene.remove(light))
     }
   }
 
@@ -164,18 +215,39 @@ export class Gate {
 
     this.time += deltaTime
 
-    // Pulsing glow effect
+    // Enhanced pulsing glow effect
     const pulseIntensity =
-      0.3 + Math.sin(this.time * this.pulseSpeed * 10) * 0.2
+      0.4 + Math.sin(this.time * this.pulseSpeed * 10) * 0.3
     this.gateMesh.material.emissiveIntensity = pulseIntensity
-    this.gateLight.intensity = 0.5 + pulseIntensity
+    this.gateLight.intensity = 0.8 + pulseIntensity
 
     // Gentle rotation
     this.gateMesh.rotation.z += this.rotationSpeed
 
-    // Portal shimmer effect
+    // Enhanced portal shimmer effect
     this.portalMesh.material.opacity =
-      0.1 + Math.sin(this.time * this.pulseSpeed * 15) * 0.1
+      0.2 + Math.sin(this.time * this.pulseSpeed * 15) * 0.2
+
+    // Animate rim lights for dynamic lighting
+    this.rimLights.forEach((light, index) => {
+      const userData = light.userData
+      const animationTime = this.time * 0.5 + userData.animationOffset
+
+      // Create pulsing effect with phase offset for each light
+      const pulseFactor = 0.2 + Math.sin(animationTime + index * 0.5) * 0.2
+      light.intensity = pulseFactor
+
+      // Slight movement for dynamic effect
+      const lightRadius = this.width * 1.2
+      const wobble = Math.sin(animationTime * 2) * 0.1
+      light.position.set(
+        this.position.x +
+          Math.cos(userData.originalAngle) * (lightRadius + wobble),
+        this.position.y +
+          Math.sin(userData.originalAngle) * (lightRadius + wobble) * 0.7,
+        this.position.z + Math.sin(animationTime * 3) * 0.5
+      )
+    })
   }
 
   /**
@@ -212,8 +284,14 @@ export class Gate {
    * Dispose of gate resources
    */
   dispose() {
-    // Remove from physics engine
-    this.physicsEngine.removeRigidBody(this.physicsBody)
+    // Remove from physics engine - handle array of physics bodies
+    if (Array.isArray(this.physicsBody)) {
+      this.physicsBody.forEach(body => {
+        this.physicsEngine.removeRigidBody(body)
+      })
+    } else if (this.physicsBody) {
+      this.physicsEngine.removeRigidBody(this.physicsBody)
+    }
 
     // Remove from scene
     this.setVisibility(false)

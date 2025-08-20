@@ -40,8 +40,10 @@ describe('Gate Component (Stage 3)', () => {
 
     it('should create physics body for collision detection', () => {
       expect(gate.physicsBody).toBeDefined()
-      expect(gate.physicsBody.type).toBe('gate')
-      expect(gate.physicsBody.gate).toBe(gate)
+      expect(Array.isArray(gate.physicsBody)).toBe(true)
+      expect(gate.physicsBody.length).toBeGreaterThan(0)
+      expect(gate.physicsBody[0].type).toBe('gate')
+      expect(gate.physicsBody[0].gate).toBe(gate)
     })
   })
 

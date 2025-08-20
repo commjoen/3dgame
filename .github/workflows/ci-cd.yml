@@ -298,6 +298,56 @@ jobs:
           exit 1
         fi
         
+    - name: Checkout existing gh-pages branch
+      uses: actions/checkout@v5
+      with:
+        ref: gh-pages
+        path: gh-pages
+        token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+      
+    - name: Preserve PR previews and merge with main deployment
+      run: |
+        echo "Preparing combined GitHub Pages deployment..."
+        
+        # Create a temporary directory for the combined deployment
+        mkdir -p pages-deployment
+        
+        # First, copy the new main branch build
+        cp -r dist/* pages-deployment/
+        
+        # Check if gh-pages branch exists and has content
+        if [ -d "gh-pages" ] && [ -d "gh-pages/.git" ]; then
+          echo "Found existing gh-pages branch, preserving PR previews..."
+          
+          # Preserve PR preview directories
+          for dir in gh-pages/pr-*/; do
+            if [ -d "$dir" ]; then
+              pr_dir=$(basename "$dir")
+              echo "Preserving $pr_dir"
+              cp -r "$dir" "pages-deployment/$pr_dir"
+            fi
+          done
+          
+          # Preserve the previews.html file if it exists
+          if [ -f "gh-pages/previews.html" ]; then
+            echo "Preserving previews.html"
+            cp "gh-pages/previews.html" "pages-deployment/previews.html"
+          fi
+          
+          # Preserve other important files
+          if [ -f "gh-pages/README.md" ]; then
+            echo "Preserving README.md"
+            cp "gh-pages/README.md" "pages-deployment/README.md"
+          fi
+        else
+          echo "No existing gh-pages branch found, creating fresh deployment"
+        fi
+        
+        # Show what will be deployed
+        echo "Final deployment contents:"
+        ls -la pages-deployment/
+        
     - name: Setup Pages
       uses: actions/configure-pages@v4
       
@@ -305,7 +355,7 @@ jobs:
       id: pages-artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: dist
+        path: pages-deployment
 
   deploy:
     name: Deploy to GitHub Pages
@@ -329,6 +379,17 @@ jobs:
       uses: actions/deploy-pages@v4
       with:
         artifact_id: ${{ needs.prepare-pages.outputs.pages-artifact-id }}
+        
+    - name: Deployment success notification
+      if: success()
+      run: |
+        echo "✅ GitHub Pages deployment successful!"
+        echo ""
+        echo "🌐 Main application: ${{ steps.deployment.outputs.page_url }}"
+        echo "📋 PR previews: ${{ steps.deployment.outputs.page_url }}previews.html"
+        echo ""
+        echo "ℹ️ The deployment preserves all existing PR previews and the previews.html index page."
+        echo "Both the main application and PR preview system are now working together."
         
     - name: Deployment status check
       if: failure()

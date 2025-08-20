@@ -12,6 +12,7 @@ import { ParticleSystem } from './core/ParticleSystem.js'
 import { AudioEngine } from './core/AudioEngine.js'
 import { Player } from './components/Player.js'
 import { Gate } from './components/Gate.js'
+import { StarGeometry } from './components/StarGeometry.js'
 
 // Game configuration
 const CONFIG = {
@@ -411,20 +412,15 @@ class OceanAdventure {
   createSampleStars() {
     this.stars = []
 
-    // Create glowing star collectibles with enhanced materials
-    for (let i = 0; i < 5; i++) {
-      const starGeometry = new THREE.SphereGeometry(0.3)
+    // Create star geometry variants for visual variety
+    const starVariants = StarGeometry.createVariants()
 
-      // Use MeshPhongMaterial for better lighting effects
-      const starMaterial = new THREE.MeshPhongMaterial({
-        color: 0xffd700,
-        emissive: 0xffd700,
-        emissiveIntensity: 0.4,
-        shininess: 100,
-        specular: 0xffffff,
-        transparent: true,
-        opacity: 0.95,
-      })
+    // Create actual star-shaped collectibles with enhanced materials
+    for (let i = 0; i < 5; i++) {
+      // Use a random star variant for variety
+      const variant = starVariants[i % starVariants.length]
+      const starGeometry = variant.geometry.clone()
+      const starMaterial = variant.material.clone()
 
       const star = new THREE.Mesh(starGeometry, starMaterial)
       const position = new THREE.Vector3(
@@ -446,13 +442,18 @@ class OceanAdventure {
       starPhysicsBody.collected = false
       this.physicsEngine.addRigidBody(starPhysicsBody)
 
-      // Add simple rotation animation and floating effect
+      // Add enhanced rotation animation and floating effect
       star.userData = {
         rotationSpeed: 0.02 + Math.random() * 0.02,
         floatSpeed: 0.01 + Math.random() * 0.01,
         floatOffset: Math.random() * Math.PI * 2,
         originalY: position.y,
         physicsBody: starPhysicsBody,
+        rotationAxis: new THREE.Vector3(
+          Math.random() - 0.5,
+          Math.random() - 0.5,
+          Math.random() - 0.5
+        ).normalize(),
       }
 
       this.stars.push({ mesh: star, physicsBody: starPhysicsBody })
@@ -878,9 +879,25 @@ class OceanAdventure {
     // Update physics engine
     this.physicsEngine.update(deltaTime)
 
-    // Update player with input
+    // Update player with input and check for movement sounds
+    const previousPosition = this.player.getPosition().clone()
     this.player.handleInput(this.inputState)
     this.player.update()
+
+    // Play swimming sounds when player is moving
+    if (this.audioEngine && this.audioEngine.isInitialized) {
+      const currentPosition = this.player.getPosition()
+      const movementDistance = previousPosition.distanceTo(currentPosition)
+
+      // Play swimming sound if moving fast enough
+      if (movementDistance > 0.01) {
+        // Only play swimming sound occasionally to avoid spam
+        if (Math.random() < 0.05) {
+          // 5% chance per frame when moving
+          this.audioEngine.playSound('swimming', currentPosition)
+        }
+      }
+    }
 
     // Update particle system
     this.particleSystem.update(deltaTime)
@@ -904,14 +921,19 @@ class OceanAdventure {
     // Update UI (including depth meter)
     this.updateUI()
 
-    // Animate stars with floating and pulsing effects
+    // Animate stars with enhanced floating and rotation effects
     this.stars.forEach(starData => {
       const star = starData.mesh
       const userData = star.userData
 
-      // Rotation animation
-      star.rotation.y += userData.rotationSpeed
-      star.rotation.x += userData.rotationSpeed * 0.5
+      // Enhanced rotation animation using the custom rotation axis
+      if (userData.rotationAxis) {
+        star.rotateOnAxis(userData.rotationAxis, userData.rotationSpeed)
+      } else {
+        // Fallback rotation
+        star.rotation.y += userData.rotationSpeed
+        star.rotation.x += userData.rotationSpeed * 0.5
+      }
 
       // Floating animation
       const time = Date.now() * 0.001
@@ -920,7 +942,7 @@ class OceanAdventure {
         Math.sin(time * userData.floatSpeed + userData.floatOffset) * 0.3
       star.position.y = floatY
 
-      // Pulsing emissive effect
+      // Pulsing emissive effect with more dynamic variation
       const pulseFactor = 0.3 + Math.sin(time * 2 + userData.floatOffset) * 0.1
       star.material.emissiveIntensity = pulseFactor
     })
