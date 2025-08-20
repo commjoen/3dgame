@@ -103,10 +103,14 @@ export class Gate {
    */
   createPhysicsBody() {
     // Create multiple collision bodies around the ring
-    // This allows detection when player touches the gate frame but can swim through the center
+    // This allows detection when player swims through the gate center
     this.physicsBody = []
 
-    const ringRadius = this.width
+    // Position collision spheres at the inner edge of the torus opening
+    // Visual gate: TorusGeometry(4, 0.3) means major radius 4, tube radius 0.3
+    // Inner opening radius = major radius - tube radius = 4 - 0.3 = 3.7
+    // Place collision spheres slightly inside the opening at radius 3.2 to ensure detection
+    const ringRadius = this.width - 0.8 // Places spheres at radius 3.2 for reliable detection
     const segments = 8
 
     for (let i = 0; i < segments; i++) {
@@ -120,7 +124,7 @@ export class Gate {
 
       const segmentBody = this.physicsEngine.createSphereBody(
         segmentPosition,
-        0.8, // Collision radius for each segment
+        1.0, // Collision radius that ensures good coverage without blocking movement
         true // Static - gates don't move
       )
       segmentBody.type = 'gate'

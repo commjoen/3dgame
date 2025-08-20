@@ -9,6 +9,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  actions: write
 
 jobs:
   regenerate-previews:
@@ -21,6 +22,7 @@ jobs:
       with:
         ref: gh-pages
         token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
       continue-on-error: true
       
     - name: Initialize gh-pages branch if needed
@@ -162,3 +164,8 @@ jobs:
           git push origin gh-pages
           echo "Successfully updated previews.html"
         fi
+        
+    - name: Enable GitHub Pages
+      run: |
+        echo "GitHub Pages should be automatically enabled for gh-pages branch"
+        echo "If this is the first deployment, GitHub Pages may take a few minutes to become available"

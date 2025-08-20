@@ -10,6 +10,7 @@ permissions:
   pages: write
   id-token: write
   pull-requests: write
+  actions: write
 
 jobs:
   deploy-preview:
@@ -54,6 +55,7 @@ jobs:
         ref: gh-pages
         path: gh-pages
         token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
       continue-on-error: true
       
     - name: Initialize gh-pages branch if needed
@@ -88,6 +90,12 @@ jobs:
         # Recreate the PR preview directory and files
         mkdir -p pr-${{ github.event.number }}
         cp -r ../dist/* pr-${{ github.event.number }}/
+        
+        # Create main deployment if it doesn't exist
+        if [ ! -f "index.html" ]; then
+          echo "Creating placeholder main deployment..."
+          echo "<html><head><title>Ocean Adventure</title></head><body><h1>Main deployment coming soon</h1><p><a href='previews.html'>View PR Previews</a></p></body></html>" > index.html
+        fi
         
         # Regenerate the previews index
         CURRENT_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
@@ -162,7 +170,7 @@ jobs:
                 echo "                <div class=\"preview-item\">" >> previews.html
                 echo "                    <h3>🔄 Pull Request #$pr_num</h3>" >> previews.html
                 echo "                    <p>Preview deployment for PR #$pr_num</p>" >> previews.html
-                echo "                    <a href=\"/3dgame/$dir\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
+                echo "                    <a href=\"/3dgame/pr-$pr_num/\" class=\"preview-link\">Play PR #$pr_num</a>" >> previews.html
                 echo "                    <a href=\"https://github.com/commjoen/3dgame/pull/$pr_num\" class=\"preview-link\">View PR</a>" >> previews.html
                 echo "                </div>" >> previews.html
             fi
@@ -178,6 +186,12 @@ jobs:
         git add .
         git diff --staged --quiet || git commit -m "Deploy PR #${{ github.event.number }} preview"
         git push origin gh-pages
+        
+        # Trigger GitHub Pages deployment by creating a small update
+        echo "# Last updated: ${CURRENT_DATE}" >> .pages-trigger
+        git add .pages-trigger
+        git commit -m "Trigger GitHub Pages refresh for PR #${{ github.event.number }}" || true
+        git push origin gh-pages || true
     
     - name: Comment on PR
       uses: actions/github-script@v7
