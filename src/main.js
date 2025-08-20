@@ -1166,8 +1166,6 @@ window.addEventListener(
     try {
       console.log('🌊 Ocean Adventure - Starting initialization...')
       const game = new OceanAdventure()
-      // Make game available for debugging
-      window.game = game
       await game.initialize()
     } catch (error) {
       console.error('❌ Critical error during game initialization:', error)
