@@ -10,6 +10,7 @@ permissions:
   pages: write
   id-token: write
   pull-requests: write
+  actions: write
 
 jobs:
   deploy-preview:
@@ -54,6 +55,7 @@ jobs:
         ref: gh-pages
         path: gh-pages
         token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
       continue-on-error: true
       
     - name: Initialize gh-pages branch if needed
@@ -88,6 +90,16 @@ jobs:
         # Recreate the PR preview directory and files
         mkdir -p pr-${{ github.event.number }}
         cp -r ../dist/* pr-${{ github.event.number }}/
+        
+        # Create main deployment if it doesn't exist
+        if [ ! -f "index.html" ]; then
+          echo "Creating main deployment..."
+          cp -r ../dist/* .
+          # Don't overwrite existing previews.html
+          if [ -f "previews.html" ]; then
+            rm index.html && mv previews.html index.html.temp && cp -r ../dist/* . && mv index.html.temp previews.html
+          fi
+        fi
         
         # Regenerate the previews index
         CURRENT_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
