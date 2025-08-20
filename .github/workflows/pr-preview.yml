@@ -20,7 +20,7 @@ jobs:
     
     environment:
       name: pr-preview-${{ github.event.number }}
-      url: ${{ steps.deploy.outputs.page_url }}pr-${{ github.event.number }}/
+      url: https://commjoen.github.io/3dgame/pr-${{ github.event.number }}/
     
     steps:
     - name: Checkout PR code
