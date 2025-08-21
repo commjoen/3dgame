@@ -46,7 +46,7 @@ describe('Player', () => {
     it('should create physics body', () => {
       expect(player.physicsBody).toBeDefined()
       expect(player.physicsBody.collisionType).toBe('sphere')
-      expect(player.physicsBody.radius).toBe(0.7)
+      expect(player.physicsBody.radius).toBe(1.0)
       expect(player.physicsBody.isStatic).toBe(false)
     })
 

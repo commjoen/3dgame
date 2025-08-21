@@ -467,7 +467,9 @@ class OceanAdventure {
     // Position gate at a reasonable distance from player
     const gatePosition = new THREE.Vector3(0, 2, -15) // Reasonable distance for gameplay
     this.gate = new Gate(this.scene, this.physicsEngine, gatePosition)
-    console.log(`🚪 Gate created at position: (${gatePosition.x}, ${gatePosition.y}, ${gatePosition.z})`)
+    console.log(
+      `🚪 Gate created at position: (${gatePosition.x}, ${gatePosition.y}, ${gatePosition.z})`
+    )
   }
 
   createSampleStars() {
