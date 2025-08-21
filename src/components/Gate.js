@@ -124,7 +124,7 @@ export class Gate {
 
       const segmentBody = this.physicsEngine.createSphereBody(
         segmentPosition,
-        1.0, // Collision radius that ensures good coverage without blocking movement
+        2.0, // Increased from 1.0 to 2.0 for better collision coverage
         true // Static - gates don't move
       )
       segmentBody.type = 'gate'
@@ -136,7 +136,7 @@ export class Gate {
     // Add a central collision body to detect when player swims through the gate center
     const centerBody = this.physicsEngine.createSphereBody(
       this.position.clone(), // Position at gate center
-      1.5, // Radius sized to cover gate opening (player radius is 0.7)
+      3.0, // Increased from 1.5 to 3.0 for easier collision detection
       true // Static - gates don't move
     )
     centerBody.type = 'gate'

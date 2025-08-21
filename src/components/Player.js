@@ -65,7 +65,7 @@ export class Player {
   createPhysicsBody() {
     this.physicsBody = this.physicsEngine.createSphereBody(
       this.mesh.position.clone(), // Use the mesh position which is now set to (0, 2, 0)
-      0.7, // Slightly larger radius for collision detection
+      1.0, // Increased from 0.7 to 1.0 for better collision detection
       false // Not static - player can move
     )
 
