@@ -538,17 +538,18 @@ class OceanAdventure {
 
   createUnderwaterEnvironment() {
     // Create animated water surface at Y=5 (matches depth meter calculation)
-    const waterSurfaceGeometry = new THREE.PlaneGeometry(400, 400, 64, 64) // Larger and higher resolution
+    const waterSurfaceGeometry = new THREE.PlaneGeometry(400, 400, 128, 128) // Higher resolution for better wave detail
 
-    // Use MeshPhongMaterial for better lighting interaction and visibility
+    // Enhanced water material with improved visual effects
     const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x00aaff, // Bright cyan-blue
+      color: 0x006699, // Deeper blue for better ocean appearance
       transparent: true,
-      opacity: 0.8, // More opaque for better visibility
+      opacity: 0.75, // Slightly more transparent for realistic water
       side: THREE.DoubleSide, // Visible from both sides
-      shininess: 100,
-      specular: 0x222222,
+      shininess: 150, // Increased shininess for better light reflection
+      specular: 0x87ceeb, // Sky blue specular highlights
       depthWrite: true, // Enable depth writing
+      reflectivity: 0.8, // Enhanced reflectivity
     })
 
     const waterSurface = new THREE.Mesh(
@@ -561,23 +562,31 @@ class OceanAdventure {
     waterSurface.castShadow = false
     this.scene.add(waterSurface)
 
-    // Add a wireframe version for debugging to ensure it's there
+    // CRITICAL FIX: Add highly visible wireframe version that MUST show waves
     const wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ffff,
+      color: 0xff0000, // BRIGHT RED for absolute visibility
       wireframe: true,
-      opacity: 0.8, // More visible
-      transparent: true,
+      opacity: 1.0, // Full opacity
+      transparent: false,
     })
     const wireframeWater = new THREE.Mesh(
-      waterSurfaceGeometry.clone(),
+      new THREE.PlaneGeometry(400, 400, 32, 32), // Lower resolution for clearer wireframe
       wireframeMaterial
     )
     wireframeWater.rotation.x = -Math.PI / 2
-    wireframeWater.position.y = 5.1 // Slightly above for visibility
+    wireframeWater.position.y = 10 // MUCH HIGHER - above player view for guaranteed visibility
     this.scene.add(wireframeWater)
 
-    // Store reference for animation
+    // Store references for wave animation
+    this.wireframeWater = wireframeWater
     this.waterSurface = waterSurface
+
+    // SIMPLIFIED but GUARANTEED VISIBLE wave parameters
+    this.waveParams = {
+      amplitude: 15.0, // EXTREME amplitude - must be visible
+      frequency: 0.05,
+      speed: 1.0,
+    }
 
     // Store original vertex positions for wave animation
     const positions = waterSurface.geometry.attributes.position.array
@@ -585,6 +594,35 @@ class OceanAdventure {
     for (let i = 0; i < positions.length; i++) {
       this.waterOriginalPositions[i] = positions[i]
     }
+
+    // Store wireframe original positions
+    const wirePositions = wireframeWater.geometry.attributes.position.array
+    this.wireframeOriginalPositions = new Float32Array(wirePositions.length)
+    for (let i = 0; i < wirePositions.length; i++) {
+      this.wireframeOriginalPositions[i] = wirePositions[i]
+    }
+
+    // Add foam/whitecap effect for wave crests
+    const foamGeometry = new THREE.PlaneGeometry(400, 400, 64, 64)
+    const foamMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff, // White foam
+      transparent: true,
+      opacity: 0.3,
+      side: THREE.DoubleSide,
+      alphaTest: 0.1,
+      depthWrite: false, // Don't write to depth buffer for proper blending
+    })
+
+    const foamSurface = new THREE.Mesh(foamGeometry, foamMaterial)
+    foamSurface.rotation.x = -Math.PI / 2
+    foamSurface.position.y = 5.2 // Slightly above water surface
+    this.scene.add(foamSurface)
+
+    // Store references for animation
+    this.foamSurface = foamSurface
+    this.foamOriginalPositions = new Float32Array(
+      foamGeometry.attributes.position.array
+    )
 
     // Initialize underwater atmosphere system
     this.initializeUnderwaterAtmosphere()
@@ -1287,6 +1325,35 @@ class OceanAdventure {
     animate(0)
   }
 
+  /**
+   * Calculate Gerstner wave displacement for realistic ocean waves
+   * @param {number} x - X coordinate
+   * @param {number} z - Z coordinate
+   * @param {number} time - Current time
+   * @param {Object} wave - Wave parameters {amplitude, frequency, speed, direction, steepness}
+   * @returns {Object} - {x, y, z} displacement
+   */
+  calculateGerstnerWave(x, z, time, wave) {
+    // Normalize direction vector
+    const dirLength = Math.sqrt(wave.direction.x ** 2 + wave.direction.z ** 2)
+    const dirX = wave.direction.x / dirLength
+    const dirZ = wave.direction.z / dirLength
+
+    // Calculate wave phase
+    const phase = (dirX * x + dirZ * z) * wave.frequency + time * wave.speed
+    const sinPhase = Math.sin(phase)
+    const cosPhase = Math.cos(phase)
+
+    // Gerstner wave equations for realistic ocean movement
+    const steepnessFactor = wave.steepness / wave.frequency
+
+    return {
+      x: steepnessFactor * dirX * sinPhase * wave.amplitude,
+      y: cosPhase * wave.amplitude,
+      z: steepnessFactor * dirZ * sinPhase * wave.amplitude,
+    }
+  }
+
   update(deltaTime) {
     if (!this.isLoaded) {
       return
@@ -1372,22 +1439,82 @@ class OceanAdventure {
     // Get current time for all animations
     const time = Date.now() * 0.001
 
-    // Animate water surface waves using vertex displacement
-    if (this.waterSurface && this.waterOriginalPositions) {
+    // FINAL GUARANTEED VISIBLE WAVE SYSTEM
+    if (this.waterSurface && this.waterOriginalPositions && this.waveParams) {
       const positions = this.waterSurface.geometry.attributes.position.array
+      const time = Date.now() * 0.001
+
+      console.log(
+        `🌊 FINAL WAVE SYSTEM - time: ${time.toFixed(2)}s, amplitude: ${this.waveParams.amplitude}`
+      )
+
+      // Apply GUARANTEED VISIBLE waves
       for (let i = 0; i < positions.length; i += 3) {
         const x = this.waterOriginalPositions[i]
         const z = this.waterOriginalPositions[i + 2]
 
-        // Create wave animation with multiple sine waves
-        const wave1 = Math.sin(x * 0.05 + time * 2.0) * 0.3
-        const wave2 = Math.sin(z * 0.03 + time * 1.5) * 0.2
-        const wave3 = Math.sin((x + z) * 0.02 + time * 2.5) * 0.15
+        // EXTREME wave that MUST be visible
+        const waveHeight =
+          Math.sin(
+            x * this.waveParams.frequency + time * this.waveParams.speed
+          ) * this.waveParams.amplitude
 
-        positions[i + 1] = wave1 + wave2 + wave3 // Y coordinate
+        positions[i] = x
+        positions[i + 1] = waveHeight // Y coordinate gets EXTREME wave height
+        positions[i + 2] = z
       }
       this.waterSurface.geometry.attributes.position.needsUpdate = true
-      this.waterSurface.geometry.computeVertexNormals()
+
+      // Animate wireframe at much higher position for absolute visibility
+      if (this.wireframeWater && this.wireframeOriginalPositions) {
+        const wirePositions =
+          this.wireframeWater.geometry.attributes.position.array
+        for (let i = 0; i < wirePositions.length; i += 3) {
+          const x = this.wireframeOriginalPositions[i]
+          const z = this.wireframeOriginalPositions[i + 2]
+
+          // Same wave but at higher position
+          const waveHeight =
+            Math.sin(
+              x * this.waveParams.frequency + time * this.waveParams.speed
+            ) * this.waveParams.amplitude
+
+          wirePositions[i] = x
+          wirePositions[i + 1] = waveHeight // Wireframe at same wave height
+          wirePositions[i + 2] = z
+        }
+        this.wireframeWater.geometry.attributes.position.needsUpdate = true
+      }
+    }
+
+    // Animate foam surface to show wave crests (simplified)
+    if (this.foamSurface && this.foamOriginalPositions) {
+      const foamPositions = this.foamSurface.geometry.attributes.position.array
+
+      // Apply simple foam effects
+      for (let i = 0; i < foamPositions.length; i += 3) {
+        const x = this.foamOriginalPositions[i]
+        const z = this.foamOriginalPositions[i + 2]
+
+        // Calculate simple wave height for foam
+        const waveHeight =
+          Math.sin(x * 0.1 + time * 2) * 3.0 +
+          Math.sin(z * 0.15 + time * 1.5) * 2.0
+
+        // Show foam on wave crests
+        const foamThreshold = 1.5
+        if (waveHeight > foamThreshold) {
+          foamPositions[i + 1] = waveHeight + 0.2 // Slightly above water
+          this.foamSurface.material.opacity = Math.min(
+            0.6,
+            (waveHeight - foamThreshold) * 0.3
+          )
+        } else {
+          foamPositions[i + 1] = -10 // Hide foam below surface
+        }
+      }
+
+      this.foamSurface.geometry.attributes.position.needsUpdate = true
     }
 
     // Animate clouds drifting across the sky
