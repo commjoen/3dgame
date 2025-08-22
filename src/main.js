@@ -542,14 +542,15 @@ class OceanAdventure {
 
     // Enhanced water material with improved visual effects
     const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x006699, // Deeper blue for better ocean appearance
+      color: 0x0099ff, // Bright blue for excellent wave visibility
       transparent: true,
-      opacity: 0.75, // Slightly more transparent for realistic water
+      opacity: 0.8, // Higher opacity to see the surface better
       side: THREE.DoubleSide, // Visible from both sides
-      shininess: 150, // Increased shininess for better light reflection
-      specular: 0x87ceeb, // Sky blue specular highlights
-      depthWrite: true, // Enable depth writing
-      reflectivity: 0.8, // Enhanced reflectivity
+      shininess: 200, // Maximum shininess for better light reflection
+      specular: 0xffffff, // White specular highlights for brightness
+      depthWrite: false, // Disable depth writing for better transparency
+      reflectivity: 1.0, // Maximum reflectivity
+      emissive: 0x001122, // Slight blue emissive glow
     })
 
     const waterSurface = new THREE.Mesh(
@@ -574,11 +575,27 @@ class OceanAdventure {
       wireframeMaterial
     )
     wireframeWater.rotation.x = -Math.PI / 2
-    wireframeWater.position.y = 10 // MUCH HIGHER - above player view for guaranteed visibility
+    wireframeWater.position.y = 4 // Just below water surface for underwater visibility
     this.scene.add(wireframeWater)
+
+    // Add second wireframe that matches the actual water surface for comparison
+    const surfaceWireframeMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ff00, // BRIGHT GREEN for comparison
+      wireframe: true,
+      opacity: 0.8,
+      transparent: true,
+    })
+    const surfaceWireframeWater = new THREE.Mesh(
+      new THREE.PlaneGeometry(400, 400, 128, 128), // Same resolution as water surface
+      surfaceWireframeMaterial
+    )
+    surfaceWireframeWater.rotation.x = -Math.PI / 2
+    surfaceWireframeWater.position.y = 5.1 // Just above water surface
+    this.scene.add(surfaceWireframeWater)
 
     // Store references for wave animation
     this.wireframeWater = wireframeWater
+    this.surfaceWireframeWater = surfaceWireframeWater
     this.waterSurface = waterSurface
 
     // SIMPLIFIED but GUARANTEED VISIBLE wave parameters
@@ -602,15 +619,26 @@ class OceanAdventure {
       this.wireframeOriginalPositions[i] = wirePositions[i]
     }
 
+    // Store surface wireframe original positions
+    const surfaceWirePositions =
+      surfaceWireframeWater.geometry.attributes.position.array
+    this.surfaceWireframeOriginalPositions = new Float32Array(
+      surfaceWirePositions.length
+    )
+    for (let i = 0; i < surfaceWirePositions.length; i++) {
+      this.surfaceWireframeOriginalPositions[i] = surfaceWirePositions[i]
+    }
+
     // Add foam/whitecap effect for wave crests
     const foamGeometry = new THREE.PlaneGeometry(400, 400, 64, 64)
     const foamMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff, // White foam
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.6, // Higher opacity for better visibility
       side: THREE.DoubleSide,
-      alphaTest: 0.1,
+      alphaTest: 0.05, // Lower alpha test for better blending
       depthWrite: false, // Don't write to depth buffer for proper blending
+      blending: THREE.AdditiveBlending, // Additive blending for brighter foam
     })
 
     const foamSurface = new THREE.Mesh(foamGeometry, foamMaterial)
@@ -1485,6 +1513,30 @@ class OceanAdventure {
         }
         this.wireframeWater.geometry.attributes.position.needsUpdate = true
       }
+
+      // Animate surface wireframe to match the water surface exactly
+      if (
+        this.surfaceWireframeWater &&
+        this.surfaceWireframeOriginalPositions
+      ) {
+        const surfaceWirePositions =
+          this.surfaceWireframeWater.geometry.attributes.position.array
+        for (let i = 0; i < surfaceWirePositions.length; i += 3) {
+          const x = this.surfaceWireframeOriginalPositions[i]
+          const z = this.surfaceWireframeOriginalPositions[i + 2]
+
+          // Same wave as the actual water surface
+          const waveHeight =
+            Math.sin(
+              x * this.waveParams.frequency + time * this.waveParams.speed
+            ) * this.waveParams.amplitude
+
+          surfaceWirePositions[i] = x
+          surfaceWirePositions[i + 1] = waveHeight // Exact same as water surface
+          surfaceWirePositions[i + 2] = z
+        }
+        this.surfaceWireframeWater.geometry.attributes.position.needsUpdate = true
+      }
     }
 
     // Animate foam surface to show wave crests (simplified)
@@ -1496,21 +1548,25 @@ class OceanAdventure {
         const x = this.foamOriginalPositions[i]
         const z = this.foamOriginalPositions[i + 2]
 
-        // Calculate simple wave height for foam
+        // Calculate simple wave height for foam - use same wave as water surface
         const waveHeight =
-          Math.sin(x * 0.1 + time * 2) * 3.0 +
-          Math.sin(z * 0.15 + time * 1.5) * 2.0
+          Math.sin(
+            x * this.waveParams.frequency + time * this.waveParams.speed
+          ) *
+            this.waveParams.amplitude +
+          Math.sin(
+            z * this.waveParams.frequency * 0.8 +
+              time * this.waveParams.speed * 1.2
+          ) *
+            this.waveParams.amplitude *
+            0.5
 
-        // Show foam on wave crests
-        const foamThreshold = 1.5
+        // Show foam on wave crests with better threshold
+        const foamThreshold = this.waveParams.amplitude * 0.3 // 30% of wave amplitude
         if (waveHeight > foamThreshold) {
-          foamPositions[i + 1] = waveHeight + 0.2 // Slightly above water
-          this.foamSurface.material.opacity = Math.min(
-            0.6,
-            (waveHeight - foamThreshold) * 0.3
-          )
+          foamPositions[i + 1] = waveHeight + 0.5 // Higher above water for visibility
         } else {
-          foamPositions[i + 1] = -10 // Hide foam below surface
+          foamPositions[i + 1] = -20 // Hide foam far below surface
         }
       }
 
