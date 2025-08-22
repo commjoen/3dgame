@@ -63,7 +63,7 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
 
     physicsEngine = new PhysicsEngine()
     player = new Player(scene, physicsEngine)
-    gate = new Gate(scene, physicsEngine, new THREE.Vector3(0, 2, -15))
+    gate = new Gate(scene, physicsEngine, new THREE.Vector3(0, -8, -15)) // Updated for deeper level
     audioEngine = new AudioEngine()
   })
 
@@ -73,7 +73,7 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
       await audioEngine.initialize()
       
       // Position player near gate
-      player.setPosition(new THREE.Vector3(0, 2, -14))
+      player.setPosition(new THREE.Vector3(0, -8, -14)) // Updated for deeper level
       
       // Initially gate should not be activated
       expect(gate.getIsActivated()).toBe(false)
@@ -84,7 +84,7 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
       
       // Move player into gate collision zone - at the gate frame, not center
       // Gate has collision bodies around radius 4, so move player to that area
-      player.setPosition(new THREE.Vector3(3.5, 2, -15))
+      player.setPosition(new THREE.Vector3(3.5, -8, -15)) // Updated for deeper level
       
       // Check for gate collision
       const playerCollisions = physicsEngine.collisionSystem.checkCollisions(
@@ -105,7 +105,7 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
 
     it('should not complete level if gate is not activated', () => {
       // Position player at gate
-      player.setPosition(new THREE.Vector3(0, 2, -15))
+      player.setPosition(new THREE.Vector3(0, -8, -15)) // Updated for deeper level
       
       // Gate should not be activated
       expect(gate.getIsActivated()).toBe(false)
@@ -212,15 +212,15 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
 
     it('should maintain consistent game object states', () => {
       // Initial state
-      expect(player.getPosition()).toEqual(new THREE.Vector3(0, 2, 0))
+      expect(player.getPosition()).toEqual(new THREE.Vector3(0, -8, 0)) // Updated for deeper level
       expect(gate.getIsActivated()).toBe(false)
       expect(audioEngine.getState().isInitialized).toBe(false)
       
       // After setup
-      player.setPosition(new THREE.Vector3(5, 3, -10))
+      player.setPosition(new THREE.Vector3(5, -5, -10)) // Updated Y position for deeper level
       gate.activate()
       
-      expect(player.getPosition()).toEqual(new THREE.Vector3(5, 3, -10))
+      expect(player.getPosition()).toEqual(new THREE.Vector3(5, -5, -10)) // Updated for deeper level
       expect(gate.getIsActivated()).toBe(true)
     })
   })

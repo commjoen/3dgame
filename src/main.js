@@ -223,9 +223,9 @@ class OceanAdventure {
       2000 // Far clipping plane to see sky elements
     )
 
-    // Position camera to clearly see both water surface and sky
-    this.camera.position.set(0, 10, 20) // Higher and further back for better view
-    this.camera.lookAt(0, 3, 0) // Look slightly above water surface
+    // Position camera to view deep underwater level while still seeing water surface
+    this.camera.position.set(0, 5, 15) // Adjusted for deeper level - closer to water surface
+    this.camera.lookAt(0, -5, 0) // Look down towards the deeper player area
   }
 
   setupLights() {
@@ -592,7 +592,7 @@ class OceanAdventure {
     // Create sun or moon based on level number (even = sun, odd = moon)
     this.createCelestialBody()
 
-    // Create ocean floor with enhanced material
+    // Create ocean floor with enhanced material - positioned deeper for level layout
     const floorGeometry = new THREE.PlaneGeometry(100, 100)
     const floorMaterial = new THREE.MeshPhongMaterial({
       color: 0x8b4513,
@@ -601,13 +601,13 @@ class OceanAdventure {
     })
     const floor = new THREE.Mesh(floorGeometry, floorMaterial)
     floor.rotation.x = -Math.PI / 2
-    floor.position.y = -5
+    floor.position.y = -15 // Moved 10 units deeper from -5 to -15
     floor.receiveShadow = true
     this.scene.add(floor)
 
     // Create physics body for floor
     const floorPhysicsBody = this.physicsEngine.createBoxBody(
-      new THREE.Vector3(0, -5, 0),
+      new THREE.Vector3(0, -15, 0), // Updated to match new floor position
       new THREE.Vector3(100, 0.1, 100),
       true // Static
     )
@@ -637,7 +637,7 @@ class OceanAdventure {
 
       const position = new THREE.Vector3(
         (Math.random() - 0.5) * 80,
-        -4 + Math.random() * 2,
+        -14 + Math.random() * 2, // Moved 10 units deeper: was -4 to -2, now -14 to -12
         (Math.random() - 0.5) * 80
       )
       coral.position.copy(position)
@@ -672,29 +672,29 @@ class OceanAdventure {
     const wallHeight = 15 // Height of boundary walls
     const wallThickness = 2 // Thickness of walls
 
-    // Create four walls around the level perimeter
+    // Create four walls around the level perimeter - positioned for deeper level
     const wallConfigs = [
       // North wall (positive Z)
       {
-        position: new THREE.Vector3(0, wallHeight / 2, levelSize),
+        position: new THREE.Vector3(0, wallHeight / 2 - 10, levelSize), // Moved 10 units deeper
         size: new THREE.Vector3(levelSize * 2, wallHeight, wallThickness),
         name: 'North Wall',
       },
       // South wall (negative Z)
       {
-        position: new THREE.Vector3(0, wallHeight / 2, -levelSize),
+        position: new THREE.Vector3(0, wallHeight / 2 - 10, -levelSize), // Moved 10 units deeper
         size: new THREE.Vector3(levelSize * 2, wallHeight, wallThickness),
         name: 'South Wall',
       },
       // East wall (positive X)
       {
-        position: new THREE.Vector3(levelSize, wallHeight / 2, 0),
+        position: new THREE.Vector3(levelSize, wallHeight / 2 - 10, 0), // Moved 10 units deeper
         size: new THREE.Vector3(wallThickness, wallHeight, levelSize * 2),
         name: 'East Wall',
       },
       // West wall (negative X)
       {
-        position: new THREE.Vector3(-levelSize, wallHeight / 2, 0),
+        position: new THREE.Vector3(-levelSize, wallHeight / 2 - 10, 0), // Moved 10 units deeper
         size: new THREE.Vector3(wallThickness, wallHeight, levelSize * 2),
         name: 'West Wall',
       },
@@ -729,8 +729,8 @@ class OceanAdventure {
    * Create the level completion gate
    */
   createGate() {
-    // Position gate at a reasonable distance from player
-    const gatePosition = new THREE.Vector3(0, 2, -15) // Reasonable distance for gameplay
+    // Position gate deep underwater for blue atmosphere experience
+    const gatePosition = new THREE.Vector3(0, -8, -15) // 13m underwater to match player depth
     this.gate = new Gate(this.scene, this.physicsEngine, gatePosition)
     console.log(
       `🚪 Gate created at position: (${gatePosition.x}, ${gatePosition.y}, ${gatePosition.z})`
@@ -753,7 +753,7 @@ class OceanAdventure {
       const star = new THREE.Mesh(starGeometry, starMaterial)
       const position = new THREE.Vector3(
         (Math.random() - 0.5) * 20,
-        Math.random() * 8 - 2,
+        Math.random() * 8 - 12, // Moved 10 units deeper: was -2 to +6, now -12 to -4
         (Math.random() - 0.5) * 20
       )
       star.position.copy(position)
@@ -1260,16 +1260,15 @@ class OceanAdventure {
   }
 
   updateCamera() {
-    // Enhanced camera follow logic with better positioning for underwater/surface viewing
+    // Enhanced camera follow logic optimized for deep underwater level
     const playerPosition = this.player.getPosition()
-    const offset = new THREE.Vector3(0, 10, 20) // Increased offset for better view
+    const offset = new THREE.Vector3(0, 15, 25) // Higher offset to see both player and water surface
     const targetPosition = playerPosition.clone().add(offset)
 
     this.camera.position.lerp(targetPosition, 0.1)
 
-    // Look at a point between player and water surface for optimal view
+    // Look at the player directly for optimal underwater viewing
     const lookAtTarget = playerPosition.clone()
-    lookAtTarget.y += 3 // Look above the player to see water surface
     this.camera.lookAt(lookAtTarget)
   }
 
