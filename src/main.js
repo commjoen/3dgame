@@ -471,38 +471,48 @@ class OceanAdventure {
           this.underwaterFog.near,
           this.underwaterFog.far
         )
-        
+
         // Change renderer clear color to underwater blue
         this.renderer.setClearColor(0x004466, 1)
-        
+
         // Add blue tint to skybox when underwater
         if (this.scene.children) {
           this.scene.children.forEach(child => {
-            if (child.material && child.material.color && child.geometry && child.geometry.type === 'SphereGeometry') {
+            if (
+              child.material &&
+              child.material.color &&
+              child.geometry &&
+              child.geometry.type === 'SphereGeometry'
+            ) {
               // This is likely the skybox
               child.material.color.setHex(0x004466)
             }
           })
         }
-        
+
         console.log('🌊 Entered underwater - fog and blue tinting applied')
       } else {
         // Exiting underwater - remove fog effects
         this.scene.fog = null
-        
+
         // Restore original clear color
         this.renderer.setClearColor(this.originalClearColor, 1)
-        
+
         // Restore skybox color
         if (this.scene.children) {
           this.scene.children.forEach(child => {
-            if (child.material && child.material.color && child.geometry && child.geometry.type === 'SphereGeometry') {
+            if (
+              child.material &&
+              child.material.color &&
+              child.geometry &&
+              child.geometry.type === 'SphereGeometry'
+            ) {
               // This is likely the skybox
               child.material.color.setHex(0x87ceeb) // Light sky blue
             }
           })
         }
-        
+
         console.log('🌊 Exited underwater - fog removed')
       }
     }
@@ -512,13 +522,17 @@ class OceanAdventure {
       const depth = Math.max(0, waterSurfaceLevel - cameraY)
       const maxDepth = 15 // Maximum depth for fog calculations
       const fogIntensity = Math.min(1, depth / maxDepth)
-      
+
       // Adjust fog far distance based on depth
       this.scene.fog.far = this.underwaterFog.far * (1 - fogIntensity * 0.6)
-      
+
       // Make fog more intense at deeper levels
       const deepBlue = new THREE.Color(0x003355)
-      this.scene.fog.color.lerpColors(this.underwaterFog.color, deepBlue, fogIntensity * 0.5)
+      this.scene.fog.color.lerpColors(
+        this.underwaterFog.color,
+        deepBlue,
+        fogIntensity * 0.5
+      )
     }
   }
 
@@ -528,9 +542,9 @@ class OceanAdventure {
 
     // Use MeshPhongMaterial for better lighting interaction and visibility
     const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x0099ff, // Bright blue
+      color: 0x00aaff, // Bright cyan-blue
       transparent: true,
-      opacity: 0.5, // Semi-transparent
+      opacity: 0.8, // More opaque for better visibility
       side: THREE.DoubleSide, // Visible from both sides
       shininess: 100,
       specular: 0x222222,
@@ -551,10 +565,13 @@ class OceanAdventure {
     const wireframeMaterial = new THREE.MeshBasicMaterial({
       color: 0x00ffff,
       wireframe: true,
-      opacity: 0.3,
+      opacity: 0.8, // More visible
       transparent: true,
     })
-    const wireframeWater = new THREE.Mesh(waterSurfaceGeometry.clone(), wireframeMaterial)
+    const wireframeWater = new THREE.Mesh(
+      waterSurfaceGeometry.clone(),
+      wireframeMaterial
+    )
     wireframeWater.rotation.x = -Math.PI / 2
     wireframeWater.position.y = 5.1 // Slightly above for visibility
     this.scene.add(wireframeWater)
