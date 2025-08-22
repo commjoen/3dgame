@@ -265,6 +265,71 @@ class OceanAdventure {
     const rimLight = new THREE.DirectionalLight(0x4a9eff, 0.8) // Increased from 0.4
     rimLight.position.set(-20, 10, -20)
     this.scene.add(rimLight)
+
+    // Create background skybox with gradient and clouds
+    this.createSkybox()
+  }
+
+  /**
+   * Create a simple skybox with gradient and cloud effects
+   */
+  createSkybox() {
+    const skyGeometry = new THREE.SphereGeometry(500, 32, 32)
+
+    // Use a simpler gradient material without custom shaders
+    const skyMaterial = new THREE.MeshBasicMaterial({
+      color: 0x87ceeb, // Sky blue
+      fog: false,
+      side: THREE.BackSide,
+    })
+
+    const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial)
+    this.scene.add(skyMesh)
+
+    // Add some simple cloud sprites
+    this.createClouds()
+
+    console.log('☁️ Skybox created')
+  }
+
+  /**
+   * Create simple cloud sprites
+   */
+  createClouds() {
+    const cloudGeometry = new THREE.SphereGeometry(8, 8, 8)
+    const cloudMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.7,
+    })
+
+    this.clouds = []
+    for (let i = 0; i < 8; i++) {
+      const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial.clone())
+
+      // Position clouds in the sky randomly
+      const angle = (i / 8) * Math.PI * 2
+      const radius = 150 + Math.random() * 100
+      cloud.position.set(
+        Math.cos(angle) * radius,
+        40 + Math.random() * 20,
+        Math.sin(angle) * radius
+      )
+
+      // Randomize scale
+      const scale = 0.8 + Math.random() * 0.6
+      cloud.scale.setScalar(scale)
+
+      // Store animation data
+      cloud.userData = {
+        originalPosition: cloud.position.clone(),
+        speed: 0.02 + Math.random() * 0.02,
+        offset: Math.random() * Math.PI * 2,
+      }
+
+      this.clouds.push(cloud)
+      this.scene.add(cloud)
+    }
   }
 
   addUnderwaterVolumetricLights() {
@@ -307,9 +372,70 @@ class OceanAdventure {
     }
   }
 
+  /**
+   * Create sun or moon based on level number
+   */
+  createCelestialBody() {
+    const isEvenLevel = this.levelNumber % 2 === 0
+
+    if (isEvenLevel) {
+      // Create sun
+      const sunGeometry = new THREE.SphereGeometry(3, 32, 32)
+      const sunMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffdd44,
+        emissive: 0xffaa00,
+        emissiveIntensity: 0.8,
+      })
+      this.celestialBody = new THREE.Mesh(sunGeometry, sunMaterial)
+
+      // Position sun in the sky
+      this.celestialBody.position.set(30, 40, -20)
+
+      // Add sun light
+      this.celestialLight = new THREE.DirectionalLight(0xffffff, 1.5)
+      this.celestialLight.position.copy(this.celestialBody.position)
+      this.celestialLight.target.position.set(0, 5, 0) // Point at water surface
+
+      console.log('☀️ Sun created for even level', this.levelNumber)
+    } else {
+      // Create moon
+      const moonGeometry = new THREE.SphereGeometry(2.5, 32, 32)
+      const moonMaterial = new THREE.MeshPhongMaterial({
+        color: 0xccccdd,
+        emissive: 0x444455,
+        emissiveIntensity: 0.3,
+      })
+      this.celestialBody = new THREE.Mesh(moonGeometry, moonMaterial)
+
+      // Position moon in the sky
+      this.celestialBody.position.set(-25, 35, -15)
+
+      // Add moon light (dimmer)
+      this.celestialLight = new THREE.DirectionalLight(0x9999bb, 0.8)
+      this.celestialLight.position.copy(this.celestialBody.position)
+      this.celestialLight.target.position.set(0, 5, 0) // Point at water surface
+
+      console.log('🌙 Moon created for odd level', this.levelNumber)
+    }
+
+    // Store initial position for animation
+    this.celestialBody.userData = {
+      originalPosition: this.celestialBody.position.clone(),
+      isEvenLevel: isEvenLevel,
+      animationRadius: 15,
+      animationSpeed: 0.2,
+    }
+
+    this.scene.add(this.celestialBody)
+    this.scene.add(this.celestialLight)
+    this.scene.add(this.celestialLight.target)
+  }
+
   createUnderwaterEnvironment() {
-    // Create water surface at Y=5 (matches depth meter calculation)
-    const waterSurfaceGeometry = new THREE.PlaneGeometry(200, 200)
+    // Create animated water surface at Y=5 (matches depth meter calculation)
+    const waterSurfaceGeometry = new THREE.PlaneGeometry(200, 200, 32, 32)
+
+    // Use a simpler approach with standard material and vertex displacement
     const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
       color: 0x006994,
       transparent: true,
@@ -318,6 +444,7 @@ class OceanAdventure {
       specular: 0x87ceeb,
       side: THREE.DoubleSide,
     })
+
     const waterSurface = new THREE.Mesh(
       waterSurfaceGeometry,
       waterSurfaceMaterial
@@ -326,6 +453,19 @@ class OceanAdventure {
     waterSurface.position.y = 5 // Water surface level used by depth meter
     waterSurface.receiveShadow = true
     this.scene.add(waterSurface)
+
+    // Store reference for animation
+    this.waterSurface = waterSurface
+
+    // Store original vertex positions for wave animation
+    const positions = waterSurface.geometry.attributes.position.array
+    this.waterOriginalPositions = new Float32Array(positions.length)
+    for (let i = 0; i < positions.length; i++) {
+      this.waterOriginalPositions[i] = positions[i]
+    }
+
+    // Create sun or moon based on level number (even = sun, odd = moon)
+    this.createCelestialBody()
 
     // Create ocean floor with enhanced material
     const floorGeometry = new THREE.PlaneGeometry(100, 100)
@@ -1093,14 +1233,73 @@ class OceanAdventure {
         Math.sin(time * userData.floatSpeed + userData.floatOffset) * 0.3
       star.position.y = floatY
 
-      // Pulsing emissive effect with more dynamic variation
-      const pulseFactor = 0.3 + Math.sin(time * 2 + userData.floatOffset) * 0.1
+      // Enhanced pulsing emissive effect with more dramatic variation
+      const pulseFactor = 0.5 + Math.sin(time * 2 + userData.floatOffset) * 0.3
       star.material.emissiveIntensity = pulseFactor
     })
 
+    // Get current time for all animations
+    const time = Date.now() * 0.001
+
+    // Animate water surface waves using vertex displacement
+    if (this.waterSurface && this.waterOriginalPositions) {
+      const positions = this.waterSurface.geometry.attributes.position.array
+      for (let i = 0; i < positions.length; i += 3) {
+        const x = this.waterOriginalPositions[i]
+        const z = this.waterOriginalPositions[i + 2]
+
+        // Create wave animation with multiple sine waves
+        const wave1 = Math.sin(x * 0.05 + time * 2.0) * 0.3
+        const wave2 = Math.sin(z * 0.03 + time * 1.5) * 0.2
+        const wave3 = Math.sin((x + z) * 0.02 + time * 2.5) * 0.15
+
+        positions[i + 1] = wave1 + wave2 + wave3 // Y coordinate
+      }
+      this.waterSurface.geometry.attributes.position.needsUpdate = true
+      this.waterSurface.geometry.computeVertexNormals()
+    }
+
+    // Animate clouds drifting across the sky
+    if (this.clouds) {
+      this.clouds.forEach(cloud => {
+        const userData = cloud.userData
+        const animationTime = time * userData.speed + userData.offset
+
+        // Gentle drift movement
+        cloud.position.x =
+          userData.originalPosition.x + Math.sin(animationTime) * 5
+        cloud.position.z =
+          userData.originalPosition.z + Math.cos(animationTime * 0.7) * 3
+
+        // Subtle opacity variation
+        cloud.material.opacity = 0.6 + Math.sin(animationTime * 2) * 0.1
+      })
+    }
+
+    // Animate celestial body (sun/moon) movement across sky
+    if (this.celestialBody && this.celestialBody.userData) {
+      const userData = this.celestialBody.userData
+      const animationTime = time * userData.animationSpeed
+
+      // Create arc movement across the sky
+      const angleOffset = userData.isEvenLevel ? 0 : Math.PI // Moon starts on opposite side
+      const angle = animationTime + angleOffset
+
+      const x =
+        Math.cos(angle) * userData.animationRadius + userData.originalPosition.x
+      const y = Math.abs(Math.sin(angle)) * 15 + 25 // Keep above horizon
+      const z = userData.originalPosition.z
+
+      this.celestialBody.position.set(x, y, z)
+
+      // Update celestial light position
+      if (this.celestialLight) {
+        this.celestialLight.position.copy(this.celestialBody.position)
+      }
+    }
+
     // Animate volumetric lights for underwater caustics effect
     if (this.volumetricLights) {
-      const time = Date.now() * 0.001
       this.volumetricLights.forEach(light => {
         const userData = light.userData
         const animationTime =
