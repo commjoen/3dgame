@@ -431,17 +431,110 @@ class OceanAdventure {
     this.scene.add(this.celestialLight.target)
   }
 
+  /**
+   * Initialize underwater atmosphere effects (fog, blue tinting)
+   */
+  initializeUnderwaterAtmosphere() {
+    // Initialize fog settings for underwater effect
+    this.underwaterFog = {
+      enabled: false,
+      color: new THREE.Color(0x006699), // Deep blue underwater color
+      near: 5,
+      far: 40,
+    }
+
+    // Store original scene background for surface mode
+    this.originalSceneBackground = this.scene.background
+    this.originalClearColor = this.renderer.getClearColor(new THREE.Color())
+
+    // Track whether player is underwater
+    this.isUnderwater = false
+
+    console.log('🌊 Underwater atmosphere system initialized')
+  }
+
+  /**
+   * Update underwater atmosphere effects based on camera position
+   */
+  updateUnderwaterAtmosphere() {
+    const cameraY = this.camera.position.y
+    const waterSurfaceLevel = 5.0
+    const wasUnderwater = this.isUnderwater
+    this.isUnderwater = cameraY < waterSurfaceLevel
+
+    // If underwater state changed, update atmosphere
+    if (this.isUnderwater !== wasUnderwater) {
+      if (this.isUnderwater) {
+        // Entering underwater - apply blue fog and tinting
+        this.scene.fog = new THREE.Fog(
+          this.underwaterFog.color,
+          this.underwaterFog.near,
+          this.underwaterFog.far
+        )
+        
+        // Change renderer clear color to underwater blue
+        this.renderer.setClearColor(0x004466, 1)
+        
+        // Add blue tint to skybox when underwater
+        if (this.scene.children) {
+          this.scene.children.forEach(child => {
+            if (child.material && child.material.color && child.geometry && child.geometry.type === 'SphereGeometry') {
+              // This is likely the skybox
+              child.material.color.setHex(0x004466)
+            }
+          })
+        }
+        
+        console.log('🌊 Entered underwater - fog and blue tinting applied')
+      } else {
+        // Exiting underwater - remove fog effects
+        this.scene.fog = null
+        
+        // Restore original clear color
+        this.renderer.setClearColor(this.originalClearColor, 1)
+        
+        // Restore skybox color
+        if (this.scene.children) {
+          this.scene.children.forEach(child => {
+            if (child.material && child.material.color && child.geometry && child.geometry.type === 'SphereGeometry') {
+              // This is likely the skybox
+              child.material.color.setHex(0x87ceeb) // Light sky blue
+            }
+          })
+        }
+        
+        console.log('🌊 Exited underwater - fog removed')
+      }
+    }
+
+    // Gradual fog density adjustment based on depth underwater
+    if (this.isUnderwater && this.scene.fog) {
+      const depth = Math.max(0, waterSurfaceLevel - cameraY)
+      const maxDepth = 15 // Maximum depth for fog calculations
+      const fogIntensity = Math.min(1, depth / maxDepth)
+      
+      // Adjust fog far distance based on depth
+      this.scene.fog.far = this.underwaterFog.far * (1 - fogIntensity * 0.6)
+      
+      // Make fog more intense at deeper levels
+      const deepBlue = new THREE.Color(0x003355)
+      this.scene.fog.color.lerpColors(this.underwaterFog.color, deepBlue, fogIntensity * 0.5)
+    }
+  }
+
   createUnderwaterEnvironment() {
     // Create animated water surface at Y=5 (matches depth meter calculation)
-    const waterSurfaceGeometry = new THREE.PlaneGeometry(200, 200, 32, 32)
+    const waterSurfaceGeometry = new THREE.PlaneGeometry(400, 400, 64, 64) // Larger and higher resolution
 
-    // Use highly visible water surface material with better settings
-    const waterSurfaceMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00aaff, // Bright cyan blue
+    // Use MeshPhongMaterial for better lighting interaction and visibility
+    const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
+      color: 0x0099ff, // Bright blue
       transparent: true,
-      opacity: 0.7, // Semi-transparent so we can see through it
+      opacity: 0.5, // Semi-transparent
       side: THREE.DoubleSide, // Visible from both sides
-      wireframe: false, // Solid surface
+      shininess: 100,
+      specular: 0x222222,
+      depthWrite: true, // Enable depth writing
     })
 
     const waterSurface = new THREE.Mesh(
@@ -451,7 +544,20 @@ class OceanAdventure {
     waterSurface.rotation.x = -Math.PI / 2 // Horizontal surface
     waterSurface.position.y = 5 // Water surface level used by depth meter
     waterSurface.receiveShadow = true
+    waterSurface.castShadow = false
     this.scene.add(waterSurface)
+
+    // Add a wireframe version for debugging to ensure it's there
+    const wireframeMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ffff,
+      wireframe: true,
+      opacity: 0.3,
+      transparent: true,
+    })
+    const wireframeWater = new THREE.Mesh(waterSurfaceGeometry.clone(), wireframeMaterial)
+    wireframeWater.rotation.x = -Math.PI / 2
+    wireframeWater.position.y = 5.1 // Slightly above for visibility
+    this.scene.add(wireframeWater)
 
     // Store reference for animation
     this.waterSurface = waterSurface
@@ -462,6 +568,9 @@ class OceanAdventure {
     for (let i = 0; i < positions.length; i++) {
       this.waterOriginalPositions[i] = positions[i]
     }
+
+    // Initialize underwater atmosphere system
+    this.initializeUnderwaterAtmosphere()
 
     // Create sun or moon based on level number (even = sun, odd = moon)
     this.createCelestialBody()
@@ -1211,6 +1320,9 @@ class OceanAdventure {
 
     // Update camera
     this.updateCamera()
+
+    // Update underwater atmosphere effects based on camera position
+    this.updateUnderwaterAtmosphere()
 
     // Update UI (including depth meter)
     this.updateUI()
