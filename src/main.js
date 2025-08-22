@@ -1260,27 +1260,23 @@ class OceanAdventure {
       const gatePosition = this.gate.getPosition()
 
       // Create swirling portal particles
-      this.particleSystem.createParticles({
-        position: gatePosition,
+      this.particleSystem.createBurst(gatePosition, {
         count: 50,
-        spread: 2,
-        velocity: { min: 3, max: 8 },
-        lifetime: { min: 1.5, max: 3 },
+        life: 2.25, // Average of lifetime range (1.5-3)
+        velocity: new THREE.Vector3(0, 1, 0), // Base upward velocity
+        velocityVariation: new THREE.Vector3(6, 4, 6), // Variation for swirling effect
         size: { min: 4, max: 12 },
         color: new THREE.Color(0x87ceeb), // Light blue
-        behavior: 'swirl',
       })
 
       // Create golden sparkles for completion
-      this.particleSystem.createParticles({
-        position: gatePosition,
+      this.particleSystem.createBurst(gatePosition, {
         count: 30,
-        spread: 3,
-        velocity: { min: 2, max: 6 },
-        lifetime: { min: 2, max: 4 },
+        life: 3.0, // Average of lifetime range (2-4)
+        velocity: new THREE.Vector3(0, 0.5, 0), // Slower upward velocity
+        velocityVariation: new THREE.Vector3(4, 3, 4), // Sparkle spread effect
         size: { min: 2, max: 6 },
         color: new THREE.Color(0xffd700), // Gold
-        behavior: 'sparkle',
       })
     }
 
