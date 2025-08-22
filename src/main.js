@@ -1262,7 +1262,7 @@ class OceanAdventure {
   updateCamera() {
     // Enhanced camera follow logic optimized for deep underwater level
     const playerPosition = this.player.getPosition()
-    const offset = new THREE.Vector3(0, 15, 25) // Higher offset to see both player and water surface
+    const offset = new THREE.Vector3(0, 8, 12) // Closer offset to keep player clearly visible
     const targetPosition = playerPosition.clone().add(offset)
 
     this.camera.position.lerp(targetPosition, 0.1)
