@@ -1444,16 +1444,21 @@ class OceanAdventure {
       const positions = this.waterSurface.geometry.attributes.position.array
       const time = Date.now() * 0.001
 
-      console.log(`🌊 FINAL WAVE SYSTEM - time: ${time.toFixed(2)}s, amplitude: ${this.waveParams.amplitude}`)
+      console.log(
+        `🌊 FINAL WAVE SYSTEM - time: ${time.toFixed(2)}s, amplitude: ${this.waveParams.amplitude}`
+      )
 
       // Apply GUARANTEED VISIBLE waves
       for (let i = 0; i < positions.length; i += 3) {
         const x = this.waterOriginalPositions[i]
         const z = this.waterOriginalPositions[i + 2]
-        
+
         // EXTREME wave that MUST be visible
-        const waveHeight = Math.sin(x * this.waveParams.frequency + time * this.waveParams.speed) * this.waveParams.amplitude
-        
+        const waveHeight =
+          Math.sin(
+            x * this.waveParams.frequency + time * this.waveParams.speed
+          ) * this.waveParams.amplitude
+
         positions[i] = x
         positions[i + 1] = waveHeight // Y coordinate gets EXTREME wave height
         positions[i + 2] = z
@@ -1462,14 +1467,18 @@ class OceanAdventure {
 
       // Animate wireframe at much higher position for absolute visibility
       if (this.wireframeWater && this.wireframeOriginalPositions) {
-        const wirePositions = this.wireframeWater.geometry.attributes.position.array
+        const wirePositions =
+          this.wireframeWater.geometry.attributes.position.array
         for (let i = 0; i < wirePositions.length; i += 3) {
           const x = this.wireframeOriginalPositions[i]
           const z = this.wireframeOriginalPositions[i + 2]
-          
+
           // Same wave but at higher position
-          const waveHeight = Math.sin(x * this.waveParams.frequency + time * this.waveParams.speed) * this.waveParams.amplitude
-          
+          const waveHeight =
+            Math.sin(
+              x * this.waveParams.frequency + time * this.waveParams.speed
+            ) * this.waveParams.amplitude
+
           wirePositions[i] = x
           wirePositions[i + 1] = waveHeight // Wireframe at same wave height
           wirePositions[i + 2] = z
@@ -1488,15 +1497,18 @@ class OceanAdventure {
         const z = this.foamOriginalPositions[i + 2]
 
         // Calculate simple wave height for foam
-        const waveHeight = 
+        const waveHeight =
           Math.sin(x * 0.1 + time * 2) * 3.0 +
-          Math.sin(z * 0.15 + time * 1.5) * 2.0;
+          Math.sin(z * 0.15 + time * 1.5) * 2.0
 
         // Show foam on wave crests
         const foamThreshold = 1.5
         if (waveHeight > foamThreshold) {
           foamPositions[i + 1] = waveHeight + 0.2 // Slightly above water
-          this.foamSurface.material.opacity = Math.min(0.6, (waveHeight - foamThreshold) * 0.3)
+          this.foamSurface.material.opacity = Math.min(
+            0.6,
+            (waveHeight - foamThreshold) * 0.3
+          )
         } else {
           foamPositions[i + 1] = -10 // Hide foam below surface
         }
