@@ -254,7 +254,7 @@ jobs:
     name: Prepare GitHub Pages Artifacts
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     outputs:
       pages-artifact-id: ${{ steps.pages-artifact.outputs.artifact-id }}
@@ -408,7 +408,7 @@ jobs:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     needs: [prepare-pages]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     continue-on-error: true
     
     permissions:
