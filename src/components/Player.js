@@ -52,8 +52,8 @@ export class Player {
     this.mesh.castShadow = true
     this.mesh.receiveShadow = true
 
-    // Set initial position - start just below water surface for testing transitions
-    this.mesh.position.set(0, 4, 0) // Start 1 meter below water surface (5 - 4 = 1m depth)
+    // Set initial position - start underwater with some depth
+    this.mesh.position.set(0, 2, 0) // Start 3 meters below water surface (5 - 2 = 3m depth)
 
     // Add to scene
     this.scene.add(this.mesh)
