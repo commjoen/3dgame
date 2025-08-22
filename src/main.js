@@ -220,12 +220,12 @@ class OceanAdventure {
       75, // Field of view
       window.innerWidth / window.innerHeight, // Aspect ratio
       0.1, // Near clipping plane
-      2000 // Increased far clipping plane to see sky elements
+      2000 // Far clipping plane to see sky elements
     )
 
-    // Position camera behind and above the player, ensuring good view of environment
-    this.camera.position.set(0, 8, 15) // Moved higher and further back
-    this.camera.lookAt(0, 0, 0)
+    // Position camera to clearly see both water surface and sky
+    this.camera.position.set(0, 10, 20) // Higher and further back for better view
+    this.camera.lookAt(0, 3, 0) // Look slightly above water surface
   }
 
   setupLights() {
@@ -274,16 +274,18 @@ class OceanAdventure {
    * Create a simple skybox with gradient and cloud effects
    */
   createSkybox() {
-    const skyGeometry = new THREE.SphereGeometry(800, 32, 32) // Increased size to ensure visibility
+    const skyGeometry = new THREE.SphereGeometry(1500, 32, 32) // Much larger sphere
 
-    // Use a very contrasting color that's clearly different from clear color
+    // Use high contrast visible material
     const skyMaterial = new THREE.MeshBasicMaterial({
-      color: 0x87ceeb, // Light sky blue - very different from dark ocean background
-      fog: false,
+      color: 0x87ceeb, // Light sky blue
       side: THREE.BackSide,
+      transparent: false,
+      fog: false,
     })
 
     const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial)
+    skyMesh.position.set(0, 0, 0) // Ensure centered
     this.scene.add(skyMesh)
 
     // Add some simple cloud sprites
@@ -296,28 +298,28 @@ class OceanAdventure {
    * Create simple cloud sprites
    */
   createClouds() {
-    const cloudGeometry = new THREE.SphereGeometry(8, 8, 8)
+    const cloudGeometry = new THREE.SphereGeometry(15, 8, 8) // Larger clouds
     const cloudMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.9, // Increased from 0.7 for better visibility
+      opacity: 1.0, // Full opacity for maximum visibility
     })
 
     this.clouds = []
     for (let i = 0; i < 8; i++) {
       const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial.clone())
 
-      // Position clouds closer and higher for better visibility
+      // Position clouds much closer and at moderate height
       const angle = (i / 8) * Math.PI * 2
-      const radius = 100 + Math.random() * 50 // Reduced from 150 + 100
+      const radius = 80 + Math.random() * 40 // Closer to camera
       cloud.position.set(
         Math.cos(angle) * radius,
-        60 + Math.random() * 20, // Increased from 40 + 20
+        30 + Math.random() * 15, // Lower height for visibility
         Math.sin(angle) * radius
       )
 
-      // Randomize scale
-      const scale = 1.2 + Math.random() * 0.8 // Increased size
+      // Larger scale
+      const scale = 2.0 + Math.random() * 1.0
       cloud.scale.setScalar(scale)
 
       // Store animation data
@@ -380,16 +382,15 @@ class OceanAdventure {
 
     if (isEvenLevel) {
       // Create sun
-      const sunGeometry = new THREE.SphereGeometry(5, 32, 32) // Increased size
-      const sunMaterial = new THREE.MeshPhongMaterial({
+      const sunGeometry = new THREE.SphereGeometry(8, 32, 32) // Larger and more visible
+      const sunMaterial = new THREE.MeshBasicMaterial({
         color: 0xffdd44,
-        emissive: 0xffaa00,
-        emissiveIntensity: 1.2, // Increased for better visibility
+        transparent: false,
       })
       this.celestialBody = new THREE.Mesh(sunGeometry, sunMaterial)
 
-      // Position sun closer and higher for better visibility
-      this.celestialBody.position.set(40, 60, -30)
+      // Position sun closer for better visibility
+      this.celestialBody.position.set(50, 40, -40)
 
       // Add sun light
       this.celestialLight = new THREE.DirectionalLight(0xffffff, 1.5)
@@ -399,16 +400,15 @@ class OceanAdventure {
       console.log('☀️ Sun created for even level', this.levelNumber)
     } else {
       // Create moon
-      const moonGeometry = new THREE.SphereGeometry(4, 32, 32) // Increased size
-      const moonMaterial = new THREE.MeshPhongMaterial({
+      const moonGeometry = new THREE.SphereGeometry(6, 32, 32) // Larger and more visible
+      const moonMaterial = new THREE.MeshBasicMaterial({
         color: 0xccccdd,
-        emissive: 0x666677, // Brighter emissive for visibility
-        emissiveIntensity: 0.6, // Increased from 0.3
+        transparent: false,
       })
       this.celestialBody = new THREE.Mesh(moonGeometry, moonMaterial)
 
-      // Position moon closer and higher for better visibility
-      this.celestialBody.position.set(-35, 55, -25)
+      // Position moon closer for better visibility
+      this.celestialBody.position.set(-45, 35, -35)
 
       // Add moon light (dimmer)
       this.celestialLight = new THREE.DirectionalLight(0x9999bb, 0.8)
@@ -422,7 +422,7 @@ class OceanAdventure {
     this.celestialBody.userData = {
       originalPosition: this.celestialBody.position.clone(),
       isEvenLevel: isEvenLevel,
-      animationRadius: 20, // Increased radius for more visible movement
+      animationRadius: 15, // Reduced for closer visibility
       animationSpeed: 0.2,
     }
 
@@ -435,21 +435,20 @@ class OceanAdventure {
     // Create animated water surface at Y=5 (matches depth meter calculation)
     const waterSurfaceGeometry = new THREE.PlaneGeometry(200, 200, 32, 32)
 
-    // Use highly visible water surface material
-    const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x00aaff, // Bright cyan blue for high visibility
+    // Use highly visible water surface material with better settings
+    const waterSurfaceMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00aaff, // Bright cyan blue
       transparent: true,
-      opacity: 0.9, // Much more opaque
-      shininess: 100,
-      specular: 0xffffff, // Bright white specular highlights
-      side: THREE.DoubleSide,
+      opacity: 0.7, // Semi-transparent so we can see through it
+      side: THREE.DoubleSide, // Visible from both sides
+      wireframe: false, // Solid surface
     })
 
     const waterSurface = new THREE.Mesh(
       waterSurfaceGeometry,
       waterSurfaceMaterial
     )
-    waterSurface.rotation.x = -Math.PI / 2
+    waterSurface.rotation.x = -Math.PI / 2 // Horizontal surface
     waterSurface.position.y = 5 // Water surface level used by depth meter
     waterSurface.receiveShadow = true
     this.scene.add(waterSurface)
@@ -1137,14 +1136,14 @@ class OceanAdventure {
   updateCamera() {
     // Enhanced camera follow logic with better positioning for underwater/surface viewing
     const playerPosition = this.player.getPosition()
-    const offset = new THREE.Vector3(0, 8, 15) // Increased vertical offset and distance
+    const offset = new THREE.Vector3(0, 10, 20) // Increased offset for better view
     const targetPosition = playerPosition.clone().add(offset)
 
     this.camera.position.lerp(targetPosition, 0.1)
 
-    // Look slightly ahead of the player for better view
+    // Look at a point between player and water surface for optimal view
     const lookAtTarget = playerPosition.clone()
-    lookAtTarget.y += 2 // Look slightly above the player
+    lookAtTarget.y += 3 // Look above the player to see water surface
     this.camera.lookAt(lookAtTarget)
   }
 
