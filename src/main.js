@@ -140,7 +140,7 @@ class OceanAdventure {
 
       this.renderer.setSize(window.innerWidth, window.innerHeight)
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-      this.renderer.setClearColor(0x001830, 1) // Darker, more contrasting ocean blue
+      this.renderer.setClearColor(0x1a365d, 1) // Lighter ocean blue background for better visibility
 
       // Enable shadows with mobile-optimized settings
       this.renderer.shadowMap.enabled = true
@@ -223,18 +223,18 @@ class OceanAdventure {
       2000 // Far clipping plane to see sky elements
     )
 
-    // Position camera to view deep underwater level while still seeing water surface
-    this.camera.position.set(0, 5, 15) // Adjusted for deeper level - closer to water surface
-    this.camera.lookAt(0, -5, 0) // Look down towards the deeper player area
+    // Position camera HIGH ABOVE water surface to see both sky and waves clearly
+    this.camera.position.set(0, 12, 15) // Well above water surface at Y=5 to see sky clearly
+    this.camera.lookAt(0, 2, 0) // Look down towards the water surface
   }
 
   setupLights() {
-    // Enhanced underwater ambient lighting (adjusted for modern lighting model)
-    const ambientLight = new THREE.AmbientLight(0x336699, 0.3) // Reduced from 0.6
+    // Enhanced ambient lighting for better visibility of sky and waves
+    const ambientLight = new THREE.AmbientLight(0x5599bb, 0.6) // Increased intensity and lighter color
     this.scene.add(ambientLight)
 
-    // Primary directional light simulating filtered sunlight from above (adjusted intensity)
-    const directionalLight = new THREE.DirectionalLight(0x87ceeb, 2.5) // Increased from 1.2
+    // Primary directional light simulating sunlight - much brighter
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 4.0) // Much brighter white light
     directionalLight.position.set(0, 50, 10)
 
     // Enable shadows with optimized settings for mobile compatibility
@@ -303,6 +303,7 @@ class OceanAdventure {
       color: 0xffffff,
       transparent: true,
       opacity: 1.0, // Full opacity for maximum visibility
+      fog: false, // Ignore fog so clouds stay visible underwater
     })
 
     this.clouds = []
@@ -435,12 +436,12 @@ class OceanAdventure {
    * Initialize underwater atmosphere effects (fog, blue tinting)
    */
   initializeUnderwaterAtmosphere() {
-    // Initialize fog settings for underwater effect
+    // Initialize fog settings for underwater effect - lighter and more distant
     this.underwaterFog = {
       enabled: false,
-      color: new THREE.Color(0x006699), // Deep blue underwater color
-      near: 5,
-      far: 40,
+      color: new THREE.Color(0x3388bb), // Lighter blue underwater color for better visibility
+      near: 20, // Start fog further away
+      far: 100, // Much longer fog distance to see waves and sky
     }
 
     // Store original scene background for surface mode
@@ -475,7 +476,8 @@ class OceanAdventure {
         // Change renderer clear color to underwater blue
         this.renderer.setClearColor(0x004466, 1)
 
-        // Add blue tint to skybox when underwater
+        // Keep skybox visible - don't change its color completely
+        // Instead, just apply subtle blue tint via fog
         if (this.scene.children) {
           this.scene.children.forEach(child => {
             if (
@@ -484,8 +486,8 @@ class OceanAdventure {
               child.geometry &&
               child.geometry.type === 'SphereGeometry'
             ) {
-              // This is likely the skybox
-              child.material.color.setHex(0x004466)
+              // Keep skybox visible with just slight blue tint
+              child.material.color.setHex(0x6699cc) // Lighter blue to keep sky visible
             }
           })
         }
@@ -569,6 +571,7 @@ class OceanAdventure {
       wireframe: true,
       opacity: 1.0, // Full opacity
       transparent: false,
+      fog: false, // Ignore fog to stay visible underwater
     })
     const wireframeWater = new THREE.Mesh(
       new THREE.PlaneGeometry(400, 400, 32, 32), // Lower resolution for clearer wireframe
@@ -584,6 +587,7 @@ class OceanAdventure {
       wireframe: true,
       opacity: 0.8,
       transparent: true,
+      fog: false, // Ignore fog to stay visible
     })
     const surfaceWireframeWater = new THREE.Mesh(
       new THREE.PlaneGeometry(400, 400, 128, 128), // Same resolution as water surface
@@ -1326,15 +1330,15 @@ class OceanAdventure {
   }
 
   updateCamera() {
-    // Enhanced camera follow logic optimized for deep underwater level
+    // Enhanced camera follow logic with camera ABOVE water surface to see sky and waves
     const playerPosition = this.player.getPosition()
-    const offset = new THREE.Vector3(0, 8, 12) // Closer offset to keep player clearly visible
+    const offset = new THREE.Vector3(0, 18, 12) // Higher offset to put camera above water surface (Y=5)
     const targetPosition = playerPosition.clone().add(offset)
 
     this.camera.position.lerp(targetPosition, 0.1)
 
-    // Look at the player directly for optimal underwater viewing
-    const lookAtTarget = playerPosition.clone()
+    // Look at the water surface area to see both player and waves
+    const lookAtTarget = new THREE.Vector3(0, 0, 0) // Look at water surface area
     this.camera.lookAt(lookAtTarget)
   }
 
