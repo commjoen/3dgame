@@ -562,12 +562,12 @@ class OceanAdventure {
     waterSurface.castShadow = false
     this.scene.add(waterSurface)
 
-    // Add a wireframe version for debugging to ensure it's there
+    // Add a wireframe version for debugging to ensure waves are visible
     const wireframeMaterial = new THREE.MeshBasicMaterial({
       color: 0x00ffff,
       wireframe: true,
-      opacity: 0.8, // More visible
-      transparent: true,
+      opacity: 1.0, // Full opacity for maximum visibility
+      transparent: false, // No transparency for debugging
     })
     const wireframeWater = new THREE.Mesh(
       waterSurfaceGeometry.clone(),
@@ -576,6 +576,9 @@ class OceanAdventure {
     wireframeWater.rotation.x = -Math.PI / 2
     wireframeWater.position.y = 5.1 // Slightly above for visibility
     this.scene.add(wireframeWater)
+
+    // Store reference for wave animation (add wireframe to wave animation)
+    this.wireframeWater = wireframeWater
 
     // Add foam/whitecap effect for wave crests
     const foamGeometry = new THREE.PlaneGeometry(400, 400, 64, 64)
@@ -1468,34 +1471,54 @@ class OceanAdventure {
     // Get current time for all animations
     const time = Date.now() * 0.001
 
-    // Enhanced water surface waves using SIMPLE VISIBLE wave system
+    // Enhanced water surface waves using DRAMATICALLY VISIBLE wave system
     if (this.waterSurface && this.waterOriginalPositions && this.waveParams) {
       const positions = this.waterSurface.geometry.attributes.position.array
 
       // Debug output every 120 frames (approximately every 2 seconds at 60fps)
       if (Math.floor(time * 60) % 120 === 0) {
         console.log(`🌊 Wave animation running - time: ${time.toFixed(2)}s, positions length: ${positions.length}`)
+        console.log(`🌊 Sample wave height at center: ${Math.sin(time * 2) * 10.0}`)
       }
 
-      // Simple wave implementation - much more visible
+      // EXTREME wave implementation - absolutely must be visible
       for (let i = 0; i < positions.length; i += 3) {
         const x = this.waterOriginalPositions[i]
         const z = this.waterOriginalPositions[i + 2]
         
-        // Simple sine wave - MUCH MORE VISIBLE
+        // EXTREME sine waves - MASSIVE amplitudes for guaranteed visibility
         const waveHeight = 
-          Math.sin(x * 0.1 + time * 2) * 3.0 +  // Primary wave
-          Math.sin(z * 0.15 + time * 1.5) * 2.0 + // Cross wave
-          Math.sin((x + z) * 0.05 + time * 3) * 1.0; // Diagonal wave
+          Math.sin(x * 0.1 + time * 2) * 10.0 +  // Primary wave (10 unit amplitude!)
+          Math.sin(z * 0.15 + time * 1.5) * 7.0 + // Cross wave (7 unit amplitude!)
+          Math.sin((x + z) * 0.05 + time * 3) * 5.0; // Diagonal wave (5 unit amplitude!)
         
         // Apply wave height to Y coordinate
         positions[i] = x; // X stays the same
-        positions[i + 1] = waveHeight; // Y gets wave height
+        positions[i + 1] = waveHeight; // Y gets MASSIVE wave height
         positions[i + 2] = z; // Z stays the same
       }
 
       this.waterSurface.geometry.attributes.position.needsUpdate = true
       this.waterSurface.geometry.computeVertexNormals()
+
+      // Also animate wireframe water for debugging
+      if (this.wireframeWater) {
+        const wirePositions = this.wireframeWater.geometry.attributes.position.array
+        for (let i = 0; i < wirePositions.length; i += 3) {
+          const x = this.waterOriginalPositions[i]
+          const z = this.waterOriginalPositions[i + 2]
+          
+          const waveHeight = 
+            Math.sin(x * 0.1 + time * 2) * 10.0 +
+            Math.sin(z * 0.15 + time * 1.5) * 7.0 +
+            Math.sin((x + z) * 0.05 + time * 3) * 5.0;
+          
+          wirePositions[i] = x;
+          wirePositions[i + 1] = waveHeight + 0.2; // Slightly above regular water
+          wirePositions[i + 2] = z;
+        }
+        this.wireframeWater.geometry.attributes.position.needsUpdate = true
+      }
     }
 
     // Animate foam surface to show wave crests (simplified)
