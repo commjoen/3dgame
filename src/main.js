@@ -140,7 +140,7 @@ class OceanAdventure {
 
       this.renderer.setSize(window.innerWidth, window.innerHeight)
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-      this.renderer.setClearColor(0x001122, 1) // Deep ocean blue
+      this.renderer.setClearColor(0x001830, 1) // Darker, more contrasting ocean blue
 
       // Enable shadows with mobile-optimized settings
       this.renderer.shadowMap.enabled = true
@@ -220,12 +220,12 @@ class OceanAdventure {
       75, // Field of view
       window.innerWidth / window.innerHeight, // Aspect ratio
       0.1, // Near clipping plane
-      1000 // Far clipping plane
+      2000 // Far clipping plane to see sky elements
     )
 
-    // Position camera behind and above the player
-    this.camera.position.set(0, 5, 10)
-    this.camera.lookAt(0, 0, 0)
+    // Position camera to view deep underwater level while still seeing water surface
+    this.camera.position.set(0, 5, 15) // Adjusted for deeper level - closer to water surface
+    this.camera.lookAt(0, -5, 0) // Look down towards the deeper player area
   }
 
   setupLights() {
@@ -265,6 +265,73 @@ class OceanAdventure {
     const rimLight = new THREE.DirectionalLight(0x4a9eff, 0.8) // Increased from 0.4
     rimLight.position.set(-20, 10, -20)
     this.scene.add(rimLight)
+
+    // Create background skybox with gradient and clouds
+    this.createSkybox()
+  }
+
+  /**
+   * Create a simple skybox with gradient and cloud effects
+   */
+  createSkybox() {
+    const skyGeometry = new THREE.SphereGeometry(1500, 32, 32) // Much larger sphere
+
+    // Use high contrast visible material
+    const skyMaterial = new THREE.MeshBasicMaterial({
+      color: 0x87ceeb, // Light sky blue
+      side: THREE.BackSide,
+      transparent: false,
+      fog: false,
+    })
+
+    const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial)
+    skyMesh.position.set(0, 0, 0) // Ensure centered
+    this.scene.add(skyMesh)
+
+    // Add some simple cloud sprites
+    this.createClouds()
+
+    console.log('☁️ Skybox created')
+  }
+
+  /**
+   * Create simple cloud sprites
+   */
+  createClouds() {
+    const cloudGeometry = new THREE.SphereGeometry(15, 8, 8) // Larger clouds
+    const cloudMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 1.0, // Full opacity for maximum visibility
+    })
+
+    this.clouds = []
+    for (let i = 0; i < 8; i++) {
+      const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial.clone())
+
+      // Position clouds much closer and at moderate height
+      const angle = (i / 8) * Math.PI * 2
+      const radius = 80 + Math.random() * 40 // Closer to camera
+      cloud.position.set(
+        Math.cos(angle) * radius,
+        30 + Math.random() * 15, // Lower height for visibility
+        Math.sin(angle) * radius
+      )
+
+      // Larger scale
+      const scale = 2.0 + Math.random() * 1.0
+      cloud.scale.setScalar(scale)
+
+      // Store animation data
+      cloud.userData = {
+        originalPosition: cloud.position.clone(),
+        speed: 0.02 + Math.random() * 0.02,
+        offset: Math.random() * Math.PI * 2,
+      }
+
+      this.clouds.push(cloud)
+      this.scene.add(cloud)
+    }
   }
 
   addUnderwaterVolumetricLights() {
@@ -307,27 +374,225 @@ class OceanAdventure {
     }
   }
 
+  /**
+   * Create sun or moon based on level number
+   */
+  createCelestialBody() {
+    const isEvenLevel = this.levelNumber % 2 === 0
+
+    if (isEvenLevel) {
+      // Create sun
+      const sunGeometry = new THREE.SphereGeometry(8, 32, 32) // Larger and more visible
+      const sunMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffdd44,
+        transparent: false,
+      })
+      this.celestialBody = new THREE.Mesh(sunGeometry, sunMaterial)
+
+      // Position sun closer for better visibility
+      this.celestialBody.position.set(50, 40, -40)
+
+      // Add sun light
+      this.celestialLight = new THREE.DirectionalLight(0xffffff, 1.5)
+      this.celestialLight.position.copy(this.celestialBody.position)
+      this.celestialLight.target.position.set(0, 5, 0) // Point at water surface
+
+      console.log('☀️ Sun created for even level', this.levelNumber)
+    } else {
+      // Create moon
+      const moonGeometry = new THREE.SphereGeometry(6, 32, 32) // Larger and more visible
+      const moonMaterial = new THREE.MeshBasicMaterial({
+        color: 0xccccdd,
+        transparent: false,
+      })
+      this.celestialBody = new THREE.Mesh(moonGeometry, moonMaterial)
+
+      // Position moon closer for better visibility
+      this.celestialBody.position.set(-45, 35, -35)
+
+      // Add moon light (dimmer)
+      this.celestialLight = new THREE.DirectionalLight(0x9999bb, 0.8)
+      this.celestialLight.position.copy(this.celestialBody.position)
+      this.celestialLight.target.position.set(0, 5, 0) // Point at water surface
+
+      console.log('🌙 Moon created for odd level', this.levelNumber)
+    }
+
+    // Store initial position for animation
+    this.celestialBody.userData = {
+      originalPosition: this.celestialBody.position.clone(),
+      isEvenLevel: isEvenLevel,
+      animationRadius: 15, // Reduced for closer visibility
+      animationSpeed: 0.2,
+    }
+
+    this.scene.add(this.celestialBody)
+    this.scene.add(this.celestialLight)
+    this.scene.add(this.celestialLight.target)
+  }
+
+  /**
+   * Initialize underwater atmosphere effects (fog, blue tinting)
+   */
+  initializeUnderwaterAtmosphere() {
+    // Initialize fog settings for underwater effect
+    this.underwaterFog = {
+      enabled: false,
+      color: new THREE.Color(0x006699), // Deep blue underwater color
+      near: 5,
+      far: 40,
+    }
+
+    // Store original scene background for surface mode
+    this.originalSceneBackground = this.scene.background
+    this.originalClearColor = this.renderer.getClearColor(new THREE.Color())
+
+    // Track whether player is underwater
+    this.isUnderwater = false
+
+    console.log('🌊 Underwater atmosphere system initialized')
+  }
+
+  /**
+   * Update underwater atmosphere effects based on camera position
+   */
+  updateUnderwaterAtmosphere() {
+    const cameraY = this.camera.position.y
+    const waterSurfaceLevel = 5.0
+    const wasUnderwater = this.isUnderwater
+    this.isUnderwater = cameraY < waterSurfaceLevel
+
+    // If underwater state changed, update atmosphere
+    if (this.isUnderwater !== wasUnderwater) {
+      if (this.isUnderwater) {
+        // Entering underwater - apply blue fog and tinting
+        this.scene.fog = new THREE.Fog(
+          this.underwaterFog.color,
+          this.underwaterFog.near,
+          this.underwaterFog.far
+        )
+
+        // Change renderer clear color to underwater blue
+        this.renderer.setClearColor(0x004466, 1)
+
+        // Add blue tint to skybox when underwater
+        if (this.scene.children) {
+          this.scene.children.forEach(child => {
+            if (
+              child.material &&
+              child.material.color &&
+              child.geometry &&
+              child.geometry.type === 'SphereGeometry'
+            ) {
+              // This is likely the skybox
+              child.material.color.setHex(0x004466)
+            }
+          })
+        }
+
+        console.log('🌊 Entered underwater - fog and blue tinting applied')
+      } else {
+        // Exiting underwater - remove fog effects
+        this.scene.fog = null
+
+        // Restore original clear color
+        this.renderer.setClearColor(this.originalClearColor, 1)
+
+        // Restore skybox color
+        if (this.scene.children) {
+          this.scene.children.forEach(child => {
+            if (
+              child.material &&
+              child.material.color &&
+              child.geometry &&
+              child.geometry.type === 'SphereGeometry'
+            ) {
+              // This is likely the skybox
+              child.material.color.setHex(0x87ceeb) // Light sky blue
+            }
+          })
+        }
+
+        console.log('🌊 Exited underwater - fog removed')
+      }
+    }
+
+    // Gradual fog density adjustment based on depth underwater
+    if (this.isUnderwater && this.scene.fog) {
+      const depth = Math.max(0, waterSurfaceLevel - cameraY)
+      const maxDepth = 15 // Maximum depth for fog calculations
+      const fogIntensity = Math.min(1, depth / maxDepth)
+
+      // Adjust fog far distance based on depth
+      this.scene.fog.far = this.underwaterFog.far * (1 - fogIntensity * 0.6)
+
+      // Make fog more intense at deeper levels
+      const deepBlue = new THREE.Color(0x003355)
+      this.scene.fog.color.lerpColors(
+        this.underwaterFog.color,
+        deepBlue,
+        fogIntensity * 0.5
+      )
+    }
+  }
+
   createUnderwaterEnvironment() {
-    // Create water surface at Y=5 (matches depth meter calculation)
-    const waterSurfaceGeometry = new THREE.PlaneGeometry(200, 200)
+    // Create animated water surface at Y=5 (matches depth meter calculation)
+    const waterSurfaceGeometry = new THREE.PlaneGeometry(400, 400, 64, 64) // Larger and higher resolution
+
+    // Use MeshPhongMaterial for better lighting interaction and visibility
     const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x006994,
+      color: 0x00aaff, // Bright cyan-blue
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.8, // More opaque for better visibility
+      side: THREE.DoubleSide, // Visible from both sides
       shininess: 100,
-      specular: 0x87ceeb,
-      side: THREE.DoubleSide,
+      specular: 0x222222,
+      depthWrite: true, // Enable depth writing
     })
+
     const waterSurface = new THREE.Mesh(
       waterSurfaceGeometry,
       waterSurfaceMaterial
     )
-    waterSurface.rotation.x = -Math.PI / 2
+    waterSurface.rotation.x = -Math.PI / 2 // Horizontal surface
     waterSurface.position.y = 5 // Water surface level used by depth meter
     waterSurface.receiveShadow = true
+    waterSurface.castShadow = false
     this.scene.add(waterSurface)
 
-    // Create ocean floor with enhanced material
+    // Add a wireframe version for debugging to ensure it's there
+    const wireframeMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ffff,
+      wireframe: true,
+      opacity: 0.8, // More visible
+      transparent: true,
+    })
+    const wireframeWater = new THREE.Mesh(
+      waterSurfaceGeometry.clone(),
+      wireframeMaterial
+    )
+    wireframeWater.rotation.x = -Math.PI / 2
+    wireframeWater.position.y = 5.1 // Slightly above for visibility
+    this.scene.add(wireframeWater)
+
+    // Store reference for animation
+    this.waterSurface = waterSurface
+
+    // Store original vertex positions for wave animation
+    const positions = waterSurface.geometry.attributes.position.array
+    this.waterOriginalPositions = new Float32Array(positions.length)
+    for (let i = 0; i < positions.length; i++) {
+      this.waterOriginalPositions[i] = positions[i]
+    }
+
+    // Initialize underwater atmosphere system
+    this.initializeUnderwaterAtmosphere()
+
+    // Create sun or moon based on level number (even = sun, odd = moon)
+    this.createCelestialBody()
+
+    // Create ocean floor with enhanced material - positioned deeper for level layout
     const floorGeometry = new THREE.PlaneGeometry(100, 100)
     const floorMaterial = new THREE.MeshPhongMaterial({
       color: 0x8b4513,
@@ -336,13 +601,13 @@ class OceanAdventure {
     })
     const floor = new THREE.Mesh(floorGeometry, floorMaterial)
     floor.rotation.x = -Math.PI / 2
-    floor.position.y = -5
+    floor.position.y = -15 // Moved 10 units deeper from -5 to -15
     floor.receiveShadow = true
     this.scene.add(floor)
 
     // Create physics body for floor
     const floorPhysicsBody = this.physicsEngine.createBoxBody(
-      new THREE.Vector3(0, -5, 0),
+      new THREE.Vector3(0, -15, 0), // Updated to match new floor position
       new THREE.Vector3(100, 0.1, 100),
       true // Static
     )
@@ -372,7 +637,7 @@ class OceanAdventure {
 
       const position = new THREE.Vector3(
         (Math.random() - 0.5) * 80,
-        -4 + Math.random() * 2,
+        -14 + Math.random() * 2, // Moved 10 units deeper: was -4 to -2, now -14 to -12
         (Math.random() - 0.5) * 80
       )
       coral.position.copy(position)
@@ -407,29 +672,29 @@ class OceanAdventure {
     const wallHeight = 15 // Height of boundary walls
     const wallThickness = 2 // Thickness of walls
 
-    // Create four walls around the level perimeter
+    // Create four walls around the level perimeter - positioned for deeper level
     const wallConfigs = [
       // North wall (positive Z)
       {
-        position: new THREE.Vector3(0, wallHeight / 2, levelSize),
+        position: new THREE.Vector3(0, wallHeight / 2 - 10, levelSize), // Moved 10 units deeper
         size: new THREE.Vector3(levelSize * 2, wallHeight, wallThickness),
         name: 'North Wall',
       },
       // South wall (negative Z)
       {
-        position: new THREE.Vector3(0, wallHeight / 2, -levelSize),
+        position: new THREE.Vector3(0, wallHeight / 2 - 10, -levelSize), // Moved 10 units deeper
         size: new THREE.Vector3(levelSize * 2, wallHeight, wallThickness),
         name: 'South Wall',
       },
       // East wall (positive X)
       {
-        position: new THREE.Vector3(levelSize, wallHeight / 2, 0),
+        position: new THREE.Vector3(levelSize, wallHeight / 2 - 10, 0), // Moved 10 units deeper
         size: new THREE.Vector3(wallThickness, wallHeight, levelSize * 2),
         name: 'East Wall',
       },
       // West wall (negative X)
       {
-        position: new THREE.Vector3(-levelSize, wallHeight / 2, 0),
+        position: new THREE.Vector3(-levelSize, wallHeight / 2 - 10, 0), // Moved 10 units deeper
         size: new THREE.Vector3(wallThickness, wallHeight, levelSize * 2),
         name: 'West Wall',
       },
@@ -464,8 +729,8 @@ class OceanAdventure {
    * Create the level completion gate
    */
   createGate() {
-    // Position gate at a reasonable distance from player
-    const gatePosition = new THREE.Vector3(0, 2, -15) // Reasonable distance for gameplay
+    // Position gate deep underwater for blue atmosphere experience
+    const gatePosition = new THREE.Vector3(0, -8, -15) // 13m underwater to match player depth
     this.gate = new Gate(this.scene, this.physicsEngine, gatePosition)
     console.log(
       `🚪 Gate created at position: (${gatePosition.x}, ${gatePosition.y}, ${gatePosition.z})`
@@ -488,7 +753,7 @@ class OceanAdventure {
       const star = new THREE.Mesh(starGeometry, starMaterial)
       const position = new THREE.Vector3(
         (Math.random() - 0.5) * 20,
-        Math.random() * 8 - 2,
+        Math.random() * 8 - 12, // Moved 10 units deeper: was -2 to +6, now -12 to -4
         (Math.random() - 0.5) * 20
       )
       star.position.copy(position)
@@ -995,13 +1260,16 @@ class OceanAdventure {
   }
 
   updateCamera() {
-    // Enhanced camera follow logic
+    // Enhanced camera follow logic optimized for deep underwater level
     const playerPosition = this.player.getPosition()
-    const offset = new THREE.Vector3(0, 5, 10)
+    const offset = new THREE.Vector3(0, 8, 12) // Closer offset to keep player clearly visible
     const targetPosition = playerPosition.clone().add(offset)
 
     this.camera.position.lerp(targetPosition, 0.1)
-    this.camera.lookAt(playerPosition)
+
+    // Look at the player directly for optimal underwater viewing
+    const lookAtTarget = playerPosition.clone()
+    this.camera.lookAt(lookAtTarget)
   }
 
   startGameLoop() {
@@ -1069,6 +1337,9 @@ class OceanAdventure {
     // Update camera
     this.updateCamera()
 
+    // Update underwater atmosphere effects based on camera position
+    this.updateUnderwaterAtmosphere()
+
     // Update UI (including depth meter)
     this.updateUI()
 
@@ -1093,14 +1364,73 @@ class OceanAdventure {
         Math.sin(time * userData.floatSpeed + userData.floatOffset) * 0.3
       star.position.y = floatY
 
-      // Pulsing emissive effect with more dynamic variation
-      const pulseFactor = 0.3 + Math.sin(time * 2 + userData.floatOffset) * 0.1
+      // Enhanced pulsing emissive effect with more dramatic variation
+      const pulseFactor = 0.5 + Math.sin(time * 2 + userData.floatOffset) * 0.3
       star.material.emissiveIntensity = pulseFactor
     })
 
+    // Get current time for all animations
+    const time = Date.now() * 0.001
+
+    // Animate water surface waves using vertex displacement
+    if (this.waterSurface && this.waterOriginalPositions) {
+      const positions = this.waterSurface.geometry.attributes.position.array
+      for (let i = 0; i < positions.length; i += 3) {
+        const x = this.waterOriginalPositions[i]
+        const z = this.waterOriginalPositions[i + 2]
+
+        // Create wave animation with multiple sine waves
+        const wave1 = Math.sin(x * 0.05 + time * 2.0) * 0.3
+        const wave2 = Math.sin(z * 0.03 + time * 1.5) * 0.2
+        const wave3 = Math.sin((x + z) * 0.02 + time * 2.5) * 0.15
+
+        positions[i + 1] = wave1 + wave2 + wave3 // Y coordinate
+      }
+      this.waterSurface.geometry.attributes.position.needsUpdate = true
+      this.waterSurface.geometry.computeVertexNormals()
+    }
+
+    // Animate clouds drifting across the sky
+    if (this.clouds) {
+      this.clouds.forEach(cloud => {
+        const userData = cloud.userData
+        const animationTime = time * userData.speed + userData.offset
+
+        // Gentle drift movement
+        cloud.position.x =
+          userData.originalPosition.x + Math.sin(animationTime) * 5
+        cloud.position.z =
+          userData.originalPosition.z + Math.cos(animationTime * 0.7) * 3
+
+        // Subtle opacity variation
+        cloud.material.opacity = 0.6 + Math.sin(animationTime * 2) * 0.1
+      })
+    }
+
+    // Animate celestial body (sun/moon) movement across sky
+    if (this.celestialBody && this.celestialBody.userData) {
+      const userData = this.celestialBody.userData
+      const animationTime = time * userData.animationSpeed
+
+      // Create arc movement across the sky
+      const angleOffset = userData.isEvenLevel ? 0 : Math.PI // Moon starts on opposite side
+      const angle = animationTime + angleOffset
+
+      const x =
+        Math.cos(angle) * userData.animationRadius + userData.originalPosition.x
+      const y = Math.abs(Math.sin(angle)) * 15 + 25 // Keep above horizon
+      const z = userData.originalPosition.z
+
+      this.celestialBody.position.set(x, y, z)
+
+      // Update celestial light position
+      if (this.celestialLight) {
+        this.celestialLight.position.copy(this.celestialBody.position)
+      }
+    }
+
     // Animate volumetric lights for underwater caustics effect
     if (this.volumetricLights) {
-      const time = Date.now() * 0.001
       this.volumetricLights.forEach(light => {
         const userData = light.userData
         const animationTime =

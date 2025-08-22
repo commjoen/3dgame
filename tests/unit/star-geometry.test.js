@@ -30,7 +30,7 @@ describe('StarGeometry (Phase 3 Enhancement)', () => {
       expect(material).toBeInstanceOf(THREE.MeshPhongMaterial)
       expect(material.color.getHex()).toBe(0xffd700)
       expect(material.emissive.getHex()).toBe(0xffd700)
-      expect(material.emissiveIntensity).toBe(0.4)
+      expect(material.emissiveIntensity).toBe(0.6)
       expect(material.transparent).toBe(true)
       expect(material.opacity).toBe(0.95)
     })

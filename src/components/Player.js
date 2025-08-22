@@ -52,8 +52,8 @@ export class Player {
     this.mesh.castShadow = true
     this.mesh.receiveShadow = true
 
-    // Set initial position - start underwater with some depth
-    this.mesh.position.set(0, 2, 0) // Start 3 meters below water surface (5 - 2 = 3m depth)
+    // Set initial position - start deep underwater for blue glow effect
+    this.mesh.position.set(0, -8, 0) // Start 13 meters below water surface (5 - (-8) = 13m depth)
 
     // Add to scene
     this.scene.add(this.mesh)
@@ -156,7 +156,7 @@ export class Player {
     // Calculate movement force
     const force = this.movementVector
       .clone()
-      .multiplyScalar(this.moveSpeed * 0.016) // Assume ~60fps for consistent feel
+      .multiplyScalar(this.moveSpeed * 0.05) // Increased force for better responsiveness
 
     // Add force to velocity
     this.physicsBody.velocity.add(force)

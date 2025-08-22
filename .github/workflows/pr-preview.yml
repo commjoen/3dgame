@@ -244,7 +244,7 @@ jobs:
           const previews_url = `https://commjoen.github.io/3dgame/previews.html`;
           const container_registry_url = `https://github.com/commjoen/3dgame/pkgs/container/3dgame`;
           const pr_container_tag = `ghcr.io/commjoen/3dgame:pr-${pr_number}`;
-          const commit_container_tag = `ghcr.io/commjoen/3dgame:${branch_name.replace(/\//g, '_')}-${commit_sha}`;
+          const commit_container_tag = `ghcr.io/commjoen/3dgame:${commit_sha}`;
           
           // Find existing preview comment
           const comments = await github.rest.issues.listComments({

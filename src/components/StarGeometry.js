@@ -66,11 +66,11 @@ export class StarGeometry {
   }
 
   /**
-   * Create a simple star material with glowing effects
+   * Create a simple star material with enhanced glowing effects
    * @param {number} color - Base color (default: gold)
-   * @param {number} emissiveIntensity - Glow intensity (default: 0.4)
+   * @param {number} emissiveIntensity - Glow intensity (default: 0.6)
    */
-  static createMaterial(color = 0xffd700, emissiveIntensity = 0.4) {
+  static createMaterial(color = 0xffd700, emissiveIntensity = 0.6) {
     return new THREE.MeshPhongMaterial({
       color: color,
       emissive: color,

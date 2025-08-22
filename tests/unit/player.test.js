@@ -52,7 +52,7 @@ describe('Player', () => {
 
     it('should set initial position underwater', () => {
       const position = player.getPosition()
-      expect(position.y).toBe(2) // Started at Y=2 (3m underwater from surface at Y=5)
+      expect(position.y).toBe(-8) // Started at Y=-8 (13m underwater from surface at Y=5)
     })
 
     it('should initialize movement properties', () => {
