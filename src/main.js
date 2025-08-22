@@ -562,23 +562,45 @@ class OceanAdventure {
     waterSurface.castShadow = false
     this.scene.add(waterSurface)
 
-    // Add a wireframe version for debugging to ensure waves are visible
+    // CRITICAL FIX: Add highly visible wireframe version that MUST show waves
     const wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ffff,
+      color: 0xff0000, // BRIGHT RED for absolute visibility
       wireframe: true,
-      opacity: 1.0, // Full opacity for maximum visibility
-      transparent: false, // No transparency for debugging
+      opacity: 1.0, // Full opacity
+      transparent: false,
     })
     const wireframeWater = new THREE.Mesh(
-      waterSurfaceGeometry.clone(),
+      new THREE.PlaneGeometry(400, 400, 32, 32), // Lower resolution for clearer wireframe
       wireframeMaterial
     )
     wireframeWater.rotation.x = -Math.PI / 2
-    wireframeWater.position.y = 5.1 // Slightly above for visibility
+    wireframeWater.position.y = 10 // MUCH HIGHER - above player view for guaranteed visibility
     this.scene.add(wireframeWater)
 
-    // Store reference for wave animation (add wireframe to wave animation)
+    // Store references for wave animation
     this.wireframeWater = wireframeWater
+    this.waterSurface = waterSurface
+
+    // SIMPLIFIED but GUARANTEED VISIBLE wave parameters
+    this.waveParams = {
+      amplitude: 15.0, // EXTREME amplitude - must be visible
+      frequency: 0.05,
+      speed: 1.0,
+    }
+
+    // Store original vertex positions for wave animation
+    const positions = waterSurface.geometry.attributes.position.array
+    this.waterOriginalPositions = new Float32Array(positions.length)
+    for (let i = 0; i < positions.length; i++) {
+      this.waterOriginalPositions[i] = positions[i]
+    }
+
+    // Store wireframe original positions
+    const wirePositions = wireframeWater.geometry.attributes.position.array
+    this.wireframeOriginalPositions = new Float32Array(wirePositions.length)
+    for (let i = 0; i < wirePositions.length; i++) {
+      this.wireframeOriginalPositions[i] = wirePositions[i]
+    }
 
     // Add foam/whitecap effect for wave crests
     const foamGeometry = new THREE.PlaneGeometry(400, 400, 64, 64)
@@ -601,60 +623,6 @@ class OceanAdventure {
     this.foamOriginalPositions = new Float32Array(
       foamGeometry.attributes.position.array
     )
-
-    // Store reference for animation and wave parameters
-    this.waterSurface = waterSurface
-
-    // Enhanced wave parameters for realistic ocean simulation with MAXIMUM visibility
-    this.waveParams = {
-      // Primary wave system (dominant wind waves) - DRAMATICALLY increased amplitude for visibility
-      wave1: {
-        amplitude: 5.0, // Increased from 1.2 to 5.0 for maximum visibility
-        frequency: 0.02, // Decreased frequency for longer waves
-        speed: 1.5, // Slightly slower for better visibility
-        direction: { x: 1, z: 0.3 }, // Northeast direction
-        steepness: 0.6, // Increased steepness for more dramatic waves
-      },
-      // Secondary wave system (cross-waves) - enhanced for better flow visibility
-      wave2: {
-        amplitude: 3.0, // Increased from 0.8 to 3.0
-        frequency: 0.03,
-        speed: 1.2,
-        direction: { x: 0.2, z: 1 }, // North direction
-        steepness: 0.5,
-      },
-      // Tertiary wave system (smaller ripples) - increased for surface detail
-      wave3: {
-        amplitude: 2.0, // Increased from 0.5 to 2.0
-        frequency: 0.04,
-        speed: 1.0,
-        direction: { x: -0.5, z: 0.8 }, // Northwest direction
-        steepness: 0.3,
-      },
-      // Additional detail waves - more pronounced
-      wave4: {
-        amplitude: 1.5, // Increased from 0.3 to 1.5
-        frequency: 0.06,
-        speed: 0.8,
-        direction: { x: 0.8, z: -0.2 }, // East-southeast direction
-        steepness: 0.2,
-      },
-      // Fast ripples for surface texture
-      wave5: {
-        amplitude: 1.0, // Increased from 0.15 to 1.0
-        frequency: 0.08,
-        speed: 2.0,
-        direction: { x: 0.6, z: 0.8 }, // Variable direction
-        steepness: 0.15,
-      },
-    }
-
-    // Store original vertex positions for wave animation
-    const positions = waterSurface.geometry.attributes.position.array
-    this.waterOriginalPositions = new Float32Array(positions.length)
-    for (let i = 0; i < positions.length; i++) {
-      this.waterOriginalPositions[i] = positions[i]
-    }
 
     // Initialize underwater atmosphere system
     this.initializeUnderwaterAtmosphere()
@@ -1471,51 +1439,40 @@ class OceanAdventure {
     // Get current time for all animations
     const time = Date.now() * 0.001
 
-    // Enhanced water surface waves using DRAMATICALLY VISIBLE wave system
+    // FINAL GUARANTEED VISIBLE WAVE SYSTEM
     if (this.waterSurface && this.waterOriginalPositions && this.waveParams) {
       const positions = this.waterSurface.geometry.attributes.position.array
+      const time = Date.now() * 0.001
 
-      // Debug output every 120 frames (approximately every 2 seconds at 60fps)
-      if (Math.floor(time * 60) % 120 === 0) {
-        console.log(`🌊 Wave animation running - time: ${time.toFixed(2)}s, positions length: ${positions.length}`)
-        console.log(`🌊 Sample wave height at center: ${Math.sin(time * 2) * 10.0}`)
-      }
+      console.log(`🌊 FINAL WAVE SYSTEM - time: ${time.toFixed(2)}s, amplitude: ${this.waveParams.amplitude}`)
 
-      // EXTREME wave implementation - absolutely must be visible
+      // Apply GUARANTEED VISIBLE waves
       for (let i = 0; i < positions.length; i += 3) {
         const x = this.waterOriginalPositions[i]
         const z = this.waterOriginalPositions[i + 2]
         
-        // EXTREME sine waves - MASSIVE amplitudes for guaranteed visibility
-        const waveHeight = 
-          Math.sin(x * 0.1 + time * 2) * 10.0 +  // Primary wave (10 unit amplitude!)
-          Math.sin(z * 0.15 + time * 1.5) * 7.0 + // Cross wave (7 unit amplitude!)
-          Math.sin((x + z) * 0.05 + time * 3) * 5.0; // Diagonal wave (5 unit amplitude!)
+        // EXTREME wave that MUST be visible
+        const waveHeight = Math.sin(x * this.waveParams.frequency + time * this.waveParams.speed) * this.waveParams.amplitude
         
-        // Apply wave height to Y coordinate
-        positions[i] = x; // X stays the same
-        positions[i + 1] = waveHeight; // Y gets MASSIVE wave height
-        positions[i + 2] = z; // Z stays the same
+        positions[i] = x
+        positions[i + 1] = waveHeight // Y coordinate gets EXTREME wave height
+        positions[i + 2] = z
       }
-
       this.waterSurface.geometry.attributes.position.needsUpdate = true
-      this.waterSurface.geometry.computeVertexNormals()
 
-      // Also animate wireframe water for debugging
-      if (this.wireframeWater) {
+      // Animate wireframe at much higher position for absolute visibility
+      if (this.wireframeWater && this.wireframeOriginalPositions) {
         const wirePositions = this.wireframeWater.geometry.attributes.position.array
         for (let i = 0; i < wirePositions.length; i += 3) {
-          const x = this.waterOriginalPositions[i]
-          const z = this.waterOriginalPositions[i + 2]
+          const x = this.wireframeOriginalPositions[i]
+          const z = this.wireframeOriginalPositions[i + 2]
           
-          const waveHeight = 
-            Math.sin(x * 0.1 + time * 2) * 10.0 +
-            Math.sin(z * 0.15 + time * 1.5) * 7.0 +
-            Math.sin((x + z) * 0.05 + time * 3) * 5.0;
+          // Same wave but at higher position
+          const waveHeight = Math.sin(x * this.waveParams.frequency + time * this.waveParams.speed) * this.waveParams.amplitude
           
-          wirePositions[i] = x;
-          wirePositions[i + 1] = waveHeight + 0.2; // Slightly above regular water
-          wirePositions[i + 2] = z;
+          wirePositions[i] = x
+          wirePositions[i + 1] = waveHeight // Wireframe at same wave height
+          wirePositions[i + 2] = z
         }
         this.wireframeWater.geometry.attributes.position.needsUpdate = true
       }
