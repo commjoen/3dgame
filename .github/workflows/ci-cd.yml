@@ -329,10 +329,57 @@ jobs:
             fi
           done
           
-          # Preserve the previews.html file if it exists
+          # Preserve or create the previews.html file
           if [ -f "gh-pages/previews.html" ]; then
-            echo "Preserving previews.html"
+            echo "Preserving existing previews.html"
             cp "gh-pages/previews.html" "pages-deployment/previews.html"
+          else
+            echo "Creating default previews.html"
+            # Create a default previews.html file when none exists
+            CURRENT_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            
+            # Generate the HTML content using echo to avoid YAML parsing issues
+            {
+              echo '<!DOCTYPE html>'
+              echo '<html lang="en">'
+              echo '<head>'
+              echo '    <meta charset="UTF-8">'
+              echo '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
+              echo '    <title>Ocean Adventure - PR Previews</title>'
+              echo '    <style>'
+              echo '        body { font-family: Arial, sans-serif; margin: 40px; background: linear-gradient(to bottom, #1e40af, #0f172a); color: white; min-height: 100vh; }'
+              echo '        .container { max-width: 800px; margin: 0 auto; }'
+              echo '        .preview-item { background: rgba(255,255,255,0.1); margin: 20px 0; padding: 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); }'
+              echo '        .preview-item h3 { margin-top: 0; color: #60a5fa; }'
+              echo '        .preview-link { display: inline-block; background: #1e40af; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; margin: 5px 5px 5px 0; }'
+              echo '        .preview-link:hover { background: #1d4ed8; }'
+              echo '        .main-link { background: #059669; }'
+              echo '        .main-link:hover { background: #047857; }'
+              echo '        .regenerate-info { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #60a5fa; }'
+              echo '    </style>'
+              echo '</head>'
+              echo '<body>'
+              echo '    <div class="container">'
+              echo '        <h1>🌊 Ocean Adventure - Preview Deployments</h1>'
+              echo '        <div class="regenerate-info">'
+              echo "            <p><strong>Last updated:</strong> ${CURRENT_DATE}</p>"
+              echo '            <p>This page is automatically updated when PR previews are deployed.</p>'
+              echo '        </div>'
+              echo '        <div class="preview-item">'
+              echo '            <h3>🚀 Main Branch (Stable)</h3>'
+              echo '            <p>The stable version deployed from the main branch.</p>'
+              echo '            <a href="/3dgame/" class="preview-link main-link">Play Main Version</a>'
+              echo '            <a href="https://github.com/commjoen/3dgame" class="preview-link">View Repository</a>'
+              echo '        </div>'
+              echo '        <div class="preview-item">'
+              echo '            <h3>📝 No Active PR Previews</h3>'
+              echo '            <p>PR previews will appear here when pull requests are opened against the main branch.</p>'
+              echo '            <a href="https://github.com/commjoen/3dgame/pulls" class="preview-link">View Open PRs</a>'
+              echo '        </div>'
+              echo '    </div>'
+              echo '</body>'
+              echo '</html>'
+            } > "pages-deployment/previews.html"
           fi
           
           # Preserve other important files
