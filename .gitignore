@@ -66,3 +66,6 @@ workbox-*.js
 
 # Generated documentation
 docs/.vitepress/dist/
+
+# GitHub Pages CI-generated files
+previews.html
