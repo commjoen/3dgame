@@ -329,17 +329,17 @@ class OceanAdventure {
         cloudGroup.add(cloudSphere)
       }
 
-      // Position cloud clusters MUCH closer and lower for visibility
+      // Position cloud clusters far away in the sky for realistic appearance
       const angle = (i / 12) * Math.PI * 2
-      const radius = 25 + Math.random() * 15 // Much closer: 25-40 units instead of 80-120
+      const radius = 300 + Math.random() * 200 // Distant horizon: 300-500 units
       cloudGroup.position.set(
         Math.cos(angle) * radius,
-        12 + Math.random() * 8, // Much lower: Y=12-20 instead of Y=30-45
+        120 + Math.random() * 80, // High in the sky: Y=120-200 units above water surface
         Math.sin(angle) * radius
       )
 
-      // Reasonable scale for visibility
-      const scale = 1.5 + Math.random() * 0.8
+      // Scale appropriately for distant sky appearance
+      const scale = 3.0 + Math.random() * 2.0 // Larger scale for distant clouds
       cloudGroup.scale.setScalar(scale)
 
       // Store animation data
@@ -353,7 +353,7 @@ class OceanAdventure {
       this.scene.add(cloudGroup)
     }
 
-    console.log(`☁️ Created ${this.clouds.length} realistic cloud clusters`)
+    console.log(`☁️ Created ${this.clouds.length} distant sky cloud clusters`)
   }
 
   addUnderwaterVolumetricLights() {
