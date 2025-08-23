@@ -303,6 +303,7 @@ class OceanAdventure {
       color: 0xffffff,
       transparent: true,
       opacity: 1.0, // Full opacity for maximum visibility
+      fog: false, // Ensure clouds are not affected by underwater fog
     })
 
     this.clouds = []
@@ -497,8 +498,8 @@ class OceanAdventure {
         // Exiting underwater - remove fog effects
         this.scene.fog = null
 
-        // Restore original clear color
-        this.renderer.setClearColor(this.originalClearColor, 1)
+        // Set proper sky clear color instead of the original dark color
+        this.renderer.setClearColor(0x87ceeb, 1) // Light sky blue
 
         // Restore skybox color
         if (this.scene.children) {
@@ -515,7 +516,16 @@ class OceanAdventure {
           })
         }
 
-        console.log('🌊 Exited underwater - fog removed')
+        // Ensure clouds are visible by resetting their material properties
+        if (this.clouds) {
+          this.clouds.forEach(cloud => {
+            cloud.material.opacity = 1.0
+            cloud.material.visible = true
+            cloud.visible = true
+          })
+        }
+
+        console.log('🌊 Exited underwater - fog removed, sky elements restored')
       }
     }
 
@@ -552,6 +562,7 @@ class OceanAdventure {
       specular: 0x87ceeb, // Sky blue specular highlights
       depthWrite: true, // Enable depth writing
       reflectivity: 0.8, // Enhanced reflectivity
+      fog: false, // Ensure water surface is not affected by underwater fog
     })
 
     const waterSurface = new THREE.Mesh(
@@ -570,6 +581,7 @@ class OceanAdventure {
       wireframe: true,
       opacity: 1.0, // Full opacity
       transparent: false,
+      fog: false, // Ensure wireframe waves are not affected by fog
     })
     const wireframeWater = new THREE.Mesh(
       new THREE.PlaneGeometry(400, 400, 32, 32), // Lower resolution for clearer wireframe
