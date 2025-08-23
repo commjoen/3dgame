@@ -298,41 +298,62 @@ class OceanAdventure {
    * Create simple cloud sprites
    */
   createClouds() {
-    const cloudGeometry = new THREE.SphereGeometry(15, 8, 8) // Larger clouds
-    const cloudMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 1.0, // Full opacity for maximum visibility
-      fog: false, // Ensure clouds are not affected by underwater fog
-    })
-
     this.clouds = []
-    for (let i = 0; i < 8; i++) {
-      const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial.clone())
 
-      // Position clouds much closer and at moderate height
-      const angle = (i / 8) * Math.PI * 2
-      const radius = 80 + Math.random() * 40 // Closer to camera
-      cloud.position.set(
+    // Create multiple cloud clusters for realistic appearance
+    for (let i = 0; i < 12; i++) {
+      // Create cloud cluster with multiple spheres
+      const cloudGroup = new THREE.Group()
+
+      // Create 3-5 spheres per cloud for fluffy appearance
+      const sphereCount = 3 + Math.floor(Math.random() * 3)
+      for (let j = 0; j < sphereCount; j++) {
+        const sphereSize = 8 + Math.random() * 12
+        const cloudGeometry = new THREE.SphereGeometry(sphereSize, 16, 16)
+        const cloudMaterial = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.8 + Math.random() * 0.2, // Vary opacity for depth
+          fog: false, // Ensure clouds are not affected by underwater fog
+        })
+
+        const cloudSphere = new THREE.Mesh(cloudGeometry, cloudMaterial)
+
+        // Position spheres within the cloud cluster
+        cloudSphere.position.set(
+          (Math.random() - 0.5) * 25,
+          (Math.random() - 0.5) * 8,
+          (Math.random() - 0.5) * 25
+        )
+
+        cloudGroup.add(cloudSphere)
+      }
+
+      // Position cloud clusters MUCH closer and lower for visibility
+      const angle = (i / 12) * Math.PI * 2
+      const radius = 25 + Math.random() * 15 // Much closer: 25-40 units instead of 80-120
+      cloudGroup.position.set(
         Math.cos(angle) * radius,
-        30 + Math.random() * 15, // Lower height for visibility
+        12 + Math.random() * 8, // Much lower: Y=12-20 instead of Y=30-45
         Math.sin(angle) * radius
       )
 
-      // Larger scale
-      const scale = 2.0 + Math.random() * 1.0
-      cloud.scale.setScalar(scale)
+      // Reasonable scale for visibility
+      const scale = 1.5 + Math.random() * 0.8
+      cloudGroup.scale.setScalar(scale)
 
       // Store animation data
-      cloud.userData = {
-        originalPosition: cloud.position.clone(),
-        speed: 0.02 + Math.random() * 0.02,
+      cloudGroup.userData = {
+        originalPosition: cloudGroup.position.clone(),
+        speed: 0.01 + Math.random() * 0.01,
         offset: Math.random() * Math.PI * 2,
       }
 
-      this.clouds.push(cloud)
-      this.scene.add(cloud)
+      this.clouds.push(cloudGroup)
+      this.scene.add(cloudGroup)
     }
+
+    console.log(`☁️ Created ${this.clouds.length} realistic cloud clusters`)
   }
 
   addUnderwaterVolumetricLights() {
@@ -518,10 +539,16 @@ class OceanAdventure {
 
         // Ensure clouds are visible by resetting their material properties
         if (this.clouds) {
-          this.clouds.forEach(cloud => {
-            cloud.material.opacity = 1.0
-            cloud.material.visible = true
-            cloud.visible = true
+          this.clouds.forEach(cloudGroup => {
+            cloudGroup.visible = true
+            // Restore visibility for all spheres in each cloud group
+            cloudGroup.children.forEach(sphere => {
+              if (sphere.material) {
+                sphere.material.opacity = Math.max(0.8, sphere.material.opacity)
+                sphere.material.visible = true
+              }
+              sphere.visible = true
+            })
           })
         }
 
@@ -575,45 +602,45 @@ class OceanAdventure {
     waterSurface.castShadow = false
     this.scene.add(waterSurface)
 
-    // CRITICAL FIX: Add highly visible wireframe version that MUST show waves
-    const wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff0000, // BRIGHT RED for absolute visibility
-      wireframe: true,
-      opacity: 1.0, // Full opacity
-      transparent: false,
-      fog: false, // Ensure wireframe waves are not affected by fog
+    // Create visible wave surface with proper parameters
+    const waveSurfaceGeometry = new THREE.PlaneGeometry(200, 200, 64, 64) // Higher resolution for smoother waves
+    const waveSurfaceMaterial = new THREE.MeshPhongMaterial({
+      color: 0x87ceeb, // Light blue for wave crests
+      transparent: true,
+      opacity: 0.8,
+      side: THREE.DoubleSide,
+      fog: false, // Ensure wave surface is not affected by fog
+      wireframe: false, // Solid surface, not wireframe
     })
-    const wireframeWater = new THREE.Mesh(
-      new THREE.PlaneGeometry(400, 400, 32, 32), // Lower resolution for clearer wireframe
-      wireframeMaterial
-    )
-    wireframeWater.rotation.x = -Math.PI / 2
-    wireframeWater.position.y = 10 // MUCH HIGHER - above player view for guaranteed visibility
-    this.scene.add(wireframeWater)
+
+    const waveSurface = new THREE.Mesh(waveSurfaceGeometry, waveSurfaceMaterial)
+    waveSurface.rotation.x = -Math.PI / 2
+    waveSurface.position.y = 5.5 // Just above water surface level for visibility
+    this.scene.add(waveSurface)
 
     // Store references for wave animation
-    this.wireframeWater = wireframeWater
+    this.waveSurface = waveSurface
     this.waterSurface = waterSurface
 
-    // SIMPLIFIED but GUARANTEED VISIBLE wave parameters
+    // Realistic wave parameters for visible waves
     this.waveParams = {
-      amplitude: 15.0, // EXTREME amplitude - must be visible
-      frequency: 0.05,
-      speed: 1.0,
+      amplitude: 3.5, // Reasonable amplitude for ocean waves
+      frequency: 0.2, // Higher frequency for more visible wave patterns
+      speed: 1.5, // Faster wave movement
     }
 
-    // Store original vertex positions for wave animation
+    // Store original positions for wave surface animation
+    const wavePositions = waveSurface.geometry.attributes.position.array
+    this.waveOriginalPositions = new Float32Array(wavePositions.length)
+    for (let i = 0; i < wavePositions.length; i++) {
+      this.waveOriginalPositions[i] = wavePositions[i]
+    }
+
+    // Store original vertex positions for water surface wave animation
     const positions = waterSurface.geometry.attributes.position.array
     this.waterOriginalPositions = new Float32Array(positions.length)
     for (let i = 0; i < positions.length; i++) {
       this.waterOriginalPositions[i] = positions[i]
-    }
-
-    // Store wireframe original positions
-    const wirePositions = wireframeWater.geometry.attributes.position.array
-    this.wireframeOriginalPositions = new Float32Array(wirePositions.length)
-    for (let i = 0; i < wirePositions.length; i++) {
-      this.wireframeOriginalPositions[i] = wirePositions[i]
     }
 
     // Add foam/whitecap effect for wave crests
@@ -1453,51 +1480,79 @@ class OceanAdventure {
     // Get current time for all animations
     const time = Date.now() * 0.001
 
-    // FINAL GUARANTEED VISIBLE WAVE SYSTEM
+    // Realistic wave animation system for both water surface and wave surface
     if (this.waterSurface && this.waterOriginalPositions && this.waveParams) {
       const positions = this.waterSurface.geometry.attributes.position.array
       const time = Date.now() * 0.001
 
-      console.log(
-        `🌊 FINAL WAVE SYSTEM - time: ${time.toFixed(2)}s, amplitude: ${this.waveParams.amplitude}`
-      )
-
-      // Apply GUARANTEED VISIBLE waves
+      // Apply realistic wave motion to underwater water surface
       for (let i = 0; i < positions.length; i += 3) {
         const x = this.waterOriginalPositions[i]
         const z = this.waterOriginalPositions[i + 2]
 
-        // EXTREME wave that MUST be visible
-        const waveHeight =
+        // Multi-layered wave system for realistic ocean movement
+        const wave1 =
           Math.sin(
             x * this.waveParams.frequency + time * this.waveParams.speed
           ) * this.waveParams.amplitude
+        const wave2 =
+          Math.sin(
+            z * this.waveParams.frequency * 0.7 +
+              time * this.waveParams.speed * 0.8
+          ) *
+          this.waveParams.amplitude *
+          0.6
+        const wave3 =
+          Math.sin(
+            (x + z) * this.waveParams.frequency * 1.3 +
+              time * this.waveParams.speed * 1.2
+          ) *
+          this.waveParams.amplitude *
+          0.4
+
+        const waveHeight = wave1 + wave2 + wave3
 
         positions[i] = x
-        positions[i + 1] = waveHeight // Y coordinate gets EXTREME wave height
+        positions[i + 1] = waveHeight
         positions[i + 2] = z
       }
       this.waterSurface.geometry.attributes.position.needsUpdate = true
 
-      // Animate wireframe at much higher position for absolute visibility
-      if (this.wireframeWater && this.wireframeOriginalPositions) {
-        const wirePositions =
-          this.wireframeWater.geometry.attributes.position.array
-        for (let i = 0; i < wirePositions.length; i += 3) {
-          const x = this.wireframeOriginalPositions[i]
-          const z = this.wireframeOriginalPositions[i + 2]
+      // Animate the visible wave surface at Y=5.5
+      if (this.waveSurface && this.waveOriginalPositions) {
+        const wavePositions =
+          this.waveSurface.geometry.attributes.position.array
+        for (let i = 0; i < wavePositions.length; i += 3) {
+          const x = this.waveOriginalPositions[i]
+          const z = this.waveOriginalPositions[i + 2]
 
-          // Same wave but at higher position
-          const waveHeight =
+          // Same wave pattern but with enhanced visibility
+          const wave1 =
             Math.sin(
               x * this.waveParams.frequency + time * this.waveParams.speed
             ) * this.waveParams.amplitude
+          const wave2 =
+            Math.sin(
+              z * this.waveParams.frequency * 0.7 +
+                time * this.waveParams.speed * 0.8
+            ) *
+            this.waveParams.amplitude *
+            0.6
+          const wave3 =
+            Math.sin(
+              (x + z) * this.waveParams.frequency * 1.3 +
+                time * this.waveParams.speed * 1.2
+            ) *
+            this.waveParams.amplitude *
+            0.4
 
-          wirePositions[i] = x
-          wirePositions[i + 1] = waveHeight // Wireframe at same wave height
-          wirePositions[i + 2] = z
+          const waveHeight = wave1 + wave2 + wave3
+
+          wavePositions[i] = x
+          wavePositions[i + 1] = waveHeight
+          wavePositions[i + 2] = z
         }
-        this.wireframeWater.geometry.attributes.position.needsUpdate = true
+        this.waveSurface.geometry.attributes.position.needsUpdate = true
       }
     }
 
@@ -1533,18 +1588,28 @@ class OceanAdventure {
 
     // Animate clouds drifting across the sky
     if (this.clouds) {
-      this.clouds.forEach(cloud => {
-        const userData = cloud.userData
+      this.clouds.forEach(cloudGroup => {
+        const userData = cloudGroup.userData
         const animationTime = time * userData.speed + userData.offset
 
-        // Gentle drift movement
-        cloud.position.x =
-          userData.originalPosition.x + Math.sin(animationTime) * 5
-        cloud.position.z =
-          userData.originalPosition.z + Math.cos(animationTime * 0.7) * 3
+        // Gentle drift movement for the entire cloud group
+        cloudGroup.position.x =
+          userData.originalPosition.x + Math.sin(animationTime) * 3
+        cloudGroup.position.z =
+          userData.originalPosition.z + Math.cos(animationTime * 0.7) * 2
 
-        // Subtle opacity variation
-        cloud.material.opacity = 0.6 + Math.sin(animationTime * 2) * 0.1
+        // Animate individual spheres within each cloud group
+        cloudGroup.children.forEach((sphere, index) => {
+          // Individual sphere rotation for cloud movement effect
+          sphere.rotation.y += 0.002 + index * 0.001
+
+          // Subtle opacity variation for depth effect
+          const baseOpacity = sphere.material.opacity || 0.8
+          sphere.material.opacity = Math.max(
+            0.6,
+            baseOpacity + Math.sin(animationTime * 2 + index) * 0.1
+          )
+        })
       })
     }
 
