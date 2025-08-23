@@ -33,16 +33,36 @@
         .preview-link:hover { background: #1d4ed8; }
         .main-link { background: #059669; }
         .main-link:hover { background: #047857; }
+        .regenerate-info {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🌊 Ocean Adventure - Preview Deployments</h1>
+        
+        <div class="regenerate-info">
+            <p><strong>Last updated:</strong> 2025-08-23 04:31:09 UTC</p>
+            <p>This page is automatically updated when PR previews are deployed.</p>
+        </div>
+        
         <div class="preview-item">
             <h3>🚀 Main Branch (Stable)</h3>
             <p>The stable version deployed from the main branch.</p>
             <a href="/3dgame/" class="preview-link main-link">Play Main Version</a>
+            <a href="https://github.com/commjoen/3dgame" class="preview-link">View Repository</a>
         </div>
+                <div class="preview-item">
+                    <h3>🔄 Pull Request #72</h3>
+                    <p>Preview deployment for PR #72</p>
+                    <a href="/3dgame/pr-72/" class="preview-link">Play PR #72</a>
+                    <a href="https://github.com/commjoen/3dgame/pull/72" class="preview-link">View PR</a>
+                </div>
     </div>
 </body>
 </html>
