@@ -581,14 +581,14 @@ class OceanAdventure {
 
     // Enhanced water material with improved visual effects
     const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x006699, // Deeper blue for better ocean appearance
+      color: 0x0088cc, // Brighter blue for better visibility
       transparent: true,
-      opacity: 0.75, // Slightly more transparent for realistic water
+      opacity: 0.7, // Semi-transparent for realistic water
       side: THREE.DoubleSide, // Visible from both sides
-      shininess: 150, // Increased shininess for better light reflection
+      shininess: 100, // Moderate shininess for water reflection
       specular: 0x87ceeb, // Sky blue specular highlights
       depthWrite: true, // Enable depth writing
-      reflectivity: 0.8, // Enhanced reflectivity
+      reflectivity: 0.6, // Moderate reflectivity
       fog: false, // Ensure water surface is not affected by underwater fog
     })
 
@@ -596,27 +596,35 @@ class OceanAdventure {
       waterSurfaceGeometry,
       waterSurfaceMaterial
     )
+    waterSurface.name = 'waterSurface' // Add name for debugging
     waterSurface.rotation.x = -Math.PI / 2 // Horizontal surface
     waterSurface.position.y = 5 // Water surface level used by depth meter
     waterSurface.receiveShadow = true
     waterSurface.castShadow = false
     this.scene.add(waterSurface)
+    
+    console.log('🌊 Water surface created at position:', waterSurface.position)
 
     // Create visible wave surface with proper parameters
     const waveSurfaceGeometry = new THREE.PlaneGeometry(200, 200, 64, 64) // Higher resolution for smoother waves
     const waveSurfaceMaterial = new THREE.MeshPhongMaterial({
       color: 0x87ceeb, // Light blue for wave crests
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.6,
       side: THREE.DoubleSide,
+      shininess: 80,
+      specular: 0x4499dd,
       fog: false, // Ensure wave surface is not affected by fog
       wireframe: false, // Solid surface, not wireframe
     })
 
     const waveSurface = new THREE.Mesh(waveSurfaceGeometry, waveSurfaceMaterial)
+    waveSurface.name = 'waveSurface' // Add name for debugging
     waveSurface.rotation.x = -Math.PI / 2
     waveSurface.position.y = 6.5 // Raised above water surface level for better wave visibility
     this.scene.add(waveSurface)
+    
+    console.log('🌊 Wave surface created at position:', waveSurface.position)
 
     // Store references for wave animation
     this.waveSurface = waveSurface
@@ -1341,7 +1349,7 @@ class OceanAdventure {
   updateCamera() {
     // Enhanced camera follow logic optimized for deep underwater level
     const playerPosition = this.player.getPosition()
-    const offset = new THREE.Vector3(0, 8, 12) // Closer offset to keep player clearly visible
+    const offset = new THREE.Vector3(0, 15, 12) // Increased Y offset to see water surface above
     const targetPosition = playerPosition.clone().add(offset)
 
     this.camera.position.lerp(targetPosition, 0.1)
@@ -1976,6 +1984,7 @@ window.addEventListener(
     try {
       console.log('🌊 Ocean Adventure - Starting initialization...')
       const game = new OceanAdventure()
+      window.oceanAdventure = game // Expose game instance for debugging
       await game.initialize()
     } catch (error) {
       console.error('❌ Critical error during game initialization:', error)
