@@ -602,7 +602,7 @@ class OceanAdventure {
     waterSurface.receiveShadow = true
     waterSurface.castShadow = false
     this.scene.add(waterSurface)
-    
+
     console.log('🌊 Water surface created at position:', waterSurface.position)
 
     // Create visible wave surface with proper parameters
@@ -623,7 +623,7 @@ class OceanAdventure {
     waveSurface.rotation.x = -Math.PI / 2
     waveSurface.position.y = 6.5 // Raised above water surface level for better wave visibility
     this.scene.add(waveSurface)
-    
+
     console.log('🌊 Wave surface created at position:', waveSurface.position)
 
     // Store references for wave animation
