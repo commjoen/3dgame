@@ -454,13 +454,15 @@ class OceanAdventure {
   }
 
   /**
-   * Update underwater atmosphere effects based on camera position
+   * Update underwater atmosphere effects based on player position
    */
   updateUnderwaterAtmosphere() {
-    const cameraY = this.camera.position.y
+    // Use player position instead of camera position for underwater detection
+    // This prevents issues with camera lerping lag when player reaches surface
+    const playerPosition = this.player ? this.player.getPosition() : { y: -10 }
     const waterSurfaceLevel = 5.0
     const wasUnderwater = this.isUnderwater
-    this.isUnderwater = cameraY < waterSurfaceLevel
+    this.isUnderwater = playerPosition.y < waterSurfaceLevel
 
     // If underwater state changed, update atmosphere
     if (this.isUnderwater !== wasUnderwater) {
@@ -519,7 +521,7 @@ class OceanAdventure {
 
     // Gradual fog density adjustment based on depth underwater
     if (this.isUnderwater && this.scene.fog) {
-      const depth = Math.max(0, waterSurfaceLevel - cameraY)
+      const depth = Math.max(0, waterSurfaceLevel - playerPosition.y)
       const maxDepth = 15 // Maximum depth for fog calculations
       const fogIntensity = Math.min(1, depth / maxDepth)
 
