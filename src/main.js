@@ -334,7 +334,7 @@ class OceanAdventure {
       const radius = 300 + Math.random() * 200 // Distant horizon: 300-500 units
       cloudGroup.position.set(
         Math.cos(angle) * radius,
-        120 + Math.random() * 80, // High in the sky: Y=120-200 units above water surface
+        60 + Math.random() * 40, // Lowered clouds: Y=60-100 units above water surface for better visibility
         Math.sin(angle) * radius
       )
 
@@ -615,7 +615,7 @@ class OceanAdventure {
 
     const waveSurface = new THREE.Mesh(waveSurfaceGeometry, waveSurfaceMaterial)
     waveSurface.rotation.x = -Math.PI / 2
-    waveSurface.position.y = 5.5 // Just above water surface level for visibility
+    waveSurface.position.y = 6.5 // Raised above water surface level for better wave visibility
     this.scene.add(waveSurface)
 
     // Store references for wave animation
