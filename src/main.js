@@ -461,7 +461,7 @@ class OceanAdventure {
     this.underwaterFog = {
       enabled: false,
       color: new THREE.Color(0x006699), // Deep blue underwater color
-      near: 5,
+      near: 15, // Increased from 5 to reduce fog thickness
       far: 40,
     }
 
@@ -562,15 +562,15 @@ class OceanAdventure {
       const maxDepth = 15 // Maximum depth for fog calculations
       const fogIntensity = Math.min(1, depth / maxDepth)
 
-      // Adjust fog far distance based on depth
-      this.scene.fog.far = this.underwaterFog.far * (1 - fogIntensity * 0.6)
+      // Adjust fog far distance based on depth - reduced intensity for less thick fog
+      this.scene.fog.far = this.underwaterFog.far * (1 - fogIntensity * 0.3)
 
-      // Make fog more intense at deeper levels
+      // Make fog more intense at deeper levels - reduced intensity for better visibility
       const deepBlue = new THREE.Color(0x003355)
       this.scene.fog.color.lerpColors(
         this.underwaterFog.color,
         deepBlue,
-        fogIntensity * 0.5
+        fogIntensity * 0.25
       )
     }
   }
@@ -610,7 +610,7 @@ class OceanAdventure {
     const waveSurfaceMaterial = new THREE.MeshPhongMaterial({
       color: 0x87ceeb, // Light blue for wave crests
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.8, // Increased from 0.6 for better wave visibility
       side: THREE.DoubleSide,
       shininess: 80,
       specular: 0x4499dd,
