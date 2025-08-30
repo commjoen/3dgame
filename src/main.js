@@ -55,7 +55,15 @@ class OceanAdventure {
         down: false,
       },
       joystick: { x: 0, y: 0 },
+      cameraJoystick: { x: 0, y: 0 }, // New camera joystick input
       mobileButtons: { swimUp: false, swimDown: false },
+    }
+
+    // Camera rotation state for independent camera control
+    this.cameraRotation = {
+      horizontal: 0, // Horizontal rotation (yaw)
+      vertical: 0, // Vertical rotation (pitch)
+      sensitivity: 0.005, // Camera rotation sensitivity
     }
 
     // Timing
@@ -605,15 +613,15 @@ class OceanAdventure {
 
     console.log('🌊 Water surface created at position:', waterSurface.position)
 
-    // Create visible wave surface with proper parameters
-    const waveSurfaceGeometry = new THREE.PlaneGeometry(200, 200, 64, 64) // Higher resolution for smoother waves
+    // Create visible wave surface with enhanced visibility parameters
+    const waveSurfaceGeometry = new THREE.PlaneGeometry(300, 300, 96, 96) // Larger area and higher resolution for better visibility
     const waveSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x87ceeb, // Light blue for wave crests
+      color: 0x4dc5ff, // Brighter light blue for enhanced wave visibility
       transparent: true,
-      opacity: 0.8, // Increased from 0.6 for better wave visibility
+      opacity: 0.9, // Increased opacity for better visibility at surface
       side: THREE.DoubleSide,
-      shininess: 80,
-      specular: 0x4499dd,
+      shininess: 120, // Higher shininess for more realistic water reflection
+      specular: 0x87ceeb, // Light blue specular highlights
       fog: false, // Ensure wave surface is not affected by fog
       wireframe: false, // Solid surface, not wireframe
     })
@@ -621,7 +629,7 @@ class OceanAdventure {
     const waveSurface = new THREE.Mesh(waveSurfaceGeometry, waveSurfaceMaterial)
     waveSurface.name = 'waveSurface' // Add name for debugging
     waveSurface.rotation.x = -Math.PI / 2
-    waveSurface.position.y = 6.5 // Raised above water surface level for better wave visibility
+    waveSurface.position.y = 5.2 // Positioned closer to water surface for better visibility at depth 0.0
     this.scene.add(waveSurface)
 
     console.log('🌊 Wave surface created at position:', waveSurface.position)
@@ -630,11 +638,11 @@ class OceanAdventure {
     this.waveSurface = waveSurface
     this.waterSurface = waterSurface
 
-    // Realistic wave parameters for visible waves
+    // Enhanced wave parameters for better visibility at surface level
     this.waveParams = {
-      amplitude: 3.5, // Reasonable amplitude for ocean waves
-      frequency: 0.2, // Higher frequency for more visible wave patterns
-      speed: 1.5, // Faster wave movement
+      amplitude: 4.5, // Increased amplitude for more prominent waves
+      frequency: 0.25, // Optimized frequency for better wave visibility
+      speed: 2.0, // Faster wave movement for more dynamic surface
     }
 
     // Store original positions for wave surface animation
@@ -959,6 +967,9 @@ class OceanAdventure {
     // Setup virtual joystick
     this.setupVirtualJoystick()
 
+    // Setup camera joystick
+    this.setupCameraJoystick()
+
     // Setup mobile action buttons
     this.setupMobileButtons()
 
@@ -1133,9 +1144,134 @@ class OceanAdventure {
     })
   }
 
+  setupCameraJoystick() {
+    const cameraJoystick = document.getElementById('cameraJoystick')
+    const cameraKnob = document.getElementById('cameraKnob')
+
+    if (!cameraJoystick || !cameraKnob) {
+      return
+    }
+
+    const cameraJoystickState = {
+      isActive: false,
+      centerX: 0,
+      centerY: 0,
+      currentX: 0,
+      currentY: 0,
+    }
+
+    cameraJoystick.addEventListener('touchstart', event => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      if (event.touches.length > 0) {
+        const touch = event.touches[0]
+        const rect = cameraJoystick.getBoundingClientRect()
+
+        cameraJoystickState.isActive = true
+        cameraJoystickState.centerX = rect.left + rect.width / 2
+        cameraJoystickState.centerY = rect.top + rect.height / 2
+        cameraJoystickState.currentX = touch.clientX
+        cameraJoystickState.currentY = touch.clientY
+
+        // Visual feedback - highlight camera joystick when active
+        cameraJoystick.style.borderColor = 'rgba(255, 200, 100, 0.6)'
+        cameraJoystick.style.background = 'rgba(0, 17, 34, 0.7)'
+
+        this.updateCameraJoystickKnob(cameraKnob, cameraJoystickState, rect)
+      }
+    })
+
+    cameraJoystick.addEventListener('touchmove', event => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      if (event.touches.length > 0 && cameraJoystickState.isActive) {
+        const touch = event.touches[0]
+        const rect = cameraJoystick.getBoundingClientRect()
+
+        cameraJoystickState.currentX = touch.clientX
+        cameraJoystickState.currentY = touch.clientY
+
+        // Calculate camera rotation vector
+        const deltaX =
+          cameraJoystickState.currentX - cameraJoystickState.centerX
+        const deltaY =
+          cameraJoystickState.currentY - cameraJoystickState.centerY
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+        const maxDistance = rect.width / 2 - 20
+
+        // Normalize and apply camera rotation
+        if (distance > 5) {
+          const normalizedX = deltaX / maxDistance
+          const normalizedY = deltaY / maxDistance
+
+          // Update camera input state
+          this.inputState.cameraJoystick.x = Math.max(
+            -1,
+            Math.min(1, normalizedX * 1.5)
+          )
+          this.inputState.cameraJoystick.y = Math.max(
+            -1,
+            Math.min(1, normalizedY * 1.5)
+          )
+        } else {
+          this.inputState.cameraJoystick.x = 0
+          this.inputState.cameraJoystick.y = 0
+        }
+
+        this.updateCameraJoystickKnob(cameraKnob, cameraJoystickState, rect)
+      }
+    })
+
+    cameraJoystick.addEventListener('touchend', event => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      cameraJoystickState.isActive = false
+      this.inputState.cameraJoystick.x = 0
+      this.inputState.cameraJoystick.y = 0
+
+      // Reset visual feedback
+      cameraJoystick.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+      cameraJoystick.style.background = 'rgba(0, 17, 34, 0.5)'
+      cameraKnob.style.transform = 'translate(-50%, -50%)'
+    })
+
+    cameraJoystick.addEventListener('touchcancel', event => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      cameraJoystickState.isActive = false
+      this.inputState.cameraJoystick.x = 0
+      this.inputState.cameraJoystick.y = 0
+
+      // Reset visual feedback
+      cameraJoystick.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+      cameraJoystick.style.background = 'rgba(0, 17, 34, 0.5)'
+      cameraKnob.style.transform = 'translate(-50%, -50%)'
+    })
+  }
+
   updateJoystickKnob(knob, joystickState, rect) {
     const deltaX = joystickState.currentX - joystickState.centerX
     const deltaY = joystickState.currentY - joystickState.centerY
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+    const maxDistance = rect.width / 2 - 20
+
+    if (distance <= maxDistance) {
+      knob.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`
+    } else {
+      const angle = Math.atan2(deltaY, deltaX)
+      const x = Math.cos(angle) * maxDistance
+      const y = Math.sin(angle) * maxDistance
+      knob.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
+    }
+  }
+
+  updateCameraJoystickKnob(knob, cameraJoystickState, rect) {
+    const deltaX = cameraJoystickState.currentX - cameraJoystickState.centerX
+    const deltaY = cameraJoystickState.currentY - cameraJoystickState.centerY
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
     const maxDistance = rect.width / 2 - 20
 
@@ -1347,15 +1483,45 @@ class OceanAdventure {
   }
 
   updateCamera() {
-    // Enhanced camera follow logic optimized for deep underwater level
     const playerPosition = this.player.getPosition()
-    const offset = new THREE.Vector3(0, 15, 12) // Increased Y offset to see water surface above
+
+    // Apply camera joystick rotation if active
+    if (
+      this.inputState.cameraJoystick.x !== 0 ||
+      this.inputState.cameraJoystick.y !== 0
+    ) {
+      // Update camera rotation based on joystick input
+      this.cameraRotation.horizontal +=
+        this.inputState.cameraJoystick.x * this.cameraRotation.sensitivity * 60 // 60fps normalization
+      this.cameraRotation.vertical +=
+        this.inputState.cameraJoystick.y * this.cameraRotation.sensitivity * 60
+
+      // Clamp vertical rotation to prevent flipping
+      this.cameraRotation.vertical = Math.max(
+        -Math.PI / 3,
+        Math.min(Math.PI / 3, this.cameraRotation.vertical)
+      )
+    }
+
+    // Calculate camera position based on rotation
+    const distance = 15 // Distance from player
+    const height = 12 // Base height offset
+
+    // Apply rotation to calculate offset
+    const offsetX = Math.sin(this.cameraRotation.horizontal) * distance
+    const offsetZ = Math.cos(this.cameraRotation.horizontal) * distance
+    const offsetY =
+      height + Math.sin(this.cameraRotation.vertical) * distance * 0.5
+
+    const offset = new THREE.Vector3(offsetX, offsetY, offsetZ)
     const targetPosition = playerPosition.clone().add(offset)
 
+    // Smooth camera movement
     this.camera.position.lerp(targetPosition, 0.1)
 
-    // Look at the player directly for optimal underwater viewing
+    // Look at the player with slight adjustment for better underwater viewing
     const lookAtTarget = playerPosition.clone()
+    lookAtTarget.y += 2 // Look slightly above the player
     this.camera.lookAt(lookAtTarget)
   }
 
