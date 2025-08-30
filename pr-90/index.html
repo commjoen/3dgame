@@ -87,6 +87,20 @@
             backdrop-filter: blur(4px);
         }
         
+        .camera-joystick {
+            position: absolute;
+            bottom: 0;
+            right: 130px; /* Position to the left of the mobile buttons */
+            width: 120px;
+            height: 120px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            background: rgba(0, 17, 34, 0.5);
+            pointer-events: auto;
+            touch-action: none;
+            backdrop-filter: blur(4px);
+        }
+        
         .joystick-knob {
             position: absolute;
             top: 50%;
@@ -95,6 +109,19 @@
             height: 40px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.8);
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease-out;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .camera-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 200, 100, 0.8); /* Different color for camera joystick */
             transform: translate(-50%, -50%);
             transition: all 0.1s ease-out;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -405,7 +432,7 @@
             }
         }
     </style>
-  <script type="module" crossorigin src="/3dgame/pr-90/assets/index-B2XMrIWu.js"></script>
+  <script type="module" crossorigin src="/3dgame/pr-90/assets/index-CCfzst70.js"></script>
   <link rel="modulepreload" crossorigin href="/3dgame/pr-90/assets/three-BpW7LKQv.js">
   <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();window.__vite_is_modern_browser=true</script>
   <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
@@ -465,10 +492,11 @@
                 
                 <h3>Mobile Controls:</h3>
                 <ul>
-                    <li><strong>Virtual Joystick:</strong> Move around</li>
+                    <li><strong>Left Virtual Joystick:</strong> Move around</li>
+                    <li><strong>Right Camera Joystick:</strong> Control camera view</li>
                     <li><strong>↑ Button:</strong> Swim up</li>
                     <li><strong>↓ Button:</strong> Swim down</li>
-                    <li><strong>Swipe:</strong> Look around</li>
+                    <li><strong>Swipe:</strong> Look around (alternative)</li>
                 </ul>
                 
                 <h3>Objective:</h3>
@@ -481,6 +509,9 @@
         <div class="virtual-joystick" id="virtualJoystick">
             <div class="joystick-knob" id="joystickKnob"></div>
         </div>
+        <div class="camera-joystick" id="cameraJoystick">
+            <div class="camera-knob" id="cameraKnob"></div>
+        </div>
         <div class="mobile-buttons">
             <div class="mobile-btn" id="swimUpBtn">↑</div>
             <div class="mobile-btn" id="swimDownBtn">↓</div>
@@ -491,6 +522,6 @@
     
   <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
   <script nomodule crossorigin id="vite-legacy-polyfill" src="/3dgame/pr-90/assets/polyfills-legacy-nlYFTw8r.js"></script>
-  <script nomodule crossorigin id="vite-legacy-entry" data-src="/3dgame/pr-90/assets/index-legacy-BVoGOVee.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+  <script nomodule crossorigin id="vite-legacy-entry" data-src="/3dgame/pr-90/assets/index-legacy-wRUWJdHB.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
 </body>
 </html>
