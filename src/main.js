@@ -1496,10 +1496,10 @@ class OceanAdventure {
       this.cameraRotation.vertical +=
         this.inputState.cameraJoystick.y * this.cameraRotation.sensitivity * 60
 
-      // Clamp vertical rotation to prevent flipping
+      // Clamp vertical rotation to allow upward viewing of waves while preventing flipping
       this.cameraRotation.vertical = Math.max(
-        -Math.PI / 3,
-        Math.min(Math.PI / 3, this.cameraRotation.vertical)
+        -Math.PI / 6, // Allow looking down 30°
+        Math.min(Math.PI / 2, this.cameraRotation.vertical) // Allow looking up 90° to see waves
       )
     }
 
