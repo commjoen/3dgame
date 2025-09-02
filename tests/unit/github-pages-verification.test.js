@@ -9,13 +9,15 @@ const execAsync = promisify(exec)
 describe('GitHub Pages Deployment Verification', () => {
   it('should build and verify GitHub Pages deployment files', async () => {
     // Set up environment for GitHub Pages build
-    const env = { ...process.env, VITE_BASE_PATH: '/3dgame/' }
+    const originalBasePath = process.env.VITE_BASE_PATH
+    process.env.VITE_BASE_PATH = '/3dgame/'
     
-    // Clean and build
-    await execAsync('rm -rf dist', { env })
-    await execAsync('npm run build', { env })
-    
-    const distPath = path.join(process.cwd(), 'dist')
+    try {
+      // Clean and build
+      await execAsync('rm -rf dist')
+      await execAsync('npm run build')
+      
+      const distPath = path.join(process.cwd(), 'dist')
     
     // 1. Check for 404.html file for SPA routing
     const html404Path = path.join(distPath, '404.html')
@@ -75,5 +77,13 @@ describe('GitHub Pages Deployment Verification', () => {
     // Check for assets directory
     const assetsPath = path.join(distPath, 'assets')
     expect(existsSync(assetsPath)).toBe(true)
+    } finally {
+      // Restore original environment variable
+      if (originalBasePath !== undefined) {
+        process.env.VITE_BASE_PATH = originalBasePath
+      } else {
+        delete process.env.VITE_BASE_PATH
+      }
+    }
   }, 30000) // 30 second timeout for build
 })

@@ -39,6 +39,7 @@ class OceanAdventure {
     this.player = null
     this.gate = null
     this.environmentObjects = []
+    this.seaCreatures = []
 
     // Game state
     this.starCount = 0
@@ -86,6 +87,7 @@ class OceanAdventure {
       { name: 'Player', fn: () => this.createPlayer() },
       { name: 'Sample Stars', fn: () => this.createSampleStars() },
       { name: 'Gate', fn: () => this.createGate() },
+      { name: 'Sea Creatures', fn: () => this.createSeaCreatures() },
       { name: 'Event Listeners', fn: () => this.setupEventListeners() },
       {
         name: 'UI Initialization',
@@ -687,18 +689,53 @@ class OceanAdventure {
     // Create sun or moon based on level number (even = sun, odd = moon)
     this.createCelestialBody()
 
-    // Create ocean floor with enhanced material - positioned deeper for level layout
-    const floorGeometry = new THREE.PlaneGeometry(100, 100)
+    // Create ocean floor with sandy/rocky appearance - positioned deeper for level layout
+    const floorGeometry = new THREE.PlaneGeometry(100, 100, 32, 32) // Higher resolution for detail
+
+    // Create a more realistic ocean floor material
     const floorMaterial = new THREE.MeshPhongMaterial({
-      color: 0x8b4513,
-      shininess: 30,
-      specular: 0x222222,
+      color: 0x8b7355, // Sandy brown color
+      shininess: 10, // Low shininess for sand
+      specular: 0x444444, // Subtle specular highlights
+      transparent: false,
     })
+
     const floor = new THREE.Mesh(floorGeometry, floorMaterial)
     floor.rotation.x = -Math.PI / 2
     floor.position.y = -15 // Moved 10 units deeper from -5 to -15
     floor.receiveShadow = true
+
+    // Add subtle height variation to make the floor more natural
+    const floorPositions = floor.geometry.attributes.position.array
+    for (let i = 2; i < floorPositions.length; i += 3) {
+      // Add random height variation to Y coordinates (every 3rd element)
+      floorPositions[i] += (Math.random() - 0.5) * 0.3 // Small height variations
+    }
+    floor.geometry.attributes.position.needsUpdate = true
+    floor.geometry.computeVertexNormals() // Recalculate normals for proper lighting
+
     this.scene.add(floor)
+
+    // Add some sand patches/texture variation
+    for (let i = 0; i < 8; i++) {
+      const patchGeometry = new THREE.CircleGeometry(2 + Math.random() * 3, 16)
+      const patchMaterial = new THREE.MeshPhongMaterial({
+        color: new THREE.Color().setHSL(0.1, 0.3, 0.3 + Math.random() * 0.2), // Varied sandy colors
+        shininess: 5,
+        transparent: true,
+        opacity: 0.7,
+      })
+
+      const patch = new THREE.Mesh(patchGeometry, patchMaterial)
+      patch.rotation.x = -Math.PI / 2
+      patch.position.set(
+        (Math.random() - 0.5) * 80,
+        -14.9, // Slightly above floor to avoid z-fighting
+        (Math.random() - 0.5) * 80
+      )
+      patch.receiveShadow = true
+      this.scene.add(patch)
+    }
 
     // Create physics body for floor
     const floorPhysicsBody = this.physicsEngine.createBoxBody(
@@ -712,46 +749,187 @@ class OceanAdventure {
     // Add invisible boundary walls to prevent falling off the platform
     this.createLevelBoundaries()
 
-    // Add coral/rocks with enhanced materials and lighting
-    for (let i = 0; i < 10; i++) {
-      const radius = 0.5 + Math.random() * 1.5
-      const geometry = new THREE.SphereGeometry(radius)
+    // Add varied ocean plants and coral with more realistic shapes and colors
+    const oceanObjectTypes = ['coral', 'seaweed', 'rock', 'anemone', 'kelp']
 
-      // Use MeshPhongMaterial for better lighting on all platforms
-      const hue = Math.random() * 0.3
-      const material = new THREE.MeshPhongMaterial({
-        color: new THREE.Color().setHSL(hue, 0.7, 0.5),
-        shininess: 60 + Math.random() * 40,
-        specular: new THREE.Color().setHSL(hue, 0.3, 0.8),
-        // Add slight transparency for underwater effect
-        transparent: true,
-        opacity: 0.9,
-      })
+    for (let i = 0; i < 15; i++) {
+      // Increased from 10 to 15 for more variety
+      const objectType =
+        oceanObjectTypes[Math.floor(Math.random() * oceanObjectTypes.length)]
+      let geometry, material, mesh
 
-      const coral = new THREE.Mesh(geometry, material)
+      switch (objectType) {
+        case 'coral': {
+          // Branch-like coral structure
+          geometry = new THREE.CylinderGeometry(
+            0.1,
+            0.4,
+            1 + Math.random() * 2,
+            6
+          )
+          material = new THREE.MeshPhongMaterial({
+            color: new THREE.Color().setHSL(
+              0.05 + Math.random() * 0.15,
+              0.8,
+              0.4
+            ), // Orange/red coral colors
+            shininess: 40,
+            transparent: true,
+            opacity: 0.9,
+          })
+          mesh = new THREE.Mesh(geometry, material)
+
+          // Add small coral branches
+          for (let j = 0; j < 3; j++) {
+            const branchGeometry = new THREE.SphereGeometry(
+              0.2 + Math.random() * 0.3,
+              8,
+              6
+            )
+            const branchMaterial = new THREE.MeshPhongMaterial({
+              color: material.color
+                .clone()
+                .multiplyScalar(0.8 + Math.random() * 0.4),
+              shininess: 60,
+            })
+            const branch = new THREE.Mesh(branchGeometry, branchMaterial)
+            branch.position.set(
+              (Math.random() - 0.5) * 0.8,
+              Math.random() * 1.5,
+              (Math.random() - 0.5) * 0.8
+            )
+            mesh.add(branch)
+          }
+          break
+        }
+
+        case 'seaweed': {
+          // Tall, swaying seaweed
+          geometry = new THREE.CylinderGeometry(
+            0.05,
+            0.08,
+            2 + Math.random() * 3,
+            8
+          )
+          material = new THREE.MeshPhongMaterial({
+            color: new THREE.Color().setHSL(
+              0.3,
+              0.7,
+              0.2 + Math.random() * 0.3
+            ), // Green seaweed
+            shininess: 20,
+          })
+          mesh = new THREE.Mesh(geometry, material)
+          mesh.scale.x = 0.3 // Make it flatter like seaweed
+          break
+        }
+
+        case 'kelp': {
+          // Large kelp fronds
+          geometry = new THREE.ConeGeometry(0.5, 3 + Math.random() * 2, 8)
+          material = new THREE.MeshPhongMaterial({
+            color: new THREE.Color().setHSL(0.25, 0.6, 0.3), // Dark green kelp
+            shininess: 15,
+          })
+          mesh = new THREE.Mesh(geometry, material)
+          break
+        }
+
+        case 'anemone': {
+          // Sea anemone with tentacles
+          geometry = new THREE.SphereGeometry(0.4 + Math.random() * 0.6, 12, 8)
+          material = new THREE.MeshPhongMaterial({
+            color: new THREE.Color().setHSL(
+              0.8 + Math.random() * 0.2,
+              0.7,
+              0.6
+            ), // Purple/pink anemone
+            shininess: 80,
+            transparent: true,
+            opacity: 0.85,
+          })
+          mesh = new THREE.Mesh(geometry, material)
+
+          // Add tentacle-like protrusions
+          for (let j = 0; j < 8; j++) {
+            const tentacleGeometry = new THREE.CylinderGeometry(
+              0.02,
+              0.05,
+              0.5,
+              4
+            )
+            const tentacle = new THREE.Mesh(tentacleGeometry, material.clone())
+            const angle = (j / 8) * Math.PI * 2
+            tentacle.position.set(
+              Math.cos(angle) * 0.4,
+              0.3,
+              Math.sin(angle) * 0.4
+            )
+            tentacle.rotation.x = (Math.random() - 0.5) * 0.5
+            tentacle.rotation.z = (Math.random() - 0.5) * 0.5
+            mesh.add(tentacle)
+          }
+          break
+        }
+
+        default: {
+          // rock
+          const rockRadius = 0.3 + Math.random() * 1.2
+          geometry = new THREE.DodecahedronGeometry(rockRadius, 1) // More irregular rock shape
+          material = new THREE.MeshPhongMaterial({
+            color: new THREE.Color().setHSL(
+              0.1,
+              0.2,
+              0.3 + Math.random() * 0.3
+            ), // Gray/brown rocks
+            shininess: 10,
+          })
+          mesh = new THREE.Mesh(geometry, material)
+
+          // Make rocks slightly irregular
+          const rockPositions = geometry.attributes.position.array
+          for (let j = 0; j < rockPositions.length; j += 3) {
+            rockPositions[j] += (Math.random() - 0.5) * 0.1
+            rockPositions[j + 1] += (Math.random() - 0.5) * 0.1
+            rockPositions[j + 2] += (Math.random() - 0.5) * 0.1
+          }
+          geometry.attributes.position.needsUpdate = true
+          geometry.computeVertexNormals()
+          break
+        }
+      }
 
       const position = new THREE.Vector3(
         (Math.random() - 0.5) * 80,
         -14 + Math.random() * 2, // Moved 10 units deeper: was -4 to -2, now -14 to -12
         (Math.random() - 0.5) * 80
       )
-      coral.position.copy(position)
-      coral.castShadow = true
-      coral.receiveShadow = true
-      this.scene.add(coral)
+      mesh.position.copy(position)
+      mesh.castShadow = true
+      mesh.receiveShadow = true
 
-      // Add physics body for collision
-      const coralPhysicsBody = this.physicsEngine.createSphereBody(
+      // Add gentle swaying animation for seaweed and kelp
+      if (objectType === 'seaweed' || objectType === 'kelp') {
+        mesh.userData.swaySpeed = 0.5 + Math.random() * 1.5
+        mesh.userData.swayAmount = 0.1 + Math.random() * 0.2
+      }
+
+      this.scene.add(mesh)
+
+      // Add physics body for collision (use sphere for simplicity)
+      const radius =
+        objectType === 'kelp' ? 1.0 : objectType === 'seaweed' ? 0.3 : 0.8
+      const objectPhysicsBody = this.physicsEngine.createSphereBody(
         position,
-        radius * 1.2, // Slightly larger for collision detection
+        radius, // Collision radius based on object type
         true // Static
       )
-      coralPhysicsBody.type = 'environment'
-      coralPhysicsBody.mesh = coral // Reference to visual representation
-      this.physicsEngine.addRigidBody(coralPhysicsBody)
+      objectPhysicsBody.type = 'environment'
+      objectPhysicsBody.mesh = mesh // Reference to visual representation
+      this.physicsEngine.addRigidBody(objectPhysicsBody)
       this.environmentObjects.push({
-        mesh: coral,
-        physicsBody: coralPhysicsBody,
+        mesh: mesh,
+        physicsBody: objectPhysicsBody,
       })
     }
   }
@@ -830,6 +1008,206 @@ class OceanAdventure {
     console.log(
       `🚪 Gate created at position: (${gatePosition.x}, ${gatePosition.y}, ${gatePosition.z})`
     )
+  }
+
+  /**
+   * Create swimming sea creatures for ambiance
+   */
+  createSeaCreatures() {
+    console.log('🐠 Creating sea creatures...')
+
+    const creatureTypes = ['fish', 'jellyfish', 'seahorse']
+
+    for (let i = 0; i < 12; i++) {
+      // Create 12 creatures
+      const creatureType =
+        creatureTypes[Math.floor(Math.random() * creatureTypes.length)]
+      let mesh, swimRadius, swimSpeed
+
+      switch (creatureType) {
+        case 'fish': {
+          // Simple fish shape using ellipsoid and fins
+          const fishGroup = new THREE.Group()
+
+          // Fish body
+          const bodyGeometry = new THREE.SphereGeometry(0.3, 8, 6)
+          const bodyMaterial = new THREE.MeshPhongMaterial({
+            color: new THREE.Color().setHSL(
+              0.1 + Math.random() * 0.8,
+              0.8,
+              0.6
+            ),
+            shininess: 60,
+          })
+          const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
+          body.scale.set(1.5, 1, 0.8) // Make it fish-shaped
+          fishGroup.add(body)
+
+          // Tail fin
+          const tailGeometry = new THREE.ConeGeometry(0.15, 0.4, 3)
+          const tailMaterial = new THREE.MeshPhongMaterial({
+            color: bodyMaterial.color.clone().multiplyScalar(0.8),
+            shininess: 40,
+          })
+          const tail = new THREE.Mesh(tailGeometry, tailMaterial)
+          tail.position.set(-0.4, 0, 0)
+          tail.rotation.z = Math.PI / 2
+          fishGroup.add(tail)
+
+          // Side fins
+          const finGeometry = new THREE.ConeGeometry(0.08, 0.2, 3)
+          const leftFin = new THREE.Mesh(finGeometry, tailMaterial.clone())
+          leftFin.position.set(0.1, -0.1, 0.2)
+          leftFin.rotation.x = Math.PI / 4
+          fishGroup.add(leftFin)
+
+          const rightFin = new THREE.Mesh(finGeometry, tailMaterial.clone())
+          rightFin.position.set(0.1, -0.1, -0.2)
+          rightFin.rotation.x = -Math.PI / 4
+          fishGroup.add(rightFin)
+
+          mesh = fishGroup
+          swimRadius = 8 + Math.random() * 12
+          swimSpeed = 0.3 + Math.random() * 0.5
+          break
+        }
+
+        case 'jellyfish': {
+          // Jellyfish with dome and tentacles
+          const jellyfishGroup = new THREE.Group()
+
+          // Dome
+          const domeGeometry = new THREE.SphereGeometry(
+            0.4,
+            8,
+            6,
+            0,
+            Math.PI * 2,
+            0,
+            Math.PI / 2
+          )
+          const domeMaterial = new THREE.MeshPhongMaterial({
+            color: new THREE.Color().setHSL(
+              0.7 + Math.random() * 0.3,
+              0.5,
+              0.8
+            ),
+            transparent: true,
+            opacity: 0.7,
+            shininess: 100,
+          })
+          const dome = new THREE.Mesh(domeGeometry, domeMaterial)
+          jellyfishGroup.add(dome)
+
+          // Tentacles
+          for (let j = 0; j < 6; j++) {
+            const tentacleGeometry = new THREE.CylinderGeometry(
+              0.02,
+              0.01,
+              1.5,
+              4
+            )
+            const tentacle = new THREE.Mesh(
+              tentacleGeometry,
+              domeMaterial.clone()
+            )
+            const angle = (j / 6) * Math.PI * 2
+            tentacle.position.set(
+              Math.cos(angle) * 0.3,
+              -0.7,
+              Math.sin(angle) * 0.3
+            )
+            tentacle.userData.originalRotation = { x: 0, z: 0 }
+            tentacle.userData.tentacleIndex = j
+            jellyfishGroup.add(tentacle)
+          }
+
+          mesh = jellyfishGroup
+          swimRadius = 6 + Math.random() * 8
+          swimSpeed = 0.1 + Math.random() * 0.2
+          break
+        }
+
+        default: {
+          // seahorse
+          const seahorseGroup = new THREE.Group()
+
+          // Seahorse body (curved)
+          const seahorseBodyGeometry = new THREE.CylinderGeometry(
+            0.1,
+            0.15,
+            1,
+            8
+          )
+          const seahorseBodyMaterial = new THREE.MeshPhongMaterial({
+            color: new THREE.Color().setHSL(
+              0.2 + Math.random() * 0.4,
+              0.7,
+              0.5
+            ),
+            shininess: 40,
+          })
+          const seahorseBody = new THREE.Mesh(
+            seahorseBodyGeometry,
+            seahorseBodyMaterial
+          )
+          seahorseBody.rotation.z = Math.PI / 6 // Curved posture
+          seahorseGroup.add(seahorseBody)
+
+          // Head
+          const headGeometry = new THREE.SphereGeometry(0.12, 6, 4)
+          const head = new THREE.Mesh(
+            headGeometry,
+            seahorseBodyMaterial.clone()
+          )
+          head.position.set(0.1, 0.5, 0)
+          seahorseGroup.add(head)
+
+          // Dorsal fin
+          const dorsalFinGeometry = new THREE.PlaneGeometry(0.15, 0.8)
+          const dorsalFinMaterial = new THREE.MeshPhongMaterial({
+            color: seahorseBodyMaterial.color.clone().multiplyScalar(1.2),
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide,
+          })
+          const dorsalFin = new THREE.Mesh(dorsalFinGeometry, dorsalFinMaterial)
+          dorsalFin.position.set(-0.1, 0, 0)
+          dorsalFin.rotation.y = Math.PI / 2
+          seahorseGroup.add(dorsalFin)
+
+          mesh = seahorseGroup
+          swimRadius = 4 + Math.random() * 6
+          swimSpeed = 0.2 + Math.random() * 0.3
+          break
+        }
+      }
+
+      // Set random starting position within the underwater area
+      const startPosition = new THREE.Vector3(
+        (Math.random() - 0.5) * 60,
+        -5 - Math.random() * 8, // Swimming in mid-water
+        (Math.random() - 0.5) * 60
+      )
+
+      mesh.position.copy(startPosition)
+      mesh.scale.setScalar(0.8 + Math.random() * 0.4) // Vary sizes
+
+      // Add creature data for animation
+      mesh.userData = {
+        creatureType: creatureType,
+        swimCenter: startPosition.clone(),
+        swimRadius: swimRadius,
+        swimSpeed: swimSpeed,
+        swimAngle: Math.random() * Math.PI * 2,
+        bobOffset: Math.random() * Math.PI * 2,
+      }
+
+      this.scene.add(mesh)
+      this.seaCreatures.push(mesh)
+    }
+
+    console.log(`🐠 Created ${this.seaCreatures.length} sea creatures`)
   }
 
   createSampleStars() {
@@ -1651,6 +2029,89 @@ class OceanAdventure {
       star.material.emissiveIntensity = pulseFactor
     })
 
+    // Animate environment objects (swaying seaweed and kelp)
+    this.environmentObjects.forEach(envObject => {
+      const mesh = envObject.mesh
+      if (mesh.userData.swaySpeed && mesh.userData.swayAmount) {
+        const time = Date.now() * 0.001
+        const swayX =
+          Math.sin(time * mesh.userData.swaySpeed) * mesh.userData.swayAmount
+        const swayZ =
+          Math.cos(time * mesh.userData.swaySpeed * 0.7) *
+          mesh.userData.swayAmount *
+          0.5
+        mesh.rotation.x = swayX
+        mesh.rotation.z = swayZ
+      }
+    })
+
+    // Animate sea creatures
+    this.seaCreatures.forEach(creature => {
+      const userData = creature.userData
+      const time = Date.now() * 0.001
+
+      // Update swimming angle
+      userData.swimAngle += userData.swimSpeed * deltaTime
+
+      // Calculate circular swimming path
+      const swimX =
+        userData.swimCenter.x +
+        Math.cos(userData.swimAngle) * userData.swimRadius
+      const swimZ =
+        userData.swimCenter.z +
+        Math.sin(userData.swimAngle) * userData.swimRadius
+      const swimY =
+        userData.swimCenter.y + Math.sin(time + userData.bobOffset) * 0.5 // Gentle vertical bobbing
+
+      creature.position.set(swimX, swimY, swimZ)
+
+      // Face swimming direction
+      const directionAngle = userData.swimAngle + Math.PI / 2
+      creature.rotation.y = directionAngle
+
+      // Add specific animations based on creature type
+      if (userData.creatureType === 'jellyfish') {
+        // Animate jellyfish tentacles
+        creature.children.forEach(child => {
+          if (child.userData.tentacleIndex !== undefined) {
+            const tentacleWave =
+              Math.sin(time * 3 + child.userData.tentacleIndex) * 0.3
+            child.rotation.x = tentacleWave
+            child.rotation.z =
+              Math.sin(time * 2 + child.userData.tentacleIndex) * 0.2
+          }
+        })
+
+        // Pulse the dome
+        const pulseScale = 1 + Math.sin(time * 2) * 0.1
+        if (creature.children[0]) {
+          creature.children[0].scale.setScalar(pulseScale)
+        }
+      } else if (userData.creatureType === 'fish') {
+        // Animate fish tail wagging
+        if (creature.children[1]) {
+          // Tail is usually second child
+          creature.children[1].rotation.y = Math.sin(time * 8) * 0.3
+        }
+
+        // Animate side fins
+        creature.children.forEach((child, index) => {
+          if (index > 1) {
+            // Side fins
+            child.rotation.z =
+              child.rotation.z + Math.sin(time * 6 + index) * 0.1
+          }
+        })
+      } else if (userData.creatureType === 'seahorse') {
+        // Animate dorsal fin
+        creature.children.forEach(child => {
+          if (child.geometry && child.geometry.type === 'PlaneGeometry') {
+            child.rotation.z = Math.sin(time * 5) * 0.2
+          }
+        })
+      }
+    })
+
     // Get current time for all animations
     const time = Date.now() * 0.001
 
@@ -2086,8 +2547,11 @@ class OceanAdventure {
       const playerPosition = this.player.getPosition()
       // Water surface is at Y=5, so depth = surface level - current Y position
       const waterSurface = 5.0
-      const depth = Math.max(0, waterSurface - playerPosition.y)
-      document.getElementById('depthMeter').textContent = depth.toFixed(1)
+      const depth = waterSurface - playerPosition.y // Remove Math.max(0, ...) to allow negative values
+
+      // Format depth display: positive values for underwater, negative for above surface
+      const depthText = depth >= 0 ? depth.toFixed(1) : depth.toFixed(1)
+      document.getElementById('depthMeter').textContent = depthText
     }
   }
 

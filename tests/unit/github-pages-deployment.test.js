@@ -9,13 +9,15 @@ const execAsync = promisify(exec)
 describe('GitHub Pages Deployment Verification', () => {
   it('should build correctly for GitHub Pages deployment', async () => {
     // Set up environment for GitHub Pages build
-    const env = { ...process.env, VITE_BASE_PATH: '/3dgame/' }
+    const originalBasePath = process.env.VITE_BASE_PATH
+    process.env.VITE_BASE_PATH = '/3dgame/'
     
-    // Clean and build
-    await execAsync('rm -rf dist', { env })
-    await execAsync('npm run build', { env })
-    
-    const distPath = path.join(process.cwd(), 'dist')
+    try {
+      // Clean and build
+      await execAsync('rm -rf dist')
+      await execAsync('npm run build')
+      
+      const distPath = path.join(process.cwd(), 'dist')
     
     // 1. Check for essential files
     const indexPath = path.join(distPath, 'index.html')
@@ -54,5 +56,13 @@ describe('GitHub Pages Deployment Verification', () => {
     const assetsPath = path.join(distPath, 'assets')
     const assetsExists = await fs.access(assetsPath).then(() => true).catch(() => false)
     expect(assetsExists).toBe(true)
+    } finally {
+      // Restore original environment variable
+      if (originalBasePath !== undefined) {
+        process.env.VITE_BASE_PATH = originalBasePath
+      } else {
+        delete process.env.VITE_BASE_PATH
+      }
+    }
   }, 60000) // 60 second timeout for build
 })
