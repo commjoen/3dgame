@@ -221,6 +221,92 @@ describe('Player', () => {
       // Rotation should change when moving sideways
       expect(player.mesh.rotation.y).not.toBe(initialRotation)
     })
+
+    it('should tilt when swimming up and down (pitch)', () => {
+      const initialPitch = player.mesh.rotation.x
+
+      // Test swimming up
+      const inputStateUp = {
+        keys: { up: true },
+        joystick: { x: 0, y: 0 },
+        mobileButtons: {},
+      }
+
+      player.handleInput(inputStateUp)
+
+      // Pitch should change when swimming up (negative direction due to coordinate system)
+      expect(player.mesh.rotation.x).toBeLessThan(initialPitch)
+
+      // Reset and test swimming down
+      player.mesh.rotation.x = 0
+      const inputStateDown = {
+        keys: { down: true },
+        joystick: { x: 0, y: 0 },
+        mobileButtons: {},
+      }
+
+      player.handleInput(inputStateDown)
+
+      // Pitch should change when swimming down (positive direction)
+      expect(player.mesh.rotation.x).toBeGreaterThan(0)
+    })
+
+    it('should bank when turning while moving forward (roll)', () => {
+      const initialRoll = player.mesh.rotation.z
+
+      // Test banking right while moving forward
+      const inputStateRight = {
+        keys: { forward: true, right: true },
+        joystick: { x: 0, y: 0 },
+        mobileButtons: {},
+      }
+
+      player.handleInput(inputStateRight)
+
+      // Roll should change when banking right
+      expect(player.mesh.rotation.z).toBeGreaterThan(initialRoll)
+
+      // Reset and test banking left while moving forward
+      player.mesh.rotation.z = 0
+      const inputStateLeft = {
+        keys: { forward: true, left: true },
+        joystick: { x: 0, y: 0 },
+        mobileButtons: {},
+      }
+
+      player.handleInput(inputStateLeft)
+
+      // Roll should change when banking left (negative direction)
+      expect(player.mesh.rotation.z).toBeLessThan(0)
+    })
+
+    it('should apply tilting behavior based on movement direction', () => {
+      // Test that tilting occurs when there's movement
+      const inputStateUp = {
+        keys: { up: true },
+        joystick: { x: 0, y: 0 },
+        mobileButtons: {},
+      }
+
+      const initialPitch = player.mesh.rotation.x
+      player.handleInput(inputStateUp)
+      
+      // Should have some pitch rotation when swimming up
+      expect(player.mesh.rotation.x).not.toBe(initialPitch)
+
+      // Test banking when turning
+      const inputStateTurn = {
+        keys: { forward: true, right: true },
+        joystick: { x: 0, y: 0 },
+        mobileButtons: {},
+      }
+
+      const initialRoll = player.mesh.rotation.z
+      player.handleInput(inputStateTurn)
+      
+      // Should have some roll rotation when turning
+      expect(player.mesh.rotation.z).not.toBe(initialRoll)
+    })
   })
 
   describe('Update and Synchronization', () => {
