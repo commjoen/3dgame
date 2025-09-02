@@ -253,6 +253,36 @@ export class Player {
         targetRotation,
         this.rotationSpeed * 0.016
       )
+
+      // Add tilting based on movement direction
+      // Pitch (X-axis): Tilt up when swimming up, down when swimming down
+      const targetPitch = -this.movementVector.y * 0.3 // Negative for correct tilt direction
+      this.mesh.rotation.x = THREE.MathUtils.lerp(
+        this.mesh.rotation.x,
+        targetPitch,
+        this.rotationSpeed * 0.016
+      )
+
+      // Roll (Z-axis): Bank when turning left/right (only when moving forward/backward)
+      const forwardMovement = Math.abs(this.movementVector.z)
+      const bankingAmount = this.movementVector.x * forwardMovement * 0.2
+      this.mesh.rotation.z = THREE.MathUtils.lerp(
+        this.mesh.rotation.z,
+        bankingAmount,
+        this.rotationSpeed * 0.016
+      )
+    } else {
+      // Return to neutral position when not moving
+      this.mesh.rotation.x = THREE.MathUtils.lerp(
+        this.mesh.rotation.x,
+        0,
+        this.rotationSpeed * 0.016
+      )
+      this.mesh.rotation.z = THREE.MathUtils.lerp(
+        this.mesh.rotation.z,
+        0,
+        this.rotationSpeed * 0.016
+      )
     }
   }
 
