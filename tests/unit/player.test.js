@@ -39,8 +39,13 @@ describe('Player', () => {
     it('should create player mesh and add to scene', () => {
       expect(mockScene.add).toHaveBeenCalled()
       expect(player.mesh).toBeDefined()
-      expect(player.mesh.geometry).toBeDefined()
-      expect(player.mesh.material).toBeDefined()
+      // Player mesh is now a Group with child meshes for body parts
+      expect(player.mesh.type).toBe('Group')
+      expect(player.mesh.children.length).toBeGreaterThan(0)
+      // Check that child meshes have geometry and material
+      const childMesh = player.mesh.children[0]
+      expect(childMesh.geometry).toBeDefined()
+      expect(childMesh.material).toBeDefined()
     })
 
     it('should create physics body', () => {

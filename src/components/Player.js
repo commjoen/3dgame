@@ -391,7 +391,9 @@ export class Player {
     // Dispose geometry and material for the group
     if (this.mesh.children) {
       this.mesh.children.forEach(child => {
-        if (child.geometry) child.geometry.dispose()
+        if (child.geometry) {
+          child.geometry.dispose()
+        }
         if (child.material) {
           if (Array.isArray(child.material)) {
             child.material.forEach(material => material.dispose())
@@ -402,8 +404,12 @@ export class Player {
       })
     } else {
       // Fallback for simple mesh (backward compatibility)
-      if (this.mesh.geometry) this.mesh.geometry.dispose()
-      if (this.mesh.material) this.mesh.material.dispose()
+      if (this.mesh.geometry) {
+        this.mesh.geometry.dispose()
+      }
+      if (this.mesh.material) {
+        this.mesh.material.dispose()
+      }
     }
   }
 }
