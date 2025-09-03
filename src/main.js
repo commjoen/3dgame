@@ -620,18 +620,19 @@ class OceanAdventure {
     const waveSurfaceMaterial = new THREE.MeshPhongMaterial({
       color: 0x4dc5ff, // Brighter light blue for enhanced wave visibility
       transparent: true,
-      opacity: 0.9, // Increased opacity for better visibility at surface
+      opacity: 0.95, // Increased opacity for better visibility from depth
       side: THREE.DoubleSide,
-      shininess: 120, // Higher shininess for more realistic water reflection
+      shininess: 150, // Higher shininess for more realistic water reflection visible from depth
       specular: 0x87ceeb, // Light blue specular highlights
       fog: false, // Ensure wave surface is not affected by fog
       wireframe: false, // Solid surface, not wireframe
+      emissive: 0x001122, // Slight emissive glow to make waves visible from depth
     })
 
     const waveSurface = new THREE.Mesh(waveSurfaceGeometry, waveSurfaceMaterial)
     waveSurface.name = 'waveSurface' // Add name for debugging
     waveSurface.rotation.x = -Math.PI / 2
-    waveSurface.position.y = 5.2 // Positioned closer to water surface for better visibility at depth 0.0
+    waveSurface.position.y = 5.5 // Positioned slightly higher for better visibility from deep underwater
     this.scene.add(waveSurface)
 
     console.log('🌊 Wave surface created at position:', waveSurface.position)
@@ -640,11 +641,11 @@ class OceanAdventure {
     this.waveSurface = waveSurface
     this.waterSurface = waterSurface
 
-    // Enhanced wave parameters for better visibility at surface level
+    // Enhanced wave parameters for better visibility at all depths
     this.waveParams = {
-      amplitude: 4.5, // Increased amplitude for more prominent waves
-      frequency: 0.25, // Optimized frequency for better wave visibility
-      speed: 2.0, // Faster wave movement for more dynamic surface
+      amplitude: 6.0, // Increased amplitude for more prominent waves visible from depth
+      frequency: 0.2, // Slightly lower frequency for larger, more visible waves
+      speed: 2.5, // Faster wave movement for more dynamic surface
     }
 
     // Store original positions for wave surface animation
@@ -1881,9 +1882,14 @@ class OceanAdventure {
       )
     }
 
-    // Calculate camera position based on rotation
+    // Calculate camera position based on rotation and depth
     const distance = 15 // Distance from player
-    const height = 12 // Base height offset
+    const baseHeight = 12 // Base height offset
+
+    // Adjust height offset based on player depth for better wave visibility
+    const playerDepth = 5.0 - playerPosition.y // Water surface at Y=5
+    const depthAdjustment = Math.min(3, Math.max(0, playerDepth - 10) * 0.3) // Increase height when deeper than 10m
+    const height = baseHeight + depthAdjustment
 
     // Apply rotation to calculate offset
     const offsetX = Math.sin(this.cameraRotation.horizontal) * distance
@@ -1897,9 +1903,19 @@ class OceanAdventure {
     // Smooth camera movement
     this.camera.position.lerp(targetPosition, 0.1)
 
-    // Look at the player with slight adjustment for better underwater viewing
+    // Improved camera look direction to account for player movement direction
     const lookAtTarget = playerPosition.clone()
-    lookAtTarget.y += 2 // Look slightly above the player
+
+    // If player is moving, adjust camera to look in the direction of movement
+    if (this.player && this.player.isMoving) {
+      const movementDirection = this.player.movementVector.clone().normalize()
+      // Add movement direction influence to look target for better head direction awareness
+      lookAtTarget.add(movementDirection.multiplyScalar(2))
+      lookAtTarget.y += 1 // Less vertical offset when moving to see movement direction better
+    } else {
+      lookAtTarget.y += 2 // Look slightly above the player when stationary
+    }
+
     this.camera.lookAt(lookAtTarget)
   }
 
