@@ -15,8 +15,8 @@ describe('Deployment Configuration', () => {
     
     // Check prepare-pages job has the setup and upload actions
     const preparePagesSteps = workflow.jobs['prepare-pages'].steps
-    const hasSetupPages = preparePagesSteps.some(step => step.uses === 'actions/configure-pages@v4')
-    const hasUploadArtifact = preparePagesSteps.some(step => step.uses === 'actions/upload-pages-artifact@v3')
+    const hasSetupPages = preparePagesSteps.some(step => step.uses === 'actions/configure-pages@v5')
+    const hasUploadArtifact = preparePagesSteps.some(step => step.uses === 'actions/upload-pages-artifact@v4')
     
     // Check deploy job has the deploy action
     const deploySteps = workflow.jobs.deploy.steps
@@ -56,7 +56,7 @@ describe('Deployment Configuration', () => {
     expect(hasBuildx).toBe(true)
     
     // Check multi-platform build
-    const buildStep = containerSteps.find(step => step.uses === 'docker/build-push-action@v5')
+    const buildStep = containerSteps.find(step => step.uses === 'docker/build-push-action@v6')
     expect(buildStep).toBeDefined()
     expect(buildStep.with.platforms).toBe('linux/amd64,linux/arm64')
     
