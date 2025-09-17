@@ -16,13 +16,20 @@ const execAsync = promisify(exec)
 
 describe('GitHub Pages Deployment Simulation', () => {
   let server
+  let distPath
   const PORT = 8080
   const BASE_URL = `http://localhost:${PORT}`
 
   beforeAll(async () => {
-    // Build the application for GitHub Pages
-    const env = { ...process.env, VITE_BASE_PATH: '/3dgame/' }
-    await execAsync('rm -rf dist', { env })
+    // Build the application for GitHub Pages using unique directory
+    const testId = 'github-pages-simulation-' + Date.now()
+    distPath = path.join(process.cwd(), 'dist-' + testId)
+    const env = { 
+      ...process.env, 
+      VITE_BASE_PATH: '/3dgame/',
+      VITE_OUT_DIR: distPath
+    }
+    await execAsync(`rm -rf "${distPath}"`, { env })
     await execAsync('npm run build', { env })
 
     // Create a simple static server that simulates GitHub Pages
@@ -37,11 +44,11 @@ describe('GitHub Pages Deployment Simulation', () => {
       
       // Remove /3dgame prefix for file system access
       const cleanPath = filePath.replace('/3dgame', '')
-      let fsPath = path.join(process.cwd(), 'dist', cleanPath === '/' ? 'index.html' : cleanPath)
+      let fsPath = path.join(distPath, cleanPath === '/' ? 'index.html' : cleanPath)
       
       // Handle 404s with the 404.html file (GitHub Pages behavior)
       if (!fs.existsSync(fsPath)) {
-        fsPath = path.join(process.cwd(), 'dist', '404.html')
+        fsPath = path.join(distPath, '404.html')
       }
 
       if (fs.existsSync(fsPath)) {
@@ -79,6 +86,10 @@ describe('GitHub Pages Deployment Simulation', () => {
       await new Promise((resolve) => {
         server.close(resolve)
       })
+    }
+    // Cleanup test directory
+    if (distPath) {
+      await execAsync(`rm -rf "${distPath}"`).catch(() => {})
     }
   })
 

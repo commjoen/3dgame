@@ -46,7 +46,7 @@ export default defineConfig({
     host: true
   },
   build: {
-    outDir: 'dist',
+    outDir: process.env.VITE_OUT_DIR || 'dist',
     sourcemap: true,
     rollupOptions: {
       output: {

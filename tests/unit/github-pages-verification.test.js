@@ -10,14 +10,17 @@ describe('GitHub Pages Deployment Verification', () => {
   it('should build and verify GitHub Pages deployment files', async () => {
     // Set up environment for GitHub Pages build
     const originalBasePath = process.env.VITE_BASE_PATH
+    const originalOutDir = process.env.VITE_OUT_DIR
+    const testId = 'github-pages-verification-' + Date.now()
+    const distPath = path.join(process.cwd(), 'dist-' + testId)
+    
     process.env.VITE_BASE_PATH = '/3dgame/'
+    process.env.VITE_OUT_DIR = distPath
     
     try {
-      // Clean and build
-      await execAsync('rm -rf dist')
+      // Clean and build to unique directory
+      await execAsync(`rm -rf "${distPath}"`)
       await execAsync('npm run build')
-      
-      const distPath = path.join(process.cwd(), 'dist')
     
     // 1. Check for 404.html file for SPA routing
     const html404Path = path.join(distPath, '404.html')
@@ -78,11 +81,20 @@ describe('GitHub Pages Deployment Verification', () => {
     const assetsPath = path.join(distPath, 'assets')
     expect(existsSync(assetsPath)).toBe(true)
     } finally {
-      // Restore original environment variable
+      // Cleanup test directory
+      await execAsync(`rm -rf "${distPath}"`).catch(() => {})
+      
+      // Restore original environment variables
       if (originalBasePath !== undefined) {
         process.env.VITE_BASE_PATH = originalBasePath
       } else {
         delete process.env.VITE_BASE_PATH
+      }
+      
+      if (originalOutDir !== undefined) {
+        process.env.VITE_OUT_DIR = originalOutDir
+      } else {
+        delete process.env.VITE_OUT_DIR
       }
     }
   }, 30000) // 30 second timeout for build
