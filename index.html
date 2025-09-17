@@ -431,6 +431,56 @@
                 text-align: center;
             }
         }
+        
+        /* App Install Section */
+        .app-install-section {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .install-button {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .install-button:hover {
+            background: linear-gradient(135deg, #45a049, #3d8b40);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .install-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .install-status {
+            color: #b0c4de;
+            font-style: italic;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        /* Mobile responsive install button */
+        @media (max-width: 768px) {
+            .install-button {
+                font-size: 18px;
+                padding: 14px 28px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -494,6 +544,13 @@
                     <li><strong>↓ Button:</strong> Swim down</li>
                     <li><strong>Swipe:</strong> Look around (alternative)</li>
                 </ul>
+                
+                <h3>App Installation:</h3>
+                <div class="app-install-section">
+                    <p>Install Ocean Adventure as an app for the best offline experience!</p>
+                    <button id="installButton" class="install-button hidden">📱 Install App</button>
+                    <p id="installStatus" class="install-status hidden">App installation not available in this browser.</p>
+                </div>
                 
                 <h3>Objective:</h3>
                 <p>Collect all the golden stars to complete each level. Watch your depth and explore the underwater world!</p>
