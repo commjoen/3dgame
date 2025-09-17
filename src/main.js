@@ -586,66 +586,50 @@ class OceanAdventure {
   }
 
   createUnderwaterEnvironment() {
-    // Create animated water surface at Y=5 (matches depth meter calculation)
-    const waterSurfaceGeometry = new THREE.PlaneGeometry(400, 400, 128, 128) // Higher resolution for better wave detail
+    // Note: Static water surface removed to eliminate z-fighting with animated waves
+    // const waterSurface = new THREE.Mesh(
+    //   waterSurfaceGeometry,
+    //   waterSurfaceMaterial
+    // )
+    // waterSurface.name = 'waterSurface' // Add name for debugging
+    // waterSurface.rotation.x = -Math.PI / 2 // Horizontal surface
+    // waterSurface.position.y = 5 // Water surface level used by depth meter
+    // waterSurface.receiveShadow = true
+    // waterSurface.castShadow = false
+    // this.scene.add(waterSurface)
 
-    // Enhanced water material with improved visual effects
-    const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x0088cc, // Brighter blue for better visibility
-      transparent: true,
-      opacity: 0.7, // Semi-transparent for realistic water
-      side: THREE.DoubleSide, // Visible from both sides
-      shininess: 100, // Moderate shininess for water reflection
-      specular: 0x87ceeb, // Sky blue specular highlights
-      depthWrite: true, // Enable depth writing
-      reflectivity: 0.6, // Moderate reflectivity
-      fog: false, // Ensure water surface is not affected by underwater fog
-    })
-
-    const waterSurface = new THREE.Mesh(
-      waterSurfaceGeometry,
-      waterSurfaceMaterial
-    )
-    waterSurface.name = 'waterSurface' // Add name for debugging
-    waterSurface.rotation.x = -Math.PI / 2 // Horizontal surface
-    waterSurface.position.y = 5 // Water surface level used by depth meter
-    waterSurface.receiveShadow = true
-    waterSurface.castShadow = false
-    this.scene.add(waterSurface)
-
-    console.log('🌊 Water surface created at position:', waterSurface.position)
+    // console.log('🌊 Water surface created at position:', waterSurface.position)
 
     // Create visible wave surface with enhanced visibility parameters
     const waveSurfaceGeometry = new THREE.PlaneGeometry(300, 300, 96, 96) // Larger area and higher resolution for better visibility
     const waveSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x4dc5ff, // Brighter light blue for enhanced wave visibility
-      transparent: true,
-      opacity: 0.95, // Increased opacity for better visibility from depth
+      color: 0x0099ff, // Bright blue for high visibility underwater
+      transparent: false, // Keep solid for better visibility
       side: THREE.DoubleSide,
-      shininess: 150, // Higher shininess for more realistic water reflection visible from depth
-      specular: 0x87ceeb, // Light blue specular highlights
+      shininess: 100,
+      specular: 0xffffff, // White specular highlights for realistic water
       fog: false, // Ensure wave surface is not affected by fog
-      wireframe: false, // Solid surface, not wireframe
-      emissive: 0x001122, // Slight emissive glow to make waves visible from depth
+      wireframe: false, // Solid surface for final implementation
+      emissive: 0x0066cc, // Strong blue emissive glow for underwater visibility
     })
 
     const waveSurface = new THREE.Mesh(waveSurfaceGeometry, waveSurfaceMaterial)
     waveSurface.name = 'waveSurface' // Add name for debugging
     waveSurface.rotation.x = -Math.PI / 2
-    waveSurface.position.y = 5.5 // Positioned slightly higher for better visibility from deep underwater
+    waveSurface.position.y = 5.0 // Position at same level as water surface for proper wave effect
     this.scene.add(waveSurface)
 
     console.log('🌊 Wave surface created at position:', waveSurface.position)
 
     // Store references for wave animation
     this.waveSurface = waveSurface
-    this.waterSurface = waterSurface
+    // this.waterSurface = waterSurface // Temporarily disabled
 
     // Enhanced wave parameters for better visibility at all depths
     this.waveParams = {
-      amplitude: 6.0, // Increased amplitude for more prominent waves visible from depth
-      frequency: 0.2, // Slightly lower frequency for larger, more visible waves
-      speed: 2.5, // Faster wave movement for more dynamic surface
+      amplitude: 8.0, // Increased amplitude for even more prominent waves
+      frequency: 0.15, // Lower frequency for larger, more visible waves
+      speed: 3.0, // Faster wave movement for more dynamic surface
     }
 
     // Store original positions for wave surface animation
@@ -655,12 +639,12 @@ class OceanAdventure {
       this.waveOriginalPositions[i] = wavePositions[i]
     }
 
-    // Store original vertex positions for water surface wave animation
-    const positions = waterSurface.geometry.attributes.position.array
-    this.waterOriginalPositions = new Float32Array(positions.length)
-    for (let i = 0; i < positions.length; i++) {
-      this.waterOriginalPositions[i] = positions[i]
-    }
+    // Store original vertex positions for wave surface animation (no longer used for water surface)
+    // const positions = waterSurface.geometry.attributes.position.array
+    // this.waterOriginalPositions = new Float32Array(positions.length)
+    // for (let i = 0; i < positions.length; i++) {
+    //   this.waterOriginalPositions[i] = positions[i]
+    // }
 
     // Add foam/whitecap effect for wave crests
     const foamGeometry = new THREE.PlaneGeometry(400, 400, 64, 64)
@@ -2131,17 +2115,56 @@ class OceanAdventure {
     // Get current time for all animations
     const time = Date.now() * 0.001
 
-    // Realistic wave animation system for both water surface and wave surface
-    if (this.waterSurface && this.waterOriginalPositions && this.waveParams) {
-      const positions = this.waterSurface.geometry.attributes.position.array
-      const time = Date.now() * 0.001
+    // Realistic wave animation system for wave surface only (water surface temporarily disabled)
+    // if (this.waterSurface && this.waterOriginalPositions && this.waveParams) {
+    //   const positions = this.waterSurface.geometry.attributes.position.array
+    //   const time = Date.now() * 0.001
 
-      // Apply realistic wave motion to underwater water surface
-      for (let i = 0; i < positions.length; i += 3) {
-        const x = this.waterOriginalPositions[i]
-        const z = this.waterOriginalPositions[i + 2]
+    //   // Apply realistic wave motion to underwater water surface
+    //   for (let i = 0; i < positions.length; i += 3) {
+    //     const x = this.waterOriginalPositions[i]
+    //     const z = this.waterOriginalPositions[i + 2]
 
-        // Multi-layered wave system for realistic ocean movement
+    //     // Multi-layered wave system for realistic ocean movement
+    //     const wave1 =
+    //       Math.sin(
+    //         x * this.waveParams.frequency + time * this.waveParams.speed
+    //       ) * this.waveParams.amplitude
+    //     const wave2 =
+    //       Math.sin(
+    //         z * this.waveParams.frequency * 0.7 +
+    //           time * this.waveParams.speed * 0.8
+    //       ) *
+    //       this.waveParams.amplitude *
+    //       0.6
+    //     const wave3 =
+    //       Math.sin(
+    //         (x + z) * this.waveParams.frequency * 1.3 +
+    //           time * this.waveParams.speed * 1.2
+    //       ) *
+    //       this.waveParams.amplitude *
+    //       0.4
+
+    //     const waveHeight = wave1 + wave2 + wave3
+
+    //     positions[i] = x
+    //     positions[i + 1] = waveHeight
+    //     positions[i + 2] = z
+    //   }
+    //   this.waterSurface.geometry.attributes.position.needsUpdate = true
+    // }
+
+    // Animate the visible wave surface at Y=5.0
+    if (this.waveSurface && this.waveOriginalPositions) {
+      const time = Date.now() * 0.001 // Declare time here since it's not declared above anymore
+      const wavePositions = this.waveSurface.geometry.attributes.position.array
+      let maxHeight = 0
+      let minHeight = 0
+      for (let i = 0; i < wavePositions.length; i += 3) {
+        const x = this.waveOriginalPositions[i]
+        const z = this.waveOriginalPositions[i + 2]
+
+        // Same wave pattern but with enhanced visibility
         const wave1 =
           Math.sin(
             x * this.waveParams.frequency + time * this.waveParams.speed
@@ -2162,50 +2185,16 @@ class OceanAdventure {
           0.4
 
         const waveHeight = wave1 + wave2 + wave3
+        maxHeight = Math.max(maxHeight, waveHeight)
+        minHeight = Math.min(minHeight, waveHeight)
 
-        positions[i] = x
-        positions[i + 1] = waveHeight
-        positions[i + 2] = z
+        wavePositions[i] = x
+        wavePositions[i + 1] = waveHeight
+        wavePositions[i + 2] = z
       }
-      this.waterSurface.geometry.attributes.position.needsUpdate = true
-
-      // Animate the visible wave surface at Y=5.5
-      if (this.waveSurface && this.waveOriginalPositions) {
-        const wavePositions =
-          this.waveSurface.geometry.attributes.position.array
-        for (let i = 0; i < wavePositions.length; i += 3) {
-          const x = this.waveOriginalPositions[i]
-          const z = this.waveOriginalPositions[i + 2]
-
-          // Same wave pattern but with enhanced visibility
-          const wave1 =
-            Math.sin(
-              x * this.waveParams.frequency + time * this.waveParams.speed
-            ) * this.waveParams.amplitude
-          const wave2 =
-            Math.sin(
-              z * this.waveParams.frequency * 0.7 +
-                time * this.waveParams.speed * 0.8
-            ) *
-            this.waveParams.amplitude *
-            0.6
-          const wave3 =
-            Math.sin(
-              (x + z) * this.waveParams.frequency * 1.3 +
-                time * this.waveParams.speed * 1.2
-            ) *
-            this.waveParams.amplitude *
-            0.4
-
-          const waveHeight = wave1 + wave2 + wave3
-
-          wavePositions[i] = x
-          wavePositions[i + 1] = waveHeight
-          wavePositions[i + 2] = z
-        }
-        this.waveSurface.geometry.attributes.position.needsUpdate = true
-      }
+      this.waveSurface.geometry.attributes.position.needsUpdate = true
     }
+    // }
 
     // Animate foam surface to show wave crests (simplified)
     if (this.foamSurface && this.foamOriginalPositions) {

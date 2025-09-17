@@ -255,8 +255,8 @@ export class Player {
       )
 
       // Add tilting based on movement direction
-      // Pitch (X-axis): Tilt up when swimming up, down when swimming down
-      const targetPitch = -this.movementVector.y * 0.6 // Negative for correct tilt direction, increased for more pronounced effect
+      // Pitch (X-axis): Tilt down when swimming forward, up when swimming backward
+      const targetPitch = this.movementVector.z * 0.6 // Forward/backward movement controls pitch
       this.mesh.rotation.x = THREE.MathUtils.lerp(
         this.mesh.rotation.x,
         targetPitch,

@@ -222,32 +222,32 @@ describe('Player', () => {
       expect(player.mesh.rotation.y).not.toBe(initialRotation)
     })
 
-    it('should tilt when swimming up and down (pitch)', () => {
+    it('should tilt when swimming forward and backward (pitch)', () => {
       const initialPitch = player.mesh.rotation.x
 
-      // Test swimming up
-      const inputStateUp = {
-        keys: { up: true },
+      // Test swimming forward
+      const inputStateForward = {
+        keys: { forward: true },
         joystick: { x: 0, y: 0 },
         mobileButtons: {},
       }
 
-      player.handleInput(inputStateUp)
+      player.handleInput(inputStateForward)
 
-      // Pitch should change when swimming up (negative direction due to coordinate system)
+      // Pitch should change when swimming forward (negative direction due to coordinate system)
       expect(player.mesh.rotation.x).toBeLessThan(initialPitch)
 
-      // Reset and test swimming down
+      // Reset and test swimming backward
       player.mesh.rotation.x = 0
-      const inputStateDown = {
-        keys: { down: true },
+      const inputStateBackward = {
+        keys: { backward: true },
         joystick: { x: 0, y: 0 },
         mobileButtons: {},
       }
 
-      player.handleInput(inputStateDown)
+      player.handleInput(inputStateBackward)
 
-      // Pitch should change when swimming down (positive direction)
+      // Pitch should change when swimming backward (positive direction)
       expect(player.mesh.rotation.x).toBeGreaterThan(0)
     })
 
@@ -281,17 +281,17 @@ describe('Player', () => {
     })
 
     it('should apply tilting behavior based on movement direction', () => {
-      // Test that tilting occurs when there's movement
-      const inputStateUp = {
-        keys: { up: true },
+      // Test that tilting occurs when moving forward
+      const inputStateForward = {
+        keys: { forward: true },
         joystick: { x: 0, y: 0 },
         mobileButtons: {},
       }
 
       const initialPitch = player.mesh.rotation.x
-      player.handleInput(inputStateUp)
+      player.handleInput(inputStateForward)
       
-      // Should have some pitch rotation when swimming up
+      // Should have some pitch rotation when swimming forward
       expect(player.mesh.rotation.x).not.toBe(initialPitch)
 
       // Test banking when turning
