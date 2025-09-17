@@ -64,7 +64,7 @@ class OceanAdventure {
     this.cameraRotation = {
       horizontal: 0, // Horizontal rotation (yaw)
       vertical: 0, // Vertical rotation (pitch)
-      sensitivity: 0.005, // Camera rotation sensitivity
+      sensitivity: this.isMobile ? 0.003 : 0.005, // Slower camera movement on mobile
     }
 
     // Camera smoothing state for adaptive movement
@@ -1896,10 +1896,14 @@ class OceanAdventure {
     const baseSmoothingFactor = 0.1
 
     // Screen size factor: larger screens get smoother camera movement
-    const screenSizeFactor = Math.min(
-      1.5,
-      Math.max(0.8, window.innerWidth / 1920)
-    )
+    // Mobile devices get more conservative smoothing for better control
+    let screenSizeFactor
+    if (this.isMobile) {
+      // More conservative smoothing on mobile for better control
+      screenSizeFactor = Math.min(1.0, Math.max(0.6, window.innerWidth / 1920))
+    } else {
+      screenSizeFactor = Math.min(1.5, Math.max(0.8, window.innerWidth / 1920))
+    }
 
     // Frame rate compensation: maintain consistent smoothing regardless of FPS
     const frameRateCompensation = deltaTime * 60 // Target 60fps equivalent

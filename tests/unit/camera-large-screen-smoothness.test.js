@@ -54,6 +54,7 @@ describe('Camera Large Screen Smoothness Improvements', () => {
         vertical: 0,
         sensitivity: 0.005,
       },
+      isMobile: false, // Default to desktop
       inputState: {
         cameraJoystick: { x: 0, y: 0 },
       },
@@ -100,7 +101,14 @@ describe('Camera Large Screen Smoothness Improvements', () => {
         const baseSmoothingFactor = 0.1
         
         // Screen size factor: larger screens get smoother camera movement
-        const screenSizeFactor = Math.min(1.5, Math.max(0.8, window.innerWidth / 1920))
+        // Mobile devices get more conservative smoothing for better control
+        let screenSizeFactor
+        if (this.isMobile) {
+          // More conservative smoothing on mobile for better control
+          screenSizeFactor = Math.min(1.0, Math.max(0.6, window.innerWidth / 1920))
+        } else {
+          screenSizeFactor = Math.min(1.5, Math.max(0.8, window.innerWidth / 1920))
+        }
         
         // Frame rate compensation: maintain consistent smoothing regardless of FPS
         const frameRateCompensation = deltaTime * 60
@@ -285,6 +293,50 @@ describe('Camera Large Screen Smoothness Improvements', () => {
 
       // Should still provide reasonable smoothing (at least some minimum)
       expect(smoothingFactor).toBeGreaterThan(0.05)
+    })
+  })
+
+  describe('Mobile Camera Behavior', () => {
+    it('should provide more conservative smoothing on mobile devices', () => {
+      // Mock very large screen to see the difference
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 2880, // 1.5x of 1920px
+      })
+
+      // Test desktop mode first
+      mockGame.isMobile = false
+      const desktopSmoothingFactor = mockGame.updateCamera(0.016)
+      
+      // Reset camera position for fair comparison
+      mockGame.camera.position.set(0, 0, 0)
+      
+      // Set up mobile mode
+      mockGame.isMobile = true
+      const mobileSmoothingFactor = mockGame.updateCamera(0.016)
+
+      // For very large screens (2880px):
+      // Desktop: screenSizeFactor = Math.min(1.5, Math.max(0.8, 2880/1920)) = Math.min(1.5, 1.5) = 1.5
+      // Mobile: screenSizeFactor = Math.min(1.0, Math.max(0.6, 2880/1920)) = Math.min(1.0, 1.5) = 1.0
+      
+      // Mobile should have more conservative smoothing (lower factor)
+      expect(mobileSmoothingFactor).toBeLessThan(desktopSmoothingFactor)
+    })
+
+    it('should have appropriate maximum smoothing factor on mobile', () => {
+      // Set up mobile mode with large screen
+      mockGame.isMobile = true
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1920,
+      })
+
+      const smoothingFactor = mockGame.updateCamera(0.016)
+
+      // Mobile devices should have smoothing factor capped at 1.0 (based on max 1.0 screen factor)
+      expect(smoothingFactor).toBeLessThanOrEqual(1.0)
     })
   })
 })
