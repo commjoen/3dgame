@@ -586,23 +586,7 @@ class OceanAdventure {
   }
 
   createUnderwaterEnvironment() {
-    // Create animated water surface at Y=5 (matches depth meter calculation)
-    const waterSurfaceGeometry = new THREE.PlaneGeometry(400, 400, 128, 128) // Higher resolution for better wave detail
-
-    // Enhanced water material with improved visual effects
-    const waterSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x0088cc, // Brighter blue for better visibility
-      transparent: true,
-      opacity: 0.7, // Semi-transparent for realistic water
-      side: THREE.DoubleSide, // Visible from both sides
-      shininess: 100, // Moderate shininess for water reflection
-      specular: 0x87ceeb, // Sky blue specular highlights
-      depthWrite: true, // Enable depth writing
-      reflectivity: 0.6, // Moderate reflectivity
-      fog: false, // Ensure water surface is not affected by underwater fog
-    })
-
-    // TEMPORARY: Remove static water surface to eliminate z-fighting with animated waves
+    // Note: Static water surface removed to eliminate z-fighting with animated waves
     // const waterSurface = new THREE.Mesh(
     //   waterSurfaceGeometry,
     //   waterSurfaceMaterial
@@ -2170,47 +2154,46 @@ class OceanAdventure {
     //   this.waterSurface.geometry.attributes.position.needsUpdate = true
     // }
 
-      // Animate the visible wave surface at Y=5.0
-      if (this.waveSurface && this.waveOriginalPositions) {
-        const time = Date.now() * 0.001 // Declare time here since it's not declared above anymore
-        const wavePositions =
-          this.waveSurface.geometry.attributes.position.array
-        let maxHeight = 0
-        let minHeight = 0
-        for (let i = 0; i < wavePositions.length; i += 3) {
-          const x = this.waveOriginalPositions[i]
-          const z = this.waveOriginalPositions[i + 2]
+    // Animate the visible wave surface at Y=5.0
+    if (this.waveSurface && this.waveOriginalPositions) {
+      const time = Date.now() * 0.001 // Declare time here since it's not declared above anymore
+      const wavePositions = this.waveSurface.geometry.attributes.position.array
+      let maxHeight = 0
+      let minHeight = 0
+      for (let i = 0; i < wavePositions.length; i += 3) {
+        const x = this.waveOriginalPositions[i]
+        const z = this.waveOriginalPositions[i + 2]
 
-          // Same wave pattern but with enhanced visibility
-          const wave1 =
-            Math.sin(
-              x * this.waveParams.frequency + time * this.waveParams.speed
-            ) * this.waveParams.amplitude
-          const wave2 =
-            Math.sin(
-              z * this.waveParams.frequency * 0.7 +
-                time * this.waveParams.speed * 0.8
-            ) *
-            this.waveParams.amplitude *
-            0.6
-          const wave3 =
-            Math.sin(
-              (x + z) * this.waveParams.frequency * 1.3 +
-                time * this.waveParams.speed * 1.2
-            ) *
-            this.waveParams.amplitude *
-            0.4
+        // Same wave pattern but with enhanced visibility
+        const wave1 =
+          Math.sin(
+            x * this.waveParams.frequency + time * this.waveParams.speed
+          ) * this.waveParams.amplitude
+        const wave2 =
+          Math.sin(
+            z * this.waveParams.frequency * 0.7 +
+              time * this.waveParams.speed * 0.8
+          ) *
+          this.waveParams.amplitude *
+          0.6
+        const wave3 =
+          Math.sin(
+            (x + z) * this.waveParams.frequency * 1.3 +
+              time * this.waveParams.speed * 1.2
+          ) *
+          this.waveParams.amplitude *
+          0.4
 
-          const waveHeight = wave1 + wave2 + wave3
-          maxHeight = Math.max(maxHeight, waveHeight)
-          minHeight = Math.min(minHeight, waveHeight)
+        const waveHeight = wave1 + wave2 + wave3
+        maxHeight = Math.max(maxHeight, waveHeight)
+        minHeight = Math.min(minHeight, waveHeight)
 
-          wavePositions[i] = x
-          wavePositions[i + 1] = waveHeight
-          wavePositions[i + 2] = z
-        }
-        this.waveSurface.geometry.attributes.position.needsUpdate = true
+        wavePositions[i] = x
+        wavePositions[i + 1] = waveHeight
+        wavePositions[i + 2] = z
       }
+      this.waveSurface.geometry.attributes.position.needsUpdate = true
+    }
     // }
 
     // Animate foam surface to show wave crests (simplified)
