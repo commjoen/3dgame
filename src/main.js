@@ -67,6 +67,9 @@ class OceanAdventure {
       sensitivity: 0.005, // Camera rotation sensitivity
     }
 
+    // Camera smoothing state for adaptive movement
+    this.previousMovementDirection = null
+
     // Timing
     this.lastTime = 0
 
@@ -1845,7 +1848,7 @@ class OceanAdventure {
     this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
-  updateCamera() {
+  updateCamera(deltaTime = 0.016) {
     const playerPosition = this.player.getPosition()
 
     // Apply camera joystick rotation if active
@@ -1853,11 +1856,15 @@ class OceanAdventure {
       this.inputState.cameraJoystick.x !== 0 ||
       this.inputState.cameraJoystick.y !== 0
     ) {
-      // Update camera rotation based on joystick input
+      // Update camera rotation based on joystick input with delta time
       this.cameraRotation.horizontal +=
-        this.inputState.cameraJoystick.x * this.cameraRotation.sensitivity * 60 // 60fps normalization
+        this.inputState.cameraJoystick.x *
+        this.cameraRotation.sensitivity *
+        (60 * deltaTime) // Frame rate independent
       this.cameraRotation.vertical +=
-        this.inputState.cameraJoystick.y * this.cameraRotation.sensitivity * 60
+        this.inputState.cameraJoystick.y *
+        this.cameraRotation.sensitivity *
+        (60 * deltaTime)
 
       // Clamp vertical rotation to allow upward viewing of waves while preventing flipping
       this.cameraRotation.vertical = Math.max(
@@ -1884,8 +1891,47 @@ class OceanAdventure {
     const offset = new THREE.Vector3(offsetX, offsetY, offsetZ)
     const targetPosition = playerPosition.clone().add(offset)
 
-    // Smooth camera movement
-    this.camera.position.lerp(targetPosition, 0.1)
+    // Adaptive camera smoothing for better large screen experience
+    // Base smoothing factor adjusted for frame rate and screen size
+    const baseSmoothingFactor = 0.1
+
+    // Screen size factor: larger screens get smoother camera movement
+    const screenSizeFactor = Math.min(
+      1.5,
+      Math.max(0.8, window.innerWidth / 1920)
+    )
+
+    // Frame rate compensation: maintain consistent smoothing regardless of FPS
+    const frameRateCompensation = deltaTime * 60 // Target 60fps equivalent
+
+    // Player movement responsiveness: more responsive when changing direction
+    let movementResponsiveness = 1.0
+    if (this.player && this.player.isMoving) {
+      // Check if player direction changed recently for extra responsiveness
+      const currentMovementDirection = this.player.movementVector
+        .clone()
+        .normalize()
+      if (this.previousMovementDirection) {
+        const directionChange =
+          1 - currentMovementDirection.dot(this.previousMovementDirection)
+        movementResponsiveness = 1.0 + directionChange * 0.8 // Up to 80% more responsive when changing direction
+      }
+      this.previousMovementDirection = currentMovementDirection.clone()
+    } else {
+      this.previousMovementDirection = null
+    }
+
+    // Calculate final smoothing factor
+    const adaptiveSmoothingFactor = Math.min(
+      1.0,
+      baseSmoothingFactor *
+        screenSizeFactor *
+        frameRateCompensation *
+        movementResponsiveness
+    )
+
+    // Smooth camera movement with adaptive factor
+    this.camera.position.lerp(targetPosition, adaptiveSmoothingFactor)
 
     // Improved camera look direction to account for player movement direction
     const lookAtTarget = playerPosition.clone()
@@ -1994,8 +2040,8 @@ class OceanAdventure {
       this.audioEngine.updateListenerPosition(playerPos, forward, up)
     }
 
-    // Update camera
-    this.updateCamera()
+    // Update camera with delta time for smooth interpolation
+    this.updateCamera(deltaTime)
 
     // Update underwater atmosphere effects based on camera position
     this.updateUnderwaterAtmosphere()
