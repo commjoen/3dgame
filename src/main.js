@@ -64,7 +64,7 @@ class OceanAdventure {
     this.cameraRotation = {
       horizontal: 0, // Horizontal rotation (yaw)
       vertical: 0, // Vertical rotation (pitch)
-      sensitivity: this.isMobile ? 0.003 : 0.005, // Slower camera movement on mobile
+      sensitivity: this.isMobile ? 0.0015 : 0.005, // Much slower camera movement on mobile for better control
     }
 
     // Camera smoothing state for adaptive movement
@@ -606,14 +606,16 @@ class OceanAdventure {
     // Create visible wave surface with enhanced visibility parameters
     const waveSurfaceGeometry = new THREE.PlaneGeometry(300, 300, 96, 96) // Larger area and higher resolution for better visibility
     const waveSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x0099ff, // Bright blue for high visibility underwater
-      transparent: false, // Keep solid for better visibility
+      color: 0x00aaff, // Brighter blue for enhanced visibility from depth
+      transparent: true, // Enable transparency for better underwater viewing
+      opacity: 0.9, // Slightly transparent to see through when very close
       side: THREE.DoubleSide,
-      shininess: 100,
+      shininess: 150, // Increased shininess for more reflection
       specular: 0xffffff, // White specular highlights for realistic water
       fog: false, // Ensure wave surface is not affected by fog
       wireframe: false, // Solid surface for final implementation
-      emissive: 0x0066cc, // Strong blue emissive glow for underwater visibility
+      emissive: 0x0088dd, // Stronger blue emissive glow for underwater visibility
+      emissiveIntensity: 0.3, // Add emissive intensity for better glow
     })
 
     const waveSurface = new THREE.Mesh(waveSurfaceGeometry, waveSurfaceMaterial)
@@ -1760,6 +1762,9 @@ class OceanAdventure {
 
     // Setup audio controls
     this.setupAudioControls()
+
+    // Setup PWA install functionality
+    this.setupPWAInstall()
   }
 
   setupAudioControls() {
@@ -1842,6 +1847,103 @@ class OceanAdventure {
     }
   }
 
+  setupPWAInstall() {
+    const installButton = document.getElementById('installButton')
+    const installStatus = document.getElementById('installStatus')
+
+    // Store the beforeinstallprompt event for later use
+    let deferredPrompt = null
+
+    // Listen for the beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', event => {
+      console.log('📱 PWA install prompt available')
+      // Prevent the mini-infobar from appearing on mobile
+      event.preventDefault()
+      // Store the event so it can be triggered later
+      deferredPrompt = event
+
+      // Show the install button
+      if (installButton) {
+        installButton.classList.remove('hidden')
+      }
+      if (installStatus) {
+        installStatus.classList.add('hidden')
+      }
+    })
+
+    // Handle install button click
+    if (installButton) {
+      installButton.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+          console.log('📱 No install prompt available')
+          return
+        }
+
+        // Show the install prompt
+        deferredPrompt.prompt()
+
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice
+
+        if (outcome === 'accepted') {
+          console.log('📱 User accepted the install prompt')
+          installButton.textContent = '✅ App Installing...'
+          installButton.disabled = true
+        } else {
+          console.log('📱 User dismissed the install prompt')
+        }
+
+        // Clear the deferred prompt since it can only be used once
+        deferredPrompt = null
+        installButton.classList.add('hidden')
+      })
+    }
+
+    // Listen for successful app installation
+    window.addEventListener('appinstalled', () => {
+      console.log('📱 PWA was installed successfully')
+      if (installButton) {
+        installButton.classList.add('hidden')
+      }
+      if (installStatus) {
+        installStatus.textContent = '✅ App installed successfully!'
+        installStatus.classList.remove('hidden')
+      }
+      // Clear the deferred prompt
+      deferredPrompt = null
+    })
+
+    // Check if app is already installed or running in standalone mode
+    if (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone
+    ) {
+      console.log('📱 PWA is already running in standalone mode')
+      if (installButton) {
+        installButton.classList.add('hidden')
+      }
+      if (installStatus) {
+        installStatus.textContent = '✅ App is already installed!'
+        installStatus.classList.remove('hidden')
+      }
+    } else {
+      // Show fallback message if install prompt is not available after a delay
+      setTimeout(() => {
+        if (
+          !deferredPrompt &&
+          installButton &&
+          installButton.classList.contains('hidden')
+        ) {
+          if (installStatus) {
+            installStatus.textContent =
+              'App installation not available in this browser. Try Chrome, Edge, or Safari.'
+            installStatus.classList.remove('hidden')
+          }
+        }
+      }, 2000)
+    }
+  }
+
   onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight
     this.camera.updateProjectionMatrix()
@@ -1893,16 +1995,17 @@ class OceanAdventure {
 
     // Adaptive camera smoothing for better large screen experience
     // Base smoothing factor adjusted for frame rate and screen size
-    const baseSmoothingFactor = 0.1
+    const baseSmoothingFactor = 0.12 // Slightly increased for smoother movement
 
     // Screen size factor: larger screens get smoother camera movement
     // Mobile devices get more conservative smoothing for better control
     let screenSizeFactor
     if (this.isMobile) {
       // More conservative smoothing on mobile for better control
-      screenSizeFactor = Math.min(1.0, Math.max(0.6, window.innerWidth / 1920))
+      screenSizeFactor = Math.min(0.8, Math.max(0.5, window.innerWidth / 1920))
     } else {
-      screenSizeFactor = Math.min(1.5, Math.max(0.8, window.innerWidth / 1920))
+      // Enhanced smoothing for large screens to reduce jerkiness during direction changes
+      screenSizeFactor = Math.min(2.0, Math.max(1.0, window.innerWidth / 1920))
     }
 
     // Frame rate compensation: maintain consistent smoothing regardless of FPS

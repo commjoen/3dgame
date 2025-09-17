@@ -68,4 +68,4 @@ workbox-*.js
 docs/.vitepress/dist/
 
 # GitHub Pages CI-generated files
-previews.html
+previews.html*.dist-github-pages-*
