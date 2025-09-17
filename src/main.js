@@ -619,14 +619,14 @@ class OceanAdventure {
     // Create visible wave surface with enhanced visibility parameters
     const waveSurfaceGeometry = new THREE.PlaneGeometry(300, 300, 96, 96) // Larger area and higher resolution for better visibility
     const waveSurfaceMaterial = new THREE.MeshPhongMaterial({
-      color: 0x00ccff, // Bright cyan for high contrast with underwater environment
+      color: 0x0099ff, // Bright blue for high visibility underwater
       transparent: false, // Keep solid for better visibility
       side: THREE.DoubleSide,
-      shininess: 80,
-      specular: 0xffffff, // White specular for better wave highlights
+      shininess: 100,
+      specular: 0xffffff, // White specular highlights for realistic water
       fog: false, // Ensure wave surface is not affected by fog
-      wireframe: false, // Disable wireframe, use solid mesh with proper lighting
-      emissive: 0x004488, // Stronger blue emissive for better underwater visibility
+      wireframe: false, // Solid surface for final implementation
+      emissive: 0x0066cc, // Strong blue emissive glow for underwater visibility
     })
 
     const waveSurface = new THREE.Mesh(waveSurfaceGeometry, waveSurfaceMaterial)
@@ -636,7 +636,6 @@ class OceanAdventure {
     this.scene.add(waveSurface)
 
     console.log('🌊 Wave surface created at position:', waveSurface.position)
-    console.log('🌊 Wave surface geometry vertices:', waveSurfaceGeometry.attributes.position.count)
 
     // Store references for wave animation
     this.waveSurface = waveSurface
