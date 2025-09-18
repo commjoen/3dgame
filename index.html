@@ -175,6 +175,11 @@
             #mobileControls {
                 display: none;
             }
+            
+            /* Tesla mode: show mobile controls on large screens when enabled */
+            #mobileControls.tesla-mode {
+                display: block !important;
+            }
         }
         
         /* Settings Button */
@@ -534,16 +539,24 @@
                     <li><strong>D/→:</strong> Turn right</li>
                     <li><strong>Space:</strong> Swim up</li>
                     <li><strong>Shift:</strong> Swim down</li>
+                    <li><strong>I:</strong> Look up (camera)</li>
+                    <li><strong>K:</strong> Look down (camera)</li>
+                    <li><strong>J:</strong> Look left (camera)</li>
+                    <li><strong>L:</strong> Look right (camera)</li>
+                    <li><strong>T:</strong> Toggle Tesla mode (show mobile controls)</li>
                 </ul>
                 
                 <h3>Mobile Controls:</h3>
                 <ul>
                     <li><strong>Left Virtual Joystick:</strong> Move around</li>
-                    <li><strong>Right Camera Joystick:</strong> Control camera view</li>
+                    <li><strong>Right Camera Joystick:</strong> Control camera view (360° rotation)</li>
                     <li><strong>↑ Button:</strong> Swim up</li>
                     <li><strong>↓ Button:</strong> Swim down</li>
                     <li><strong>Swipe:</strong> Look around (alternative)</li>
                 </ul>
+                
+                <h3>Tesla Mode:</h3>
+                <p>Press <strong>T</strong> on desktop to enable Tesla mode, which shows mobile touch controls on large screens for big screen touch interfaces.</p>
                 
                 <h3>App Installation:</h3>
                 <div class="app-install-section">
