@@ -31,7 +31,7 @@ class CameraControlsTest {
     this.cameraRotation = {
       horizontal: 0,
       vertical: 0,
-      sensitivity: 0.005,
+      sensitivity: 0.010,
     }
     this.inputState = {
       keys: {
@@ -47,7 +47,7 @@ class CameraControlsTest {
   }
 
   updateCameraSensitivity() {
-    this.cameraRotation.sensitivity = this.isMobile || this.teslaMode ? 0.004 : 0.005
+    this.cameraRotation.sensitivity = this.isMobile || this.teslaMode ? 0.008 : 0.010
   }
 
   toggleTeslaMode() {
@@ -182,7 +182,7 @@ describe('Camera Controls Enhancement', () => {
       cameraTest.isMobile = true
       cameraTest.updateCameraSensitivity()
 
-      expect(cameraTest.cameraRotation.sensitivity).toBe(0.004) // Increased from 0.0015
+      expect(cameraTest.cameraRotation.sensitivity).toBe(0.008) // Doubled from 0.004
     })
 
     it('should respond to joystick input with enhanced speed', () => {
@@ -219,7 +219,7 @@ describe('Camera Controls Enhancement', () => {
       cameraTest.teslaMode = true
       cameraTest.updateCameraSensitivity()
 
-      expect(cameraTest.cameraRotation.sensitivity).toBe(0.004) // Mobile sensitivity
+      expect(cameraTest.cameraRotation.sensitivity).toBe(0.008) // Mobile sensitivity
     })
 
     it('should disable desktop keyboard controls when Tesla mode is active', () => {

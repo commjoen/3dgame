@@ -1370,9 +1370,9 @@ class OceanAdventure {
   }
 
   updateCameraSensitivity() {
-    // Increased mobile camera speed for better responsiveness
+    // Doubled camera speed for even more responsive controls
     this.cameraRotation.sensitivity =
-      this.isMobile || this.teslaMode ? 0.004 : 0.005
+      this.isMobile || this.teslaMode ? 0.008 : 0.01
   }
 
   toggleTeslaMode() {
