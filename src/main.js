@@ -31,6 +31,7 @@ class OceanAdventure {
     this.canvas = null
     this.isLoaded = false
     this.isMobile = this.detectMobile()
+    this.teslaMode = false // Tesla mode: show mobile controls on large screens
 
     // Core systems
     this.physicsEngine = null
@@ -54,6 +55,11 @@ class OceanAdventure {
         right: false,
         up: false,
         down: false,
+        // Camera controls for desktop users
+        cameraUp: false,
+        cameraDown: false,
+        cameraLeft: false,
+        cameraRight: false,
       },
       joystick: { x: 0, y: 0 },
       cameraJoystick: { x: 0, y: 0 }, // New camera joystick input
@@ -64,8 +70,11 @@ class OceanAdventure {
     this.cameraRotation = {
       horizontal: 0, // Horizontal rotation (yaw)
       vertical: 0, // Vertical rotation (pitch)
-      sensitivity: this.isMobile ? 0.0015 : 0.005, // Much slower camera movement on mobile for better control
+      sensitivity: 0.005, // Will be updated based on device/mode
     }
+
+    // Set initial camera sensitivity
+    this.updateCameraSensitivity()
 
     // Camera smoothing state for adaptive movement
     this.previousMovementDirection = null
@@ -1264,8 +1273,8 @@ class OceanAdventure {
     window.addEventListener('keydown', event => this.onKeyDown(event))
     window.addEventListener('keyup', event => this.onKeyUp(event))
 
-    // Touch controls for mobile
-    if (this.isMobile) {
+    // Touch controls for mobile or Tesla mode
+    if (this.isMobile || this.teslaMode) {
       this.setupTouchControls()
     }
 
@@ -1301,6 +1310,22 @@ class OceanAdventure {
       case 'ShiftLeft':
         this.inputState.keys.down = true
         break
+      // Camera controls for desktop users
+      case 'KeyI': // Look up
+        this.inputState.keys.cameraUp = true
+        break
+      case 'KeyK': // Look down
+        this.inputState.keys.cameraDown = true
+        break
+      case 'KeyJ': // Look left
+        this.inputState.keys.cameraLeft = true
+        break
+      case 'KeyL': // Look right
+        this.inputState.keys.cameraRight = true
+        break
+      case 'KeyT': // Toggle Tesla mode
+        this.toggleTeslaMode()
+        break
     }
   }
 
@@ -1328,6 +1353,44 @@ class OceanAdventure {
       case 'ShiftLeft':
         this.inputState.keys.down = false
         break
+      // Camera controls for desktop users
+      case 'KeyI': // Look up
+        this.inputState.keys.cameraUp = false
+        break
+      case 'KeyK': // Look down
+        this.inputState.keys.cameraDown = false
+        break
+      case 'KeyJ': // Look left
+        this.inputState.keys.cameraLeft = false
+        break
+      case 'KeyL': // Look right
+        this.inputState.keys.cameraRight = false
+        break
+    }
+  }
+
+  updateCameraSensitivity() {
+    // Increased mobile camera speed for better responsiveness
+    this.cameraRotation.sensitivity =
+      this.isMobile || this.teslaMode ? 0.004 : 0.005
+  }
+
+  toggleTeslaMode() {
+    this.teslaMode = !this.teslaMode
+    console.log(`🚗 Tesla mode ${this.teslaMode ? 'enabled' : 'disabled'}`)
+
+    // Update camera sensitivity based on new mode
+    this.updateCameraSensitivity()
+
+    const mobileControls = document.getElementById('mobileControls')
+    if (mobileControls) {
+      if (this.teslaMode) {
+        mobileControls.classList.add('tesla-mode')
+        // Re-setup touch controls for Tesla mode
+        this.setupTouchControls()
+      } else {
+        mobileControls.classList.remove('tesla-mode')
+      }
     }
   }
 
@@ -1953,7 +2016,39 @@ class OceanAdventure {
   updateCamera(deltaTime = 0.016) {
     const playerPosition = this.player.getPosition()
 
-    // Apply camera joystick rotation if active
+    // Apply desktop keyboard camera controls for non-mobile users
+    if (!this.isMobile && !this.teslaMode) {
+      let cameraInputX = 0
+      let cameraInputY = 0
+
+      if (this.inputState.keys.cameraLeft) {
+        cameraInputX -= 1
+      }
+      if (this.inputState.keys.cameraRight) {
+        cameraInputX += 1
+      }
+      if (this.inputState.keys.cameraUp) {
+        cameraInputY -= 1
+      }
+      if (this.inputState.keys.cameraDown) {
+        cameraInputY += 1
+      }
+
+      if (cameraInputX !== 0 || cameraInputY !== 0) {
+        this.cameraRotation.horizontal +=
+          cameraInputX * this.cameraRotation.sensitivity * (60 * deltaTime)
+        this.cameraRotation.vertical +=
+          cameraInputY * this.cameraRotation.sensitivity * (60 * deltaTime)
+
+        // Allow full 360° rotation by wrapping both rotations
+        this.cameraRotation.horizontal =
+          this.cameraRotation.horizontal % (Math.PI * 2)
+        this.cameraRotation.vertical =
+          this.cameraRotation.vertical % (Math.PI * 2)
+      }
+    }
+
+    // Apply camera joystick rotation if active (mobile or Tesla mode)
     if (
       this.inputState.cameraJoystick.x !== 0 ||
       this.inputState.cameraJoystick.y !== 0
@@ -1968,11 +2063,13 @@ class OceanAdventure {
         this.cameraRotation.sensitivity *
         (60 * deltaTime)
 
-      // Clamp vertical rotation to allow upward viewing of waves while preventing flipping
-      this.cameraRotation.vertical = Math.max(
-        -Math.PI / 6, // Allow looking down 30°
-        Math.min(Math.PI / 2, this.cameraRotation.vertical) // Allow looking up 90° to see waves
-      )
+      // Allow full 360° rotation by wrapping horizontal rotation
+      this.cameraRotation.horizontal =
+        this.cameraRotation.horizontal % (Math.PI * 2)
+
+      // Allow full vertical rotation (360°) for complete camera freedom
+      this.cameraRotation.vertical =
+        this.cameraRotation.vertical % (Math.PI * 2)
     }
 
     // Calculate camera position based on rotation and depth
