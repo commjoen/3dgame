@@ -69,3 +69,6 @@ docs/.vitepress/dist/
 
 # GitHub Pages CI-generated files
 previews.html*.dist-github-pages-*
+
+# Test build directories
+dist-github-pages-*/
