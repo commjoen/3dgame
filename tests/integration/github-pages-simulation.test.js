@@ -65,7 +65,10 @@ describe('GitHub Pages Deployment Simulation', () => {
         // Only use resolved path if validated
         fsPath = fsPathResolved
       } catch (err) {
-        // Path does not exist, will fall back to 404 below
+        // Failed to resolve path properly: immediately serve 404 and stop
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not Found');
+        return;
       }
 
       // Handle 404s with the 404.html file (GitHub Pages behavior)
