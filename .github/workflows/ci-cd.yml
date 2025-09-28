@@ -527,6 +527,9 @@ jobs:
 
   security-scan:
     name: Security Scan
+    permissions:
+      contents: read
+      security-events: write
     runs-on: ubuntu-latest
     continue-on-error: true
     
