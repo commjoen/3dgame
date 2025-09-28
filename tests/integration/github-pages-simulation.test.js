@@ -47,6 +47,7 @@ describe('GitHub Pages Deployment Simulation', () => {
       let fsPath = path.join(distPath, cleanPath === '/' ? 'index.html' : cleanPath)
       
       // --- Hardening: Normalize and confine fsPath to distPath root directory ---
+      let safeFsPath = null;
       try {
         // Resolve fsPath and distPath as absolute canonical paths
         const fsPathResolved = fs.realpathSync(path.resolve(fsPath));
@@ -63,20 +64,36 @@ describe('GitHub Pages Deployment Simulation', () => {
           return
         }
         // Only use resolved path if validated
-        fsPath = fsPathResolved
+        safeFsPath = fsPathResolved;
       } catch (err) {
-        // Path does not exist, will fall back to 404 below
+        // Path does not exist or could not resolve: serve 404 immediately
+        // Try serving distPath/404.html instead
+        try {
+          const error404Path = path.join(distPath, '404.html');
+          const error404PathResolved = fs.realpathSync(path.resolve(error404Path));
+          const distRootResolved = fs.realpathSync(path.resolve(distPath));
+          if (
+            error404PathResolved !== distRootResolved &&
+            !error404PathResolved.startsWith(distRootResolved + path.sep)
+          ) {
+            // 404.html is not in root: refuse as well
+            res.writeHead(404, { 'Content-Type': 'text/plain' })
+            res.end('Not Found')
+            return;
+          }
+          safeFsPath = error404PathResolved;
+        } catch (err404) {
+          // Even 404.html is missing; fail safe
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('Not Found');
+          return;
+        }
       }
 
-      // Handle 404s with the 404.html file (GitHub Pages behavior)
-      if (!fs.existsSync(fsPath)) {
-        fsPath = path.join(distPath, '404.html')
-      }
-
-      if (fs.existsSync(fsPath)) {
-        const stat = fs.statSync(fsPath)
+      if (safeFsPath && fs.existsSync(safeFsPath)) {
+        const stat = fs.statSync(safeFsPath)
         if (stat.isFile()) {
-          const ext = path.extname(fsPath)
+          const ext = path.extname(safeFsPath)
           const contentType = {
             '.html': 'text/html',
             '.js': 'application/javascript',
@@ -87,7 +104,7 @@ describe('GitHub Pages Deployment Simulation', () => {
           }[ext] || 'text/plain'
 
           res.writeHead(200, { 'Content-Type': contentType })
-          fs.createReadStream(fsPath).pipe(res)
+          fs.createReadStream(safeFsPath).pipe(res)
           return
         }
       }
