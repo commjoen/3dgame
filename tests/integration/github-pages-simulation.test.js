@@ -65,15 +65,55 @@ describe('GitHub Pages Deployment Simulation', () => {
         // Only use resolved path if validated
         fsPath = fsPathResolved
       } catch (err) {
-        // Path does not exist, will fall back to 404 below
+        // Path does not exist *or* could not be validated; fallback to 404
+        const safe404Path = path.join(distPath, '404.html')
+        try {
+          const safe404Resolved = fs.realpathSync(path.resolve(safe404Path));
+          const distRootResolved = fs.realpathSync(path.resolve(distPath));
+          // Ensure fallback 404 is safe
+          if (
+            safe404Resolved === distRootResolved ||
+            safe404Resolved.startsWith(distRootResolved + path.sep)
+          ) {
+            // Serve safe 404.html file
+            if (fs.existsSync(safe404Resolved)) {
+              res.writeHead(404, { 'Content-Type': 'text/html' })
+              fs.createReadStream(safe404Resolved).pipe(res)
+              return
+            }
+          }
+        } catch (_) {
+          // If cannot resolve safe 404, fall through to default 404
+        }
+        res.writeHead(404, { 'Content-Type': 'text/plain' })
+        res.end('Not Found')
+        return
       }
 
       // Handle 404s with the 404.html file (GitHub Pages behavior)
       if (!fs.existsSync(fsPath)) {
-        fsPath = path.join(distPath, '404.html')
+        const safe404Path = path.join(distPath, '404.html')
+        try {
+          const safe404Resolved = fs.realpathSync(path.resolve(safe404Path));
+          const distRootResolved = fs.realpathSync(path.resolve(distPath));
+          if (
+            safe404Resolved === distRootResolved ||
+            safe404Resolved.startsWith(distRootResolved + path.sep)
+          ) {
+            if (fs.existsSync(safe404Resolved)) {
+              fsPath = safe404Resolved
+            } else {
+              fsPath = null
+            }
+          } else {
+            fsPath = null
+          }
+        } catch (_) {
+          fsPath = null
+        }
       }
 
-      if (fs.existsSync(fsPath)) {
+      if (fsPath && fs.existsSync(fsPath)) {
         const stat = fs.statSync(fsPath)
         if (stat.isFile()) {
           const ext = path.extname(fsPath)
