@@ -127,6 +127,8 @@ jobs:
 
   mobile-compatibility:
     name: Mobile Compatibility Check
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: validate
     continue-on-error: true
