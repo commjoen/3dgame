@@ -46,6 +46,28 @@ describe('GitHub Pages Deployment Simulation', () => {
       const cleanPath = filePath.replace('/3dgame', '')
       let fsPath = path.join(distPath, cleanPath === '/' ? 'index.html' : cleanPath)
       
+      // --- Hardening: Normalize and confine fsPath to distPath root directory ---
+      try {
+        // Resolve fsPath and distPath as absolute canonical paths
+        const fsPathResolved = fs.realpathSync(path.resolve(fsPath));
+        const distRootResolved = fs.realpathSync(path.resolve(distPath));
+
+        // Ensure fsPathResolved is within distRootResolved (avoid partial prefix issues)
+        if (
+          fsPathResolved !== distRootResolved &&
+          !fsPathResolved.startsWith(distRootResolved + path.sep)
+        ) {
+          // Not allowed: path traversal attempt
+          res.writeHead(404, { 'Content-Type': 'text/plain' })
+          res.end('Not Found')
+          return
+        }
+        // Only use resolved path if validated
+        fsPath = fsPathResolved
+      } catch (err) {
+        // Path does not exist, will fall back to 404 below
+      }
+
       // Handle 404s with the 404.html file (GitHub Pages behavior)
       if (!fs.existsSync(fsPath)) {
         fsPath = path.join(distPath, '404.html')
