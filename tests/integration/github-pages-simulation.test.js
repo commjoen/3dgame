@@ -68,15 +68,32 @@ describe('GitHub Pages Deployment Simulation', () => {
         // Path does not exist, will fall back to 404 below
       }
 
-      // Handle 404s with the 404.html file (GitHub Pages behavior)
-      if (!fs.existsSync(fsPath)) {
-        fsPath = path.join(distPath, '404.html')
+      // Handle 404s with the 404.html file (GitHub Pages behavior), only if validated path didn't exist
+      let fileToServe = fsPath
+      if (!fs.existsSync(fileToServe)) {
+        // Validate 404 fallback file path just like any other file
+        try {
+          const fallbackPath = path.join(distPath, '404.html')
+          const fallbackResolved = fs.realpathSync(path.resolve(fallbackPath))
+          const distRootResolved = fs.realpathSync(path.resolve(distPath))
+          if (
+            fallbackResolved === distRootResolved ||
+            fallbackResolved.startsWith(distRootResolved + path.sep)
+          ) {
+            fileToServe = fallbackResolved
+          } else {
+            // Fallback is outside distPath root (unlikely, but extra paranoid)
+            fileToServe = null
+          }
+        } catch (err) {
+          fileToServe = null
+        }
       }
 
-      if (fs.existsSync(fsPath)) {
-        const stat = fs.statSync(fsPath)
+      if (fileToServe && fs.existsSync(fileToServe)) {
+        const stat = fs.statSync(fileToServe)
         if (stat.isFile()) {
-          const ext = path.extname(fsPath)
+          const ext = path.extname(fileToServe)
           const contentType = {
             '.html': 'text/html',
             '.js': 'application/javascript',
@@ -87,7 +104,7 @@ describe('GitHub Pages Deployment Simulation', () => {
           }[ext] || 'text/plain'
 
           res.writeHead(200, { 'Content-Type': contentType })
-          fs.createReadStream(fsPath).pipe(res)
+          fs.createReadStream(fileToServe).pipe(res)
           return
         }
       }
