@@ -1,6 +1,6 @@
 {
   "name": "ocean-adventure",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "A 3D browser-based underwater platform game where players swim through oceanic environments collecting stars",
   "main": "src/main.js",
   "type": "module",
