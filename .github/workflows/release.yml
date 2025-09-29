@@ -97,17 +97,23 @@ jobs:
           # For manual releases, get changes since last tag
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$LAST_TAG" ]; then
-            echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-            git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            {
+              echo "CHANGELOG<<EOF"
+              git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)"
+              echo ""
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
           else
             echo "CHANGELOG=- Initial release" >> $GITHUB_OUTPUT
           fi
         else
           # For tag releases, use existing logic
-          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-          git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:"- %s (%h)" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "CHANGELOG<<EOF"
+            git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:"- %s (%h)"
+            echo ""
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
         fi
         
     - name: Create release archive
