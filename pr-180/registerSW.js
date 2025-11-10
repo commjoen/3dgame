@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/3dgame/pr-180/sw.js', { scope: '/3dgame/pr-180/' })})}
