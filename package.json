@@ -58,7 +58,7 @@
   },
   "dependencies": {
     "stats.js": "^0.17.0",
-    "three": "^0.181.1",
+    "three": "^0.181.2",
     "striptags": "^3.2.0"
   },
   "devDependencies": {
