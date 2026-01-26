@@ -81,7 +81,7 @@
     "vite": "^7.3.0",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^3.2.4",
-    "webpack-bundle-analyzer": "^5.1.1"
+    "webpack-bundle-analyzer": "^5.2.0"
   },
   "browserslist": [
     "chrome >= 80",
