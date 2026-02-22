@@ -5,12 +5,11 @@ FROM node:24-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy package files for dependency installation
-COPY package*.json ./
+# Copy package files and npm config for dependency installation
+COPY package*.json .npmrc ./
 
 # Install all dependencies (needed for build)
 RUN npm config set strict-ssl false && \
-    npm ci --only=production --ignore-scripts && \
     npm ci
 
 # Copy source code
