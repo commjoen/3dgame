@@ -7,6 +7,7 @@
  */
 
 import * as THREE from 'three'
+import striptags from 'striptags'
 import { PhysicsEngine } from './core/Physics.js'
 import { ParticleSystem } from './core/ParticleSystem.js'
 import { AudioEngine } from './core/AudioEngine.js'
@@ -124,7 +125,8 @@ class OceanAdventure {
         } catch (stepError) {
           console.error(`❌ Failed to initialize ${step.name}:`, stepError)
           throw new Error(
-            `Initialization failed at step "${step.name}": ${stepError.message}`
+            `Initialization failed at step "${step.name}": ${stepError.message}`,
+            { cause: stepError }
           )
         }
       }
@@ -187,7 +189,9 @@ class OceanAdventure {
       console.log('✅ WebGL renderer configured successfully')
     } catch (error) {
       console.error('❌ Failed to setup WebGL renderer:', error)
-      throw new Error(`WebGL initialization failed: ${error.message}`)
+      throw new Error(`WebGL initialization failed: ${error.message}`, {
+        cause: error,
+      })
     }
   }
 
@@ -2842,10 +2846,11 @@ class OceanAdventure {
   showError(message) {
     const loadingElement = document.getElementById(CONFIG.loadingId)
     if (loadingElement) {
+      const safeMessage = striptags(message)
       loadingElement.innerHTML = `
         <div style="color: #ff4444; text-align: center;">
           <h3>⚠️ Error Loading Game</h3>
-          <p>${message}</p>
+          <p>${safeMessage}</p>
           <p style="margin-top: 20px; font-size: 14px; color: #ccc;">
             Please check the browser console for more details and try refreshing the page.
           </p>
@@ -2876,10 +2881,11 @@ window.addEventListener(
       // Show error in loading div if game initialization fails
       const loadingElement = document.getElementById('loading')
       if (loadingElement) {
+        const safeErrorMessage = striptags(error.message)
         loadingElement.innerHTML = `
           <div style="color: #ff4444; text-align: center;">
             <h3>⚠️ Critical Error</h3>
-            <p>Failed to initialize Ocean Adventure: ${error.message}</p>
+            <p>Failed to initialize Ocean Adventure: ${safeErrorMessage}</p>
             <p style="margin-top: 20px; font-size: 14px; color: #ccc;">
               Please check the browser console for more details and try refreshing the page.
             </p>

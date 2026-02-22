@@ -35,8 +35,9 @@ export class AudioEngine {
   async initialize() {
     try {
       // Create audio context
-      this.audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)()
+      this.audioContext = new (
+        window.AudioContext || window.webkitAudioContext
+      )()
 
       // Create audio listener for 3D spatial audio
       this.listener = this.audioContext.listener

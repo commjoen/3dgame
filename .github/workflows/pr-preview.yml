@@ -24,12 +24,12 @@ jobs:
     
     steps:
     - name: Checkout PR code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: '24'
         cache: 'npm'
@@ -50,7 +50,7 @@ jobs:
         VITE_BASE_PATH: /3dgame/pr-${{ github.event.number }}/
       
     - name: Checkout gh-pages branch
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         ref: gh-pages
         path: gh-pages
@@ -232,7 +232,7 @@ jobs:
         fi
     
     - name: Comment on PR
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const pr_number = context.payload.pull_request.number;
