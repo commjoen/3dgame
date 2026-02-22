@@ -32,51 +32,54 @@ describe('GitHub Pages Deployment Simulation', () => {
     await execAsync(`rm -rf "${distPath}"`, { env })
     await execAsync('npm run build', { env })
 
+    // Pre-build a map of allowed files by scanning the dist directory.
+    // Values in this map are trusted paths derived from the filesystem scan,
+    // not from user input, which prevents uncontrolled path expression issues.
+    const allowedFiles = new Map()
+    const scanDirectory = (dir) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const fullPath = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+          scanDirectory(fullPath)
+        } else {
+          const relPath = path.relative(distPath, fullPath)
+          allowedFiles.set(relPath, fullPath)
+        }
+      }
+    }
+    scanDirectory(distPath)
+
     // Create a simple static server that simulates GitHub Pages
     server = http.createServer((req, res) => {
-      // Handle the base path routing
-      let filePath = req.url
-      
+      // Strip query string to get just the pathname
+      const urlPath = req.url.split('?')[0]
+
       // GitHub Pages routing simulation
-      if (filePath === '/3dgame/' || filePath === '/3dgame') {
-        filePath = '/3dgame/index.html'
-      }
-      
-      // Remove /3dgame prefix for file system access
-      const cleanPath = filePath.replace('/3dgame', '')
-      let fsPath = path.join(distPath, cleanPath === '/' ? 'index.html' : cleanPath)
-      
-      // --- Hardening: Normalize and confine fsPath to distPath root directory ---
-      try {
-        // Resolve fsPath and distPath as absolute canonical paths
-        const fsPathResolved = fs.realpathSync(path.resolve(fsPath));
-        const distRootResolved = fs.realpathSync(path.resolve(distPath));
-
-        // Ensure fsPathResolved is within distRootResolved (avoid partial prefix issues)
-        if (
-          fsPathResolved !== distRootResolved &&
-          !fsPathResolved.startsWith(distRootResolved + path.sep)
-        ) {
-          // Not allowed: path traversal attempt
-          res.writeHead(404, { 'Content-Type': 'text/plain' })
-          res.end('Not Found')
-          return
-        }
-        // Only use resolved path if validated
-        fsPath = fsPathResolved
-      } catch (err) {
-        // Path does not exist, will fall back to 404 below
+      let servePath = urlPath
+      if (servePath === '/3dgame/' || servePath === '/3dgame') {
+        servePath = '/3dgame/index.html'
       }
 
-      // Handle 404s with the 404.html file (GitHub Pages behavior)
-      if (!fs.existsSync(fsPath)) {
-        fsPath = path.join(distPath, '404.html')
+      // Remove /3dgame prefix and normalize to get relative path for lookup
+      const cleanPath = servePath.replace('/3dgame', '')
+      const relPath = path.normalize(cleanPath === '/' ? 'index.html' : cleanPath.replace(/^[/\\]+/, ''))
+
+      // Reject any path that escapes the dist root (e.g. traversal via '..')
+      if (relPath.startsWith('..') || path.isAbsolute(relPath)) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' })
+        res.end('Not Found')
+        return
       }
 
-      if (fs.existsSync(fsPath)) {
-        const stat = fs.statSync(fsPath)
+      // Look up in the pre-built allowed files map.
+      // The value returned from the map is a trusted path from the filesystem scan,
+      // not derived from user input, breaking the taint chain.
+      const trustedPath = allowedFiles.get(relPath) ?? allowedFiles.get('404.html')
+
+      if (trustedPath && fs.existsSync(trustedPath)) {
+        const stat = fs.statSync(trustedPath)
         if (stat.isFile()) {
-          const ext = path.extname(fsPath)
+          const ext = path.extname(trustedPath)
           const contentType = {
             '.html': 'text/html',
             '.js': 'application/javascript',
@@ -87,7 +90,7 @@ describe('GitHub Pages Deployment Simulation', () => {
           }[ext] || 'text/plain'
 
           res.writeHead(200, { 'Content-Type': contentType })
-          fs.createReadStream(fsPath).pipe(res)
+          fs.createReadStream(trustedPath).pipe(res)
           return
         }
       }
