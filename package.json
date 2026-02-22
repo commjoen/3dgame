@@ -83,6 +83,9 @@
     "vitest": "^3.2.4",
     "webpack-bundle-analyzer": "^5.2.0"
   },
+  "overrides": {
+    "minimatch": ">=10.2.1"
+  },
   "browserslist": [
     "chrome >= 80",
     "firefox >= 75",
