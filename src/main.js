@@ -125,7 +125,8 @@ class OceanAdventure {
         } catch (stepError) {
           console.error(`❌ Failed to initialize ${step.name}:`, stepError)
           throw new Error(
-            `Initialization failed at step "${step.name}": ${stepError.message}`
+            `Initialization failed at step "${step.name}": ${stepError.message}`,
+            { cause: stepError }
           )
         }
       }
@@ -188,7 +189,9 @@ class OceanAdventure {
       console.log('✅ WebGL renderer configured successfully')
     } catch (error) {
       console.error('❌ Failed to setup WebGL renderer:', error)
-      throw new Error(`WebGL initialization failed: ${error.message}`)
+      throw new Error(`WebGL initialization failed: ${error.message}`, {
+        cause: error,
+      })
     }
   }
 
