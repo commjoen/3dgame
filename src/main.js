@@ -2878,10 +2878,11 @@ window.addEventListener(
       // Show error in loading div if game initialization fails
       const loadingElement = document.getElementById('loading')
       if (loadingElement) {
+        const safeErrorMessage = striptags(error.message)
         loadingElement.innerHTML = `
           <div style="color: #ff4444; text-align: center;">
             <h3>⚠️ Critical Error</h3>
-            <p>Failed to initialize Ocean Adventure: ${error.message}</p>
+            <p>Failed to initialize Ocean Adventure: ${safeErrorMessage}</p>
             <p style="margin-top: 20px; font-size: 14px; color: #ccc;">
               Please check the browser console for more details and try refreshing the page.
             </p>
