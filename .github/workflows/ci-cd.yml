@@ -118,7 +118,7 @@ jobs:
         fi
       
     - name: Upload test results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: playwright-report
@@ -176,7 +176,7 @@ jobs:
         fi
       
     - name: Upload mobile test results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: mobile-test-results
@@ -218,7 +218,7 @@ jobs:
       run: npm run analyze:bundle
       
     - name: Upload performance results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: performance-report
         path: |
@@ -250,7 +250,7 @@ jobs:
       run: npm run build
       
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: dist
         path: dist/
