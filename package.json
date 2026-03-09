@@ -59,7 +59,7 @@
   "dependencies": {
     "stats.js": "^0.17.0",
     "striptags": "^3.2.0",
-    "three": "^0.183.1"
+    "three": "^0.183.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
