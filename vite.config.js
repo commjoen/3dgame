@@ -50,9 +50,9 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'three': ['three'],
-          'vendor': ['stats.js']
+        manualChunks: (id) => {
+          if (id.includes('node_modules/three')) return 'three';
+          if (id.includes('node_modules/stats.js')) return 'vendor';
         }
       }
     }
