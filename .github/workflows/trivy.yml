@@ -33,15 +33,20 @@ jobs:
         run: |
           docker build -t docker.io/my-organization/my-app:${{ github.sha }} .
 
+      - name: Install Trivy
+        run: |
+          TRIVY_VERSION=v0.69.1
+          TRIVY_VER=${TRIVY_VERSION#v}
+          wget -qO- "https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}/trivy_${TRIVY_VER}_Linux-64bit.tar.gz" | sudo tar xz -C /usr/local/bin trivy
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           image-ref: 'docker.io/my-organization/my-app:${{ github.sha }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
+          skip-setup-trivy: true
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Trivy scan results to GitHub Security tab
