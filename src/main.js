@@ -14,6 +14,8 @@ import { AudioEngine } from './core/AudioEngine.js'
 import { Player } from './components/Player.js'
 import { Gate } from './components/Gate.js'
 import { StarGeometry } from './components/StarGeometry.js'
+import { MultiplayerManager } from './core/MultiplayerManager.js'
+import { RemotePlayer } from './components/RemotePlayer.js'
 
 // Game configuration
 const CONFIG = {
@@ -42,6 +44,11 @@ class OceanAdventure {
     this.gate = null
     this.environmentObjects = []
     this.seaCreatures = []
+
+    // Multiplayer
+    this.multiplayerManager = new MultiplayerManager()
+    /** @type {Map<string, import('./components/RemotePlayer.js').RemotePlayer>} */
+    this.remotePlayers = new Map()
 
     // Game state
     this.starCount = 0
@@ -1284,6 +1291,9 @@ class OceanAdventure {
 
     // Settings modal functionality
     this.setupSettingsModal()
+
+    // Multiplayer UI
+    this.setupMultiplayerUI()
   }
 
   onKeyDown(event) {
@@ -1834,6 +1844,180 @@ class OceanAdventure {
     this.setupPWAInstall()
   }
 
+  /**
+   * Wire up the multiplayer panel buttons and register callbacks on the
+   * MultiplayerManager so that the UI stays in sync with the network state.
+   */
+  setupMultiplayerUI() {
+    const multiplayerButton = document.getElementById('multiplayerButton')
+    const multiplayerModal = document.getElementById('multiplayerModal')
+    const closeMultiplayer = document.getElementById('closeMultiplayer')
+    const hostRoomBtn = document.getElementById('hostRoomBtn')
+    const joinRoomBtn = document.getElementById('joinRoomBtn')
+    const joinRoomInput = document.getElementById('joinRoomInput')
+    const leaveRoomBtn = document.getElementById('leaveRoomBtn')
+    const roomCodeDisplay = document.getElementById('roomCodeDisplay')
+    const multiplayerStatus = document.getElementById('multiplayerStatus')
+    const playerCountDisplay = document.getElementById('playerCountDisplay')
+
+    if (!multiplayerButton || !multiplayerModal) {
+      return
+    }
+
+    const openModal = () => multiplayerModal.classList.remove('hidden')
+    const closeModal = () => multiplayerModal.classList.add('hidden')
+
+    multiplayerButton.addEventListener('click', openModal)
+    if (closeMultiplayer) {
+      closeMultiplayer.addEventListener('click', closeModal)
+    }
+
+    multiplayerModal.addEventListener('click', event => {
+      if (event.target === multiplayerModal) {
+        closeModal()
+      }
+    })
+
+    const setStatus = text => {
+      if (multiplayerStatus) {
+        multiplayerStatus.textContent = text
+      }
+    }
+
+    const updatePlayerCount = () => {
+      if (playerCountDisplay) {
+        const count = this.multiplayerManager.playerCount
+        playerCountDisplay.textContent = `Players connected: ${count}`
+      }
+    }
+
+    // Register MultiplayerManager callbacks
+    this.multiplayerManager
+      .onConnected(localId => {
+        if (roomCodeDisplay) {
+          roomCodeDisplay.textContent = localId
+        }
+        setStatus(
+          this.multiplayerManager.isHost
+            ? '🟢 Hosting – share the room code above'
+            : '🟢 Joined room'
+        )
+        if (leaveRoomBtn) {
+          leaveRoomBtn.classList.remove('hidden')
+        }
+        if (hostRoomBtn) {
+          hostRoomBtn.disabled = true
+        }
+        if (joinRoomBtn) {
+          joinRoomBtn.disabled = true
+        }
+      })
+      .onPlayerJoined(id => {
+        console.log(`🎮 Remote player joined: ${id}`)
+        updatePlayerCount()
+        setStatus(
+          `🟢 Player joined (${this.multiplayerManager.playerCount} connected)`
+        )
+      })
+      .onPlayerLeft(id => {
+        console.log(`🎮 Remote player left: ${id}`)
+        // Remove their visual representation
+        const rp = this.remotePlayers.get(id)
+        if (rp) {
+          rp.dispose()
+          this.remotePlayers.delete(id)
+        }
+        updatePlayerCount()
+        setStatus(
+          `🟡 Player left (${this.multiplayerManager.playerCount} connected)`
+        )
+      })
+      .onPlayerUpdated(state => {
+        let rp = this.remotePlayers.get(state.id)
+        if (!rp) {
+          rp = new RemotePlayer(this.scene, state.id)
+          this.remotePlayers.set(state.id, rp)
+        }
+        rp.applyNetworkState(state.position, state.rotation, state.isMoving)
+      })
+      .onError(err => {
+        console.error('[Multiplayer] Error:', err)
+        setStatus(`🔴 Error: ${err.message ?? err}`)
+      })
+      .onDisconnected(() => {
+        setStatus('⚪ Disconnected')
+        updatePlayerCount()
+      })
+
+    // Host button
+    if (hostRoomBtn) {
+      hostRoomBtn.addEventListener('click', async () => {
+        hostRoomBtn.disabled = true
+        setStatus('⏳ Creating room…')
+        try {
+          const code = await this.multiplayerManager.createRoom()
+          if (roomCodeDisplay) {
+            roomCodeDisplay.textContent = code
+          }
+        } catch (err) {
+          setStatus(`🔴 Failed to create room: ${err.message}`)
+          hostRoomBtn.disabled = false
+        }
+      })
+    }
+
+    // Join button
+    if (joinRoomBtn && joinRoomInput) {
+      joinRoomBtn.addEventListener('click', async () => {
+        const code = joinRoomInput.value.trim()
+        if (!code) {
+          setStatus('⚠️ Please enter a room code')
+          return
+        }
+        joinRoomBtn.disabled = true
+        setStatus('⏳ Joining room…')
+        try {
+          await this.multiplayerManager.joinRoom(code)
+        } catch (err) {
+          setStatus(`🔴 Failed to join: ${err.message}`)
+          joinRoomBtn.disabled = false
+        }
+      })
+
+      // Allow pressing Enter in the input field
+      joinRoomInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          joinRoomBtn.click()
+        }
+      })
+    }
+
+    // Leave / disconnect button
+    if (leaveRoomBtn) {
+      leaveRoomBtn.addEventListener('click', () => {
+        this.multiplayerManager.destroy()
+        // Clean up remote player visuals
+        for (const rp of this.remotePlayers.values()) {
+          rp.dispose()
+        }
+        this.remotePlayers.clear()
+
+        if (roomCodeDisplay) {
+          roomCodeDisplay.textContent = '—'
+        }
+        if (hostRoomBtn) {
+          hostRoomBtn.disabled = false
+        }
+        if (joinRoomBtn) {
+          joinRoomBtn.disabled = false
+        }
+        leaveRoomBtn.classList.add('hidden')
+        updatePlayerCount()
+        setStatus('⚪ Not connected')
+      })
+    }
+  }
+
   setupAudioControls() {
     const masterVolumeSlider = document.getElementById('masterVolumeSlider')
     const musicVolumeSlider = document.getElementById('musicVolumeSlider')
@@ -2256,6 +2440,9 @@ class OceanAdventure {
 
     // Update UI (including depth meter)
     this.updateUI()
+
+    // Broadcast local player state and interpolate remote players
+    this._updateMultiplayer(deltaTime)
 
     // Animate stars with enhanced floating and rotation effects
     this.stars.forEach(starData => {
@@ -2795,6 +2982,32 @@ class OceanAdventure {
     }
 
     shakeAnimation()
+  }
+
+  /**
+   * Broadcast local player state to peers and advance remote player interpolation.
+   * @param {number} deltaTime
+   */
+  _updateMultiplayer(deltaTime) {
+    if (!this.multiplayerManager.isConnected) {
+      return
+    }
+
+    // Broadcast local state
+    if (this.player) {
+      const pos = this.player.getPosition()
+      const quat = this.player.mesh.quaternion
+      this.multiplayerManager.broadcastPlayerState(
+        pos,
+        quat,
+        this.player.getIsMoving()
+      )
+    }
+
+    // Interpolate remote players toward their latest received positions
+    for (const rp of this.remotePlayers.values()) {
+      rp.update(deltaTime)
+    }
   }
 
   updateUI() {
