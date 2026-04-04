@@ -20,7 +20,7 @@ describe('Deployment Configuration', () => {
     
     // Check deploy job has the deploy action
     const deploySteps = workflow.jobs.deploy.steps
-    const hasDeployPages = deploySteps.some(step => step.uses === 'actions/deploy-pages@v4')
+    const hasDeployPages = deploySteps.some(step => step.uses === 'actions/deploy-pages@v5')
     
     expect(hasSetupPages).toBe(true)
     expect(hasUploadArtifact).toBe(true)
@@ -48,7 +48,7 @@ describe('Deployment Configuration', () => {
     const containerSteps = workflow.jobs['build-and-push-container'].steps
     
     // Check QEMU setup for multi-arch
-    const hasQEMU = containerSteps.some(step => step.uses === 'docker/setup-qemu-action@v3')
+    const hasQEMU = containerSteps.some(step => step.uses === 'docker/setup-qemu-action@v4')
     expect(hasQEMU).toBe(true)
     
     // Check buildx setup
@@ -71,7 +71,7 @@ describe('Deployment Configuration', () => {
     const workflow = yaml.load(workflowContent)
     
     const metadataStep = workflow.jobs['build-and-push-container'].steps.find(
-      step => step.uses === 'docker/metadata-action@v5'
+      step => step.uses === 'docker/metadata-action@v6'
     )
     
     expect(metadataStep).toBeDefined()
@@ -146,7 +146,7 @@ describe('Deployment Configuration', () => {
     const workflow = yaml.load(workflowContent)
     
     const metadataStep = workflow.jobs['build-and-push-container'].steps.find(
-      step => step.uses === 'docker/metadata-action@v5'
+      step => step.uses === 'docker/metadata-action@v6'
     )
     
     expect(metadataStep).toBeDefined()

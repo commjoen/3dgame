@@ -78,7 +78,7 @@ describe('GitHub Pages Error Handling', () => {
     
     // Deploy job should use the artifact ID
     const deployJob = workflow.jobs.deploy
-    const deployStep = deployJob.steps.find(step => step.uses === 'actions/deploy-pages@v4')
+    const deployStep = deployJob.steps.find(step => step.uses === 'actions/deploy-pages@v5')
     expect(deployStep.with.artifact_id).toBe('${{ needs.prepare-pages.outputs.pages-artifact-id }}')
   })
 })
