@@ -79,7 +79,7 @@
     "lighthouse": "^13.0.1",
     "prettier": "^3.0.0",
     "typescript": "^6.0.2",
-    "vite": "^8.0.5",
+    "vite": "^8.0.8",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.2",
     "webpack-bundle-analyzer": "^5.3.0"
