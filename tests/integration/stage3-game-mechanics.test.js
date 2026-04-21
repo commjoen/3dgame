@@ -16,7 +16,8 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
     }
 
     // Mock Web Audio API for AudioEngine
-    global.AudioContext = vi.fn(() => ({
+    const MockAudioContext = vi.fn(function MockAudioContext() {
+      return {
       createOscillator: vi.fn(() => ({
         type: 'sine',
         frequency: { setValueAtTime: vi.fn() },
@@ -59,7 +60,10 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
       },
       state: 'running',
       close: vi.fn()
-    }))
+      }
+    })
+    global.AudioContext = MockAudioContext
+    global.webkitAudioContext = MockAudioContext
 
     physicsEngine = new PhysicsEngine()
     player = new Player(scene, physicsEngine)
@@ -265,6 +269,7 @@ describe('Stage 3 Integration: Game Objects & Mechanics', () => {
     it('should handle missing audio context gracefully', async () => {
       // Break the audio context
       global.AudioContext = undefined
+      global.webkitAudioContext = undefined
       const brokenAudioEngine = new AudioEngine()
       
       // Should not throw errors
