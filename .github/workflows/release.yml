@@ -122,7 +122,7 @@ jobs:
         zip -r ocean-adventure-${{ steps.version.outputs.tag_name }}.zip dist/
         
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ steps.version.outputs.tag_name }}
         name: Ocean Adventure ${{ steps.version.outputs.tag_name }}
