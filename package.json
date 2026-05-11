@@ -67,7 +67,7 @@
     "@playwright/test": "^1.59.1",
     "@types/three": "^0.184.0",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
-    "@typescript-eslint/parser": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.2",
     "@vitejs/plugin-legacy": "^8.0.1",
     "@vitest/coverage-v8": "^4.1.5",
     "@vitest/ui": "^4.1.5",
