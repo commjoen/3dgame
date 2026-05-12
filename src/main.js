@@ -1026,7 +1026,14 @@ class OceanAdventure {
   createSeaCreatures() {
     console.log('🐠 Creating sea creatures...')
 
-    const creatureTypes = ['fish', 'fish', 'fish', 'jellyfish', 'seahorse']
+    const creatureWeights = {
+      fish: 3,
+      jellyfish: 1,
+      seahorse: 1,
+    }
+    const creatureTypes = Object.entries(creatureWeights).flatMap(
+      ([creatureType, weight]) => Array(weight).fill(creatureType)
+    )
 
     for (let i = 0; i < 16; i++) {
       // Create 16 creatures with fish-forward distribution
@@ -1115,12 +1122,16 @@ class OceanAdventure {
             0.04,
             10
           )
-          const stripeSaturationOffset = -0.15
-          const stripeLightnessOffset = 0.15
+          const STRIPE_SATURATION_REDUCTION = -0.15
+          const STRIPE_LIGHTNESS_BOOST = 0.15
           const stripeMaterial = new THREE.MeshPhongMaterial({
             color: fishColor
               .clone()
-              .offsetHSL(0, stripeSaturationOffset, stripeLightnessOffset),
+              .offsetHSL(
+                0,
+                STRIPE_SATURATION_REDUCTION,
+                STRIPE_LIGHTNESS_BOOST
+              ),
             transparent: true,
             opacity: 0.7,
           })
