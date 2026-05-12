@@ -1067,7 +1067,10 @@ class OceanAdventure {
 
           // Dorsal fin
           const dorsalFinGeometry = new THREE.ConeGeometry(0.06, 0.24, 3)
-          const dorsalFin = new THREE.Mesh(dorsalFinGeometry, tailMaterial.clone())
+          const dorsalFin = new THREE.Mesh(
+            dorsalFinGeometry,
+            tailMaterial.clone()
+          )
           dorsalFin.position.set(0, 0.23, 0)
           dorsalFin.rotation.z = Math.PI
           fishGroup.add(dorsalFin)
@@ -1103,7 +1106,12 @@ class OceanAdventure {
           fishGroup.add(rightEye)
 
           // Stripe accents
-          const stripeGeometry = new THREE.CylinderGeometry(0.21, 0.21, 0.04, 10)
+          const stripeGeometry = new THREE.CylinderGeometry(
+            0.21,
+            0.21,
+            0.04,
+            10
+          )
           const stripeMaterial = new THREE.MeshPhongMaterial({
             color: fishColor.clone().offsetHSL(0, -0.15, 0.15),
             transparent: true,
@@ -1113,7 +1121,10 @@ class OceanAdventure {
           frontStripe.rotation.x = Math.PI / 2
           frontStripe.position.set(0.16, 0, 0)
           fishGroup.add(frontStripe)
-          const rearStripe = new THREE.Mesh(stripeGeometry, stripeMaterial.clone())
+          const rearStripe = new THREE.Mesh(
+            stripeGeometry,
+            stripeMaterial.clone()
+          )
           rearStripe.rotation.x = Math.PI / 2
           rearStripe.position.set(-0.08, 0, 0)
           fishGroup.add(rearStripe)
