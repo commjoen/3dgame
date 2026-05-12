@@ -1077,18 +1077,21 @@ class OceanAdventure {
 
           // Side fins
           const finGeometry = new THREE.ConeGeometry(0.08, 0.2, 3)
+          const sideFinTilt = Math.PI / 12
           const leftFin = new THREE.Mesh(finGeometry, tailMaterial.clone())
           leftFin.position.set(0.1, -0.1, 0.2)
           leftFin.rotation.x = Math.PI / 4
-          leftFin.rotation.z = Math.PI / 12
+          leftFin.rotation.z = sideFinTilt
           leftFin.userData.baseRotationZ = leftFin.rotation.z
+          leftFin.userData.finType = 'side'
           fishGroup.add(leftFin)
 
           const rightFin = new THREE.Mesh(finGeometry, tailMaterial.clone())
           rightFin.position.set(0.1, -0.1, -0.2)
           rightFin.rotation.x = -Math.PI / 4
-          rightFin.rotation.z = -Math.PI / 12
+          rightFin.rotation.z = -sideFinTilt
           rightFin.userData.baseRotationZ = rightFin.rotation.z
+          rightFin.userData.finType = 'side'
           fishGroup.add(rightFin)
 
           // Eyes
@@ -1112,8 +1115,12 @@ class OceanAdventure {
             0.04,
             10
           )
+          const stripeSaturationOffset = -0.15
+          const stripeLightnessOffset = 0.15
           const stripeMaterial = new THREE.MeshPhongMaterial({
-            color: fishColor.clone().offsetHSL(0, -0.15, 0.15),
+            color: fishColor
+              .clone()
+              .offsetHSL(0, stripeSaturationOffset, stripeLightnessOffset),
             transparent: true,
             opacity: 0.7,
           })
@@ -2593,7 +2600,10 @@ class OceanAdventure {
 
         // Animate side fins
         creature.children.forEach((child, index) => {
-          if (index > 1 && child.userData.baseRotationZ !== undefined) {
+          if (
+            child.userData.finType === 'side' &&
+            child.userData.baseRotationZ !== undefined
+          ) {
             // Side fins
             child.rotation.z =
               child.userData.baseRotationZ + Math.sin(time * 6 + index) * 0.1
