@@ -1084,11 +1084,11 @@ class OceanAdventure {
 
           // Side fins
           const finGeometry = new THREE.ConeGeometry(0.08, 0.2, 3)
-          const sideFinTilt = Math.PI / 12
+          const sideFinTiltRadians = Math.PI / 12
           const leftFin = new THREE.Mesh(finGeometry, tailMaterial.clone())
           leftFin.position.set(0.1, -0.1, 0.2)
           leftFin.rotation.x = Math.PI / 4
-          leftFin.rotation.z = sideFinTilt
+          leftFin.rotation.z = sideFinTiltRadians
           leftFin.userData.baseRotationZ = leftFin.rotation.z
           leftFin.userData.finType = 'side'
           fishGroup.add(leftFin)
@@ -1096,7 +1096,7 @@ class OceanAdventure {
           const rightFin = new THREE.Mesh(finGeometry, tailMaterial.clone())
           rightFin.position.set(0.1, -0.1, -0.2)
           rightFin.rotation.x = -Math.PI / 4
-          rightFin.rotation.z = -sideFinTilt
+          rightFin.rotation.z = -sideFinTiltRadians
           rightFin.userData.baseRotationZ = rightFin.rotation.z
           rightFin.userData.finType = 'side'
           fishGroup.add(rightFin)
@@ -1122,16 +1122,12 @@ class OceanAdventure {
             0.04,
             10
           )
-          const STRIPE_SATURATION_REDUCTION = -0.15
-          const STRIPE_LIGHTNESS_BOOST = 0.15
+          const stripeSaturationReduction = -0.15
+          const stripeLightnessBoost = 0.15
           const stripeMaterial = new THREE.MeshPhongMaterial({
             color: fishColor
               .clone()
-              .offsetHSL(
-                0,
-                STRIPE_SATURATION_REDUCTION,
-                STRIPE_LIGHTNESS_BOOST
-              ),
+              .offsetHSL(0, stripeSaturationReduction, stripeLightnessBoost),
             transparent: true,
             opacity: 0.7,
           })
