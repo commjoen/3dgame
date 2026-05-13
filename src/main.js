@@ -1026,10 +1026,17 @@ class OceanAdventure {
   createSeaCreatures() {
     console.log('🐠 Creating sea creatures...')
 
-    const creatureTypes = ['fish', 'jellyfish', 'seahorse']
+    const creatureWeights = {
+      fish: 3,
+      jellyfish: 1,
+      seahorse: 1,
+    }
+    const creatureTypes = Object.entries(creatureWeights).flatMap(
+      ([creatureType, weight]) => Array(weight).fill(creatureType)
+    )
 
-    for (let i = 0; i < 12; i++) {
-      // Create 12 creatures
+    for (let i = 0; i < 16; i++) {
+      // Create 16 creatures with fish-forward distribution
       const creatureType =
         creatureTypes[Math.floor(Math.random() * creatureTypes.length)]
       let mesh, swimRadius, swimSpeed
@@ -1041,12 +1048,13 @@ class OceanAdventure {
 
           // Fish body
           const bodyGeometry = new THREE.SphereGeometry(0.3, 8, 6)
+          const fishColor = new THREE.Color().setHSL(
+            0.1 + Math.random() * 0.8,
+            0.8,
+            0.6
+          )
           const bodyMaterial = new THREE.MeshPhongMaterial({
-            color: new THREE.Color().setHSL(
-              0.1 + Math.random() * 0.8,
-              0.8,
-              0.6
-            ),
+            color: fishColor,
             shininess: 60,
           })
           const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
@@ -1064,17 +1072,76 @@ class OceanAdventure {
           tail.rotation.z = Math.PI / 2
           fishGroup.add(tail)
 
+          // Dorsal fin
+          const dorsalFinGeometry = new THREE.ConeGeometry(0.06, 0.24, 3)
+          const dorsalFin = new THREE.Mesh(
+            dorsalFinGeometry,
+            tailMaterial.clone()
+          )
+          dorsalFin.position.set(0, 0.23, 0)
+          dorsalFin.rotation.z = Math.PI
+          fishGroup.add(dorsalFin)
+
           // Side fins
           const finGeometry = new THREE.ConeGeometry(0.08, 0.2, 3)
+          const sideFinTiltRadians = Math.PI / 12
           const leftFin = new THREE.Mesh(finGeometry, tailMaterial.clone())
           leftFin.position.set(0.1, -0.1, 0.2)
           leftFin.rotation.x = Math.PI / 4
+          leftFin.rotation.z = sideFinTiltRadians
+          leftFin.userData.baseRotationZ = leftFin.rotation.z
+          leftFin.userData.finType = 'side'
           fishGroup.add(leftFin)
 
           const rightFin = new THREE.Mesh(finGeometry, tailMaterial.clone())
           rightFin.position.set(0.1, -0.1, -0.2)
           rightFin.rotation.x = -Math.PI / 4
+          rightFin.rotation.z = -sideFinTiltRadians
+          rightFin.userData.baseRotationZ = rightFin.rotation.z
+          rightFin.userData.finType = 'side'
           fishGroup.add(rightFin)
+
+          // Eyes
+          const eyeGeometry = new THREE.SphereGeometry(0.035, 6, 6)
+          const eyeMaterial = new THREE.MeshPhongMaterial({
+            color: 0x111111,
+            emissive: 0x111111,
+            emissiveIntensity: 0.2,
+          })
+          const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial)
+          leftEye.position.set(0.32, 0.08, 0.14)
+          fishGroup.add(leftEye)
+          const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial.clone())
+          rightEye.position.set(0.32, 0.08, -0.14)
+          fishGroup.add(rightEye)
+
+          // Stripe accents
+          const stripeGeometry = new THREE.CylinderGeometry(
+            0.21,
+            0.21,
+            0.04,
+            10
+          )
+          const stripeSaturationReduction = -0.15
+          const stripeLightnessBoost = 0.15
+          const stripeMaterial = new THREE.MeshPhongMaterial({
+            color: fishColor
+              .clone()
+              .offsetHSL(0, stripeSaturationReduction, stripeLightnessBoost),
+            transparent: true,
+            opacity: 0.7,
+          })
+          const frontStripe = new THREE.Mesh(stripeGeometry, stripeMaterial)
+          frontStripe.rotation.x = Math.PI / 2
+          frontStripe.position.set(0.16, 0, 0)
+          fishGroup.add(frontStripe)
+          const rearStripe = new THREE.Mesh(
+            stripeGeometry,
+            stripeMaterial.clone()
+          )
+          rearStripe.rotation.x = Math.PI / 2
+          rearStripe.position.set(-0.08, 0, 0)
+          fishGroup.add(rearStripe)
 
           mesh = fishGroup
           swimRadius = 8 + Math.random() * 12
@@ -2535,12 +2602,18 @@ class OceanAdventure {
           creature.children[1].rotation.y = Math.sin(time * 8) * 0.3
         }
 
+        // Add subtle body rocking
+        creature.rotation.z = Math.sin(time * 4 + userData.bobOffset) * 0.08
+
         // Animate side fins
         creature.children.forEach((child, index) => {
-          if (index > 1) {
+          if (
+            child.userData.finType === 'side' &&
+            child.userData.baseRotationZ !== undefined
+          ) {
             // Side fins
             child.rotation.z =
-              child.rotation.z + Math.sin(time * 6 + index) * 0.1
+              child.userData.baseRotationZ + Math.sin(time * 6 + index) * 0.1
           }
         })
       } else if (userData.creatureType === 'seahorse') {
