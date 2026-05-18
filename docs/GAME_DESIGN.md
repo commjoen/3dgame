@@ -60,6 +60,10 @@
 - **Interactive Objects**: Pressure plates, moveable rocks, ancient ruins
 - **Atmospheric Effects**: Particle bubbles, floating debris, light caustics
 
+### Environment Description Guidelines
+- **Lighting**: Always include terms like "sunbeams piercing through the water," "volumetric caustics," or "bioluminescent glowing coral."
+- **Atmosphere**: Add details like "suspended micro-bubbles," "cloudy marine snow," or "deep blue gradient."
+
 ## User Interface Design
 
 ### Desktop Interface
