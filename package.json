@@ -68,7 +68,7 @@
     "@types/three": "^0.184.1",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
-    "@vitejs/plugin-legacy": "^8.0.1",
+    "@vitejs/plugin-legacy": "^8.0.2",
     "@vitest/coverage-v8": "^4.1.6",
     "@vitest/ui": "^4.1.5",
     "eslint": "^10.3.0",
