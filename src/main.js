@@ -1028,14 +1028,14 @@ class OceanAdventure {
     console.log('🐠 Creating sea creatures...')
 
     const creatureWeights = {
-      fish: 4,
-      jellyfish: 2,
-      seahorse: 2,
+      fish: 3,
+      jellyfish: 1,
+      seahorse: 1,
     }
     const creatureTypes = Object.entries(creatureWeights).flatMap(
       ([creatureType, weight]) => Array(weight).fill(creatureType)
     )
-    const creatureCount = this.isMobile ? 18 : 24
+    const creatureCount = this.isMobile ? 16 : 20
 
     for (let i = 0; i < creatureCount; i++) {
       // Create a larger sea-life population with fish-forward distribution
@@ -2349,7 +2349,7 @@ class OceanAdventure {
 
     // Adaptive camera smoothing for better large screen experience
     // Base smoothing factor adjusted for frame rate and screen size
-    const baseSmoothingFactor = 0.1
+    const baseSmoothingFactor = 0.12
 
     // Screen size factor: larger screens get smoother camera movement
     // Mobile devices get more conservative smoothing for better control
@@ -2411,6 +2411,7 @@ class OceanAdventure {
     if (!this.smoothedLookAtTarget) {
       this.smoothedLookAtTarget = lookAtTarget.clone()
     }
+    // Use gentler interpolation than position smoothing to prevent rapid look snaps.
     const lookSmoothingFactor = Math.min(
       1.0,
       0.08 * screenSizeFactor * frameRateCompensation
