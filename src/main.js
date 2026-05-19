@@ -2418,6 +2418,9 @@ class OceanAdventure {
     )
 
     const movementThresholdSq = 0.0001
+    const movementLookInfluenceDistance = 2
+    const cameraLookOffsetStationary = 2
+    const cameraLookOffsetMoving = 1
     const targetLookDirection = new THREE.Vector3()
     if (
       isPlayerMoving &&
@@ -2428,8 +2431,14 @@ class OceanAdventure {
     this.smoothedLookDirection.lerp(targetLookDirection, lookTransitionFactor)
 
     // Add smoothed movement direction influence to look target for smoother tilt transition.
-    lookAtTarget.add(this.smoothedLookDirection.clone().multiplyScalar(2))
-    lookAtTarget.y += 2 - this.movementLookInfluence
+    lookAtTarget.add(
+      this.smoothedLookDirection
+        .clone()
+        .multiplyScalar(movementLookInfluenceDistance)
+    )
+    const lookOffsetRange = cameraLookOffsetStationary - cameraLookOffsetMoving
+    lookAtTarget.y +=
+      cameraLookOffsetStationary - lookOffsetRange * this.movementLookInfluence
 
     // Smooth look target to reduce abrupt camera rotation changes
     if (!this.smoothedLookAtTarget) {
