@@ -89,6 +89,8 @@ class OceanAdventure {
     this.smoothedLookAtTarget = null
     this.smoothedLookDirection = new THREE.Vector3()
     this.movementLookInfluence = 0
+    this.targetLookDirection = new THREE.Vector3()
+    this.tempLookDirection = new THREE.Vector3()
 
     // Timing
     this.lastTime = 0
@@ -2407,9 +2409,9 @@ class OceanAdventure {
     const isPlayerMoving = !!(this.player && this.player.isMoving)
     const targetLookInfluence = isPlayerMoving ? 1 : 0
     const lookTransitionSpeed = 0.06
-    const lookTransitionFactor = Math.min(
-      1.0,
-      lookTransitionSpeed * frameRateCompensation
+    const lookTransitionFactor = Math.max(
+      0.0,
+      Math.min(1.0, lookTransitionSpeed * frameRateCompensation)
     )
     this.movementLookInfluence = THREE.MathUtils.lerp(
       this.movementLookInfluence,
@@ -2421,21 +2423,23 @@ class OceanAdventure {
     const movementLookInfluenceDistance = 2
     const cameraLookOffsetStationary = 2
     const cameraLookOffsetMoving = 1
-    const targetLookDirection = new THREE.Vector3()
+    this.targetLookDirection.set(0, 0, 0)
     if (
       isPlayerMoving &&
       this.player.movementVector.lengthSq() > movementThresholdSq
     ) {
-      targetLookDirection.copy(this.player.movementVector).normalize()
+      this.targetLookDirection.copy(this.player.movementVector).normalize()
     }
-    this.smoothedLookDirection.lerp(targetLookDirection, lookTransitionFactor)
+    this.smoothedLookDirection.lerp(
+      this.targetLookDirection,
+      lookTransitionFactor
+    )
 
     // Add smoothed movement direction influence to look target for smoother tilt transition.
-    lookAtTarget.add(
-      this.smoothedLookDirection
-        .clone()
-        .multiplyScalar(movementLookInfluenceDistance)
-    )
+    this.tempLookDirection
+      .copy(this.smoothedLookDirection)
+      .multiplyScalar(movementLookInfluenceDistance)
+    lookAtTarget.add(this.tempLookDirection)
     const lookOffsetRange = cameraLookOffsetStationary - cameraLookOffsetMoving
     lookAtTarget.y +=
       cameraLookOffsetStationary - lookOffsetRange * this.movementLookInfluence
