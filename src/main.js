@@ -87,6 +87,8 @@ class OceanAdventure {
     // Camera smoothing state for adaptive movement
     this.previousMovementDirection = null
     this.smoothedLookAtTarget = null
+    this.smoothedLookDirection = new THREE.Vector3(0, 0, 0)
+    this.movementLookInfluence = 0
 
     // Timing
     this.lastTime = 0
@@ -2401,15 +2403,25 @@ class OceanAdventure {
     // Improved camera look direction to account for player movement direction
     const lookAtTarget = playerPosition.clone()
 
-    // If player is moving, adjust camera to look in the direction of movement
-    if (this.player && this.player.isMoving) {
-      const movementDirection = this.player.movementVector.clone().normalize()
-      // Add movement direction influence to look target for better head direction awareness
-      lookAtTarget.add(movementDirection.multiplyScalar(2))
-      lookAtTarget.y += 1 // Less vertical offset when moving to see movement direction better
-    } else {
-      lookAtTarget.y += 2 // Look slightly above the player when stationary
+    // Blend movement look influence to avoid abrupt tilt changes when starting/stopping movement.
+    const isPlayerMoving = !!(this.player && this.player.isMoving)
+    const targetLookInfluence = isPlayerMoving ? 1 : 0
+    const lookTransitionFactor = Math.min(1.0, 0.06 * frameRateCompensation)
+    this.movementLookInfluence = THREE.MathUtils.lerp(
+      this.movementLookInfluence,
+      targetLookInfluence,
+      lookTransitionFactor
+    )
+
+    const targetLookDirection = new THREE.Vector3(0, 0, 0)
+    if (isPlayerMoving && this.player.movementVector.lengthSq() > 0.0001) {
+      targetLookDirection.copy(this.player.movementVector).normalize()
     }
+    this.smoothedLookDirection.lerp(targetLookDirection, lookTransitionFactor)
+
+    // Add smoothed movement direction influence to look target for smoother tilt transition.
+    lookAtTarget.add(this.smoothedLookDirection.clone().multiplyScalar(2))
+    lookAtTarget.y += 2 - this.movementLookInfluence
 
     // Smooth look target to reduce abrupt camera rotation changes
     if (!this.smoothedLookAtTarget) {
