@@ -87,7 +87,7 @@ class OceanAdventure {
     // Camera smoothing state for adaptive movement
     this.previousMovementDirection = null
     this.smoothedLookAtTarget = null
-    this.smoothedLookDirection = new THREE.Vector3(0, 0, 0)
+    this.smoothedLookDirection = new THREE.Vector3()
     this.movementLookInfluence = 0
 
     // Timing
@@ -2406,15 +2406,23 @@ class OceanAdventure {
     // Blend movement look influence to avoid abrupt tilt changes when starting/stopping movement.
     const isPlayerMoving = !!(this.player && this.player.isMoving)
     const targetLookInfluence = isPlayerMoving ? 1 : 0
-    const lookTransitionFactor = Math.min(1.0, 0.06 * frameRateCompensation)
+    const lookTransitionSpeed = 0.06
+    const lookTransitionFactor = Math.min(
+      1.0,
+      lookTransitionSpeed * frameRateCompensation
+    )
     this.movementLookInfluence = THREE.MathUtils.lerp(
       this.movementLookInfluence,
       targetLookInfluence,
       lookTransitionFactor
     )
 
-    const targetLookDirection = new THREE.Vector3(0, 0, 0)
-    if (isPlayerMoving && this.player.movementVector.lengthSq() > 0.0001) {
+    const movementThresholdSq = 0.0001
+    const targetLookDirection = new THREE.Vector3()
+    if (
+      isPlayerMoving &&
+      this.player.movementVector.lengthSq() > movementThresholdSq
+    ) {
       targetLookDirection.copy(this.player.movementVector).normalize()
     }
     this.smoothedLookDirection.lerp(targetLookDirection, lookTransitionFactor)
