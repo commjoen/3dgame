@@ -1035,7 +1035,11 @@ class OceanAdventure {
     const creatureTypes = Object.entries(creatureWeights).flatMap(
       ([creatureType, weight]) => Array(weight).fill(creatureType)
     )
-    const creatureCount = this.isMobile ? 16 : 20
+    const mobileCreatureCount = 16
+    const desktopCreatureCount = 20
+    const creatureCount = this.isMobile
+      ? mobileCreatureCount
+      : desktopCreatureCount
 
     for (let i = 0; i < creatureCount; i++) {
       // Create a larger sea-life population with fish-forward distribution
@@ -2412,9 +2416,10 @@ class OceanAdventure {
       this.smoothedLookAtTarget = lookAtTarget.clone()
     }
     // Use gentler interpolation than position smoothing to prevent rapid look snaps.
+    const baseLookSmoothingFactor = 0.08
     const lookSmoothingFactor = Math.min(
       1.0,
-      0.08 * screenSizeFactor * frameRateCompensation
+      baseLookSmoothingFactor * screenSizeFactor * frameRateCompensation
     )
     this.smoothedLookAtTarget.lerp(lookAtTarget, lookSmoothingFactor)
     this.camera.lookAt(this.smoothedLookAtTarget)
