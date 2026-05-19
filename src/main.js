@@ -2409,9 +2409,10 @@ class OceanAdventure {
     const isPlayerMoving = !!(this.player && this.player.isMoving)
     const targetLookInfluence = isPlayerMoving ? 1 : 0
     const lookTransitionSpeed = 0.06
-    const lookTransitionFactor = Math.max(
+    const lookTransitionFactor = THREE.MathUtils.clamp(
+      lookTransitionSpeed * frameRateCompensation,
       0.0,
-      Math.min(1.0, lookTransitionSpeed * frameRateCompensation)
+      1.0
     )
     this.movementLookInfluence = THREE.MathUtils.lerp(
       this.movementLookInfluence,
@@ -2419,16 +2420,20 @@ class OceanAdventure {
       lookTransitionFactor
     )
 
+    // Ignore tiny movement magnitudes to prevent noisy direction jitter.
     const movementThresholdSq = 0.0001
+    // Look target lead distance while moving to improve forward look anticipation.
     const movementLookInfluenceDistance = 2
+    // Vertical look offsets: higher when idle, slightly lower while swimming.
     const cameraLookOffsetStationary = 2
     const cameraLookOffsetMoving = 1
-    this.targetLookDirection.set(0, 0, 0)
     if (
       isPlayerMoving &&
       this.player.movementVector.lengthSq() > movementThresholdSq
     ) {
       this.targetLookDirection.copy(this.player.movementVector).normalize()
+    } else {
+      this.targetLookDirection.set(0, 0, 0)
     }
     this.smoothedLookDirection.lerp(
       this.targetLookDirection,
