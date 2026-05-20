@@ -86,6 +86,11 @@ class OceanAdventure {
 
     // Camera smoothing state for adaptive movement
     this.previousMovementDirection = null
+    this.smoothedLookAtTarget = null
+    this.smoothedLookDirection = new THREE.Vector3()
+    this.movementLookInfluence = 0
+    this.targetLookDirection = new THREE.Vector3()
+    this.tempLookDirection = new THREE.Vector3()
 
     // Timing
     this.lastTime = 0
@@ -1034,9 +1039,14 @@ class OceanAdventure {
     const creatureTypes = Object.entries(creatureWeights).flatMap(
       ([creatureType, weight]) => Array(weight).fill(creatureType)
     )
+    const mobileCreatureCount = 16
+    const desktopCreatureCount = 20
+    const creatureCount = this.isMobile
+      ? mobileCreatureCount
+      : desktopCreatureCount
 
-    for (let i = 0; i < 16; i++) {
-      // Create 16 creatures with fish-forward distribution
+    for (let i = 0; i < creatureCount; i++) {
+      // Create a larger sea-life population with fish-forward distribution
       const creatureType =
         creatureTypes[Math.floor(Math.random() * creatureTypes.length)]
       let mesh, swimRadius, swimSpeed
@@ -2347,7 +2357,7 @@ class OceanAdventure {
 
     // Adaptive camera smoothing for better large screen experience
     // Base smoothing factor adjusted for frame rate and screen size
-    const baseSmoothingFactor = 0.12 // Slightly increased for smoother movement
+    const baseSmoothingFactor = 0.12
 
     // Screen size factor: larger screens get smoother camera movement
     // Mobile devices get more conservative smoothing for better control
@@ -2395,17 +2405,62 @@ class OceanAdventure {
     // Improved camera look direction to account for player movement direction
     const lookAtTarget = playerPosition.clone()
 
-    // If player is moving, adjust camera to look in the direction of movement
-    if (this.player && this.player.isMoving) {
-      const movementDirection = this.player.movementVector.clone().normalize()
-      // Add movement direction influence to look target for better head direction awareness
-      lookAtTarget.add(movementDirection.multiplyScalar(2))
-      lookAtTarget.y += 1 // Less vertical offset when moving to see movement direction better
-    } else {
-      lookAtTarget.y += 2 // Look slightly above the player when stationary
-    }
+    // Blend movement look influence to avoid abrupt tilt changes when starting/stopping movement.
+    const isPlayerMoving = !!(this.player && this.player.isMoving)
+    const targetLookInfluence = isPlayerMoving ? 1 : 0
+    const lookTransitionSpeed = 0.06
+    const lookTransitionFactor = THREE.MathUtils.clamp(
+      lookTransitionSpeed * frameRateCompensation,
+      0.0,
+      1.0
+    )
+    this.movementLookInfluence = THREE.MathUtils.lerp(
+      this.movementLookInfluence,
+      targetLookInfluence,
+      lookTransitionFactor
+    )
 
-    this.camera.lookAt(lookAtTarget)
+    // Ignore tiny movement magnitudes to prevent noisy direction jitter.
+    const movementThresholdSq = 0.0001
+    // Look target lead distance while moving to improve forward look anticipation.
+    const movementLookInfluenceDistance = 2
+    // Vertical look offsets: higher when idle, slightly lower while swimming.
+    const cameraLookOffsetStationary = 2
+    const cameraLookOffsetMoving = 1
+    if (
+      isPlayerMoving &&
+      this.player.movementVector.lengthSq() > movementThresholdSq
+    ) {
+      this.targetLookDirection.copy(this.player.movementVector).normalize()
+    } else {
+      this.targetLookDirection.set(0, 0, 0)
+    }
+    this.smoothedLookDirection.lerp(
+      this.targetLookDirection,
+      lookTransitionFactor
+    )
+
+    // Add smoothed movement direction influence to look target for smoother tilt transition.
+    this.tempLookDirection
+      .copy(this.smoothedLookDirection)
+      .multiplyScalar(movementLookInfluenceDistance)
+    lookAtTarget.add(this.tempLookDirection)
+    const lookOffsetRange = cameraLookOffsetStationary - cameraLookOffsetMoving
+    lookAtTarget.y +=
+      cameraLookOffsetStationary - lookOffsetRange * this.movementLookInfluence
+
+    // Smooth look target to reduce abrupt camera rotation changes
+    if (!this.smoothedLookAtTarget) {
+      this.smoothedLookAtTarget = lookAtTarget.clone()
+    }
+    // Use gentler interpolation than position smoothing to prevent rapid look snaps.
+    const baseLookSmoothingFactor = 0.08
+    const lookSmoothingFactor = Math.min(
+      1.0,
+      baseLookSmoothingFactor * screenSizeFactor * frameRateCompensation
+    )
+    this.smoothedLookAtTarget.lerp(lookAtTarget, lookSmoothingFactor)
+    this.camera.lookAt(this.smoothedLookAtTarget)
   }
 
   startGameLoop() {
