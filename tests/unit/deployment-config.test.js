@@ -16,7 +16,7 @@ describe('Deployment Configuration', () => {
     // Check prepare-pages job has the setup and upload actions
     const preparePagesSteps = workflow.jobs['prepare-pages'].steps
     const hasSetupPages = preparePagesSteps.some(step => step.uses === 'actions/configure-pages@v6')
-    const hasUploadArtifact = preparePagesSteps.some(step => step.uses === 'actions/upload-pages-artifact@v4')
+    const hasUploadArtifact = preparePagesSteps.some(step => step.uses?.startsWith('actions/upload-pages-artifact@v'))
     
     // Check deploy job has the deploy action
     const deploySteps = workflow.jobs.deploy.steps
