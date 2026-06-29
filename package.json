@@ -60,12 +60,12 @@
     "peerjs": "^1.5.5",
     "stats.js": "^0.17.0",
     "striptags": "^3.2.0",
-    "three": "^0.184.0"
+    "three": "^0.185.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
-    "@types/three": "^0.184.1",
+    "@types/three": "^0.185.0",
     "@typescript-eslint/eslint-plugin": "^8.62.0",
     "@typescript-eslint/parser": "^8.62.0",
     "@vitejs/plugin-legacy": "^8.1.0",
