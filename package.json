@@ -60,7 +60,7 @@
     "peerjs": "^1.5.5",
     "stats.js": "^0.17.0",
     "striptags": "^3.2.0",
-    "three": "^0.184.0"
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
