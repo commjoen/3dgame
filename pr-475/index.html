@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ocean Adventure - 3D underwater platform game" />
+    <meta name="theme-color" content="#1e40af" />
+    <link rel="icon" type="image/x-icon" href="/3dgame/pr-475/favicon.ico" />
+    <link rel="manifest" href="/3dgame/pr-475/manifest.json" />
+    <title>Ocean Adventure</title>
+    <style>body{background:linear-gradient(#1e40af,#0f172a);margin:0;padding:0;font-family:Arial,sans-serif;overflow:hidden}#gameCanvas{width:100vw;height:100vh;display:block}#loading{color:#fff;text-align:center;z-index:1000;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)}.spinner{border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;width:50px;height:50px;margin:0 auto 20px;animation:1s linear infinite spin}@keyframes spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}#ui{color:#fff;z-index:100;pointer-events:none;font-size:18px;position:fixed;top:20px;left:20px}.hidden{display:none!important}#mobileControls{pointer-events:none;z-index:200;height:150px;position:fixed;bottom:20px;left:20px;right:20px}.virtual-joystick{pointer-events:auto;touch-action:none;backdrop-filter:blur(4px);background:rgba(0,17,34,.5);border:3px solid rgba(255,255,255,.3);border-radius:50%;width:120px;height:120px;position:absolute;bottom:0;left:0}.camera-joystick{pointer-events:auto;touch-action:none;backdrop-filter:blur(4px);background:rgba(0,17,34,.5);border:3px solid rgba(255,255,255,.3);border-radius:50%;width:120px;height:120px;position:absolute;bottom:0;right:130px}.joystick-knob{background:rgba(255,255,255,.8);border-radius:50%;width:40px;height:40px;transition:all .1s ease-out;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,.3)}.camera-knob{background:rgba(255,200,100,.8);border-radius:50%;width:40px;height:40px;transition:all .1s ease-out;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,.3)}.mobile-buttons{flex-direction:column;gap:10px;display:flex;position:absolute;bottom:0;right:0}.mobile-btn{color:#fff;pointer-events:auto;touch-action:none;backdrop-filter:blur(4px);user-select:none;background:rgba(0,17,34,.6);border:2px solid rgba(255,255,255,.5);border-radius:50%;justify-content:center;align-items:center;width:50px;height:50px;font-size:20px;display:flex}.mobile-btn:active{background:rgba(255,255,255,.3);transform:scale(.95)}@media (max-width:768px){#ui{font-size:16px;top:15px;left:15px}#mobileControls{display:block}}@media (min-width:769px){#mobileControls{display:none}#mobileControls.tesla-mode{display:block!important}}.settings-button{color:#fff;cursor:pointer;z-index:300;backdrop-filter:blur(4px);pointer-events:auto;touch-action:manipulation;user-select:none;background:rgba(0,17,34,.8);border:2px solid rgba(255,255,255,.3);border-radius:50%;justify-content:center;align-items:center;width:50px;height:50px;font-size:20px;transition:all .3s;display:flex;position:fixed;top:20px;right:20px}.settings-button:hover{background:rgba(255,255,255,.2);transform:scale(1.1)}@media (hover:none) and (pointer:coarse){.settings-button:active{background:rgba(255,255,255,.4);transform:scale(.95)}}.settings-modal{z-index:1000;backdrop-filter:blur(4px);pointer-events:auto;touch-action:manipulation;background:rgba(0,0,0,.8);justify-content:center;align-items:center;width:100%;height:100%;display:flex;position:fixed;top:0;left:0}.settings-content{color:#fff;backdrop-filter:blur(10px);box-sizing:border-box;pointer-events:auto;background:rgba(0,17,34,.95);border:2px solid rgba(255,255,255,.3);border-radius:15px;max-width:500px;max-height:80vh;margin:20px;padding:30px;overflow-y:auto}@media (max-width:768px){.settings-content{border-radius:10px;max-height:90vh;margin:10px;padding:20px}.settings-button{width:45px;height:45px;font-size:18px;top:15px;right:15px}}.settings-header{border-bottom:1px solid rgba(255,255,255,.3);justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:10px;display:flex}.settings-header h2{color:#87ceeb;margin:0}.close-button{color:#fff;cursor:pointer;pointer-events:auto;touch-action:manipulation;user-select:none;background:0 0;border:none;border-radius:50%;justify-content:center;align-items:center;width:40px;height:40px;padding:0;font-size:30px;transition:background .3s;display:flex}.close-button:hover{background:rgba(255,255,255,.2)}@media (hover:none) and (pointer:coarse){.close-button:active{background:rgba(255,255,255,.4);transform:scale(.9)}}.settings-body h3{color:#87ceeb;margin-top:20px;margin-bottom:10px}.settings-body ul{padding:0;list-style:none}.settings-body li{border-bottom:1px solid rgba(255,255,255,.1);padding:5px 0}.settings-body li:last-child{border-bottom:none}.settings-body strong{color:gold;min-width:100px;display:inline-block}.settings-body p{color:#b0c4de;margin-top:15px;line-height:1.5}.audio-controls{margin-bottom:20px}.volume-control{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;align-items:center;gap:10px;margin-bottom:15px;padding:10px;display:flex}.volume-control label{color:#87ceeb;min-width:120px;font-weight:700}.volume-slider{-webkit-appearance:none;appearance:none;cursor:pointer;background:rgba(255,255,255,.2);border-radius:3px;outline:none;flex:1;height:6px}.volume-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;cursor:pointer;background:#87ceeb;border-radius:50%;width:18px;height:18px;transition:all .2s}.volume-slider::-webkit-slider-thumb:hover{background:gold;transform:scale(1.1)}.volume-slider::-moz-range-thumb{cursor:pointer;background:#87ceeb;border:none;border-radius:50%;width:18px;height:18px;transition:all .2s}.volume-slider::-moz-range-thumb:hover{background:gold;transform:scale(1.1)}.volume-control span{text-align:right;color:gold;min-width:40px;font-weight:700}@media (max-width:768px){.volume-control{flex-direction:column;align-items:stretch;gap:8px}.volume-control label{text-align:center;min-width:auto}.volume-control span{text-align:center}}.multiplayer-button{color:#fff;cursor:pointer;z-index:300;backdrop-filter:blur(4px);pointer-events:auto;touch-action:manipulation;user-select:none;background:rgba(0,17,34,.8);border:2px solid rgba(255,255,255,.3);border-radius:50%;justify-content:center;align-items:center;width:50px;height:50px;font-size:20px;transition:all .3s;display:flex;position:fixed;top:80px;right:20px}.multiplayer-button:hover{background:rgba(255,255,255,.2);transform:scale(1.1)}@media (hover:none) and (pointer:coarse){.multiplayer-button:active{background:rgba(255,255,255,.4);transform:scale(.95)}}@media (max-width:768px){.multiplayer-button{width:45px;height:45px;font-size:18px;top:70px;right:15px}}.multiplayer-modal{z-index:1000;backdrop-filter:blur(4px);pointer-events:auto;touch-action:manipulation;background:rgba(0,0,0,.8);justify-content:center;align-items:center;width:100%;height:100%;display:flex;position:fixed;top:0;left:0}.multiplayer-content{color:#fff;backdrop-filter:blur(10px);box-sizing:border-box;background:rgba(0,17,34,.95);border:2px solid rgba(255,255,255,.3);border-radius:15px;width:100%;max-width:460px;max-height:80vh;margin:20px;padding:30px;overflow-y:auto}@media (max-width:768px){.multiplayer-content{max-height:90vh;margin:10px;padding:20px}}.multiplayer-header{border-bottom:1px solid rgba(255,255,255,.3);justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:10px;display:flex}.multiplayer-header h2{color:#87ceeb;margin:0}.multiplayer-body h3{color:#87ceeb;margin-top:20px;margin-bottom:10px}.room-code-box{word-break:break-all;color:gold;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;margin-bottom:12px;padding:12px;font-family:monospace;font-size:14px}.mp-input{color:#fff;box-sizing:border-box;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.3);border-radius:8px;width:100%;margin-bottom:10px;padding:10px 12px;font-family:monospace;font-size:14px}.mp-input::placeholder{color:rgba(255,255,255,.4)}.mp-btn{cursor:pointer;border:none;border-radius:8px;width:100%;margin-bottom:10px;padding:11px 20px;font-size:15px;font-weight:700;transition:all .2s}.mp-btn-primary{color:#fff;background:linear-gradient(135deg,#0077b6,#0096c7)}.mp-btn-primary:hover:not(:disabled){background:linear-gradient(135deg,#005f99,#007aab)}.mp-btn-danger{color:#fff;background:linear-gradient(135deg,#c62828,#e53935)}.mp-btn-danger:hover:not(:disabled){background:linear-gradient(135deg,#ad1457,#c62828)}.mp-btn:disabled{opacity:.5;cursor:not-allowed}.mp-status{color:#b0c4de;background:rgba(255,255,255,.05);border-radius:6px;margin-top:14px;padding:10px;font-size:13px}.mp-player-count{color:#87ceeb;margin-top:8px;font-size:13px}.app-install-section{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.2);border-radius:8px;margin:15px 0;padding:15px}.install-button{color:#fff;cursor:pointer;background:linear-gradient(135deg,#4caf50,#45a049);border:none;border-radius:8px;width:100%;margin:10px 0;padding:12px 24px;font-size:16px;font-weight:700;transition:all .3s;box-shadow:0 4px 6px rgba(0,0,0,.3)}.install-button:hover{background:linear-gradient(135deg,#45a049,#3d8b40);transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.4)}.install-button:active{transform:translateY(0);box-shadow:0 2px 4px rgba(0,0,0,.2)}.install-status{color:#b0c4de;text-align:center;margin:10px 0;font-style:italic}@media (max-width:768px){.install-button{padding:14px 28px;font-size:18px}}</style>
+  <script type="module" crossorigin src="/3dgame/pr-475/assets/index-D6O-wIxM.js"></script>
+  <link rel="modulepreload" crossorigin href="/3dgame/pr-475/assets/rolldown-runtime-hePW80VL.js">
+  <link rel="modulepreload" crossorigin href="/3dgame/pr-475/assets/three-75VQW9xw.js">
+  <script type="module">import'data:text/javascript,if(!import.meta.resolve)throw Error("import.meta.resolve not supported")';import.meta.url;import("_").catch(()=>1);(async function*(){})().next();window.__vite_is_modern_browser=true</script>
+  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+<link rel="manifest" href="/3dgame/pr-475/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/3dgame/pr-475/registerSW.js"></script></head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Loading Ocean Adventure...</p>
+    </div>
+    
+    <div id="ui" class="hidden">
+        <div>Stars: <span id="starCount">0</span></div>
+        <div>Level: <span id="levelNumber">1</span></div>
+        <div>Depth: <span id="depthMeter">0</span>m</div>
+    </div>
+    
+    <!-- Settings Button -->
+    <div id="settingsButton" class="settings-button">⚙️</div>
+    
+    <!-- Multiplayer Button -->
+    <div id="multiplayerButton" class="multiplayer-button" title="Multiplayer">🌐</div>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-modal hidden">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <button id="closeSettings" class="close-button">×</button>
+            </div>
+            <div class="settings-body">
+                <h3>Audio Settings:</h3>
+                <div class="audio-controls">
+                    <div class="volume-control">
+                        <label for="masterVolumeSlider">Master Volume:</label>
+                        <input type="range" id="masterVolumeSlider" min="0" max="100" value="50" class="volume-slider">
+                        <span id="masterVolumeValue">50%</span>
+                    </div>
+                    <div class="volume-control">
+                        <label for="musicVolumeSlider">Music Volume:</label>
+                        <input type="range" id="musicVolumeSlider" min="0" max="100" value="50" class="volume-slider">
+                        <span id="musicVolumeValue">50%</span>
+                    </div>
+                    <div class="volume-control">
+                        <label for="sfxVolumeSlider">Sound Effects Volume:</label>
+                        <input type="range" id="sfxVolumeSlider" min="0" max="100" value="50" class="volume-slider">
+                        <span id="sfxVolumeValue">50%</span>
+                    </div>
+                </div>
+                
+                <h3>Controls:</h3>
+                <h3>Desktop Controls:</h3>
+                <ul>
+                    <li><strong>W/↑:</strong> Swim forward</li>
+                    <li><strong>S/↓:</strong> Swim backward</li>
+                    <li><strong>A/←:</strong> Turn left</li>
+                    <li><strong>D/→:</strong> Turn right</li>
+                    <li><strong>Space:</strong> Swim up</li>
+                    <li><strong>Shift:</strong> Swim down</li>
+                    <li><strong>I:</strong> Look up (camera)</li>
+                    <li><strong>K:</strong> Look down (camera)</li>
+                    <li><strong>J:</strong> Look left (camera)</li>
+                    <li><strong>L:</strong> Look right (camera)</li>
+                    <li><strong>T:</strong> Toggle Tesla mode (show mobile controls)</li>
+                </ul>
+                
+                <h3>Mobile Controls:</h3>
+                <ul>
+                    <li><strong>Left Virtual Joystick:</strong> Move around</li>
+                    <li><strong>Right Camera Joystick:</strong> Control camera view (360° rotation)</li>
+                    <li><strong>↑ Button:</strong> Swim up</li>
+                    <li><strong>↓ Button:</strong> Swim down</li>
+                    <li><strong>Swipe:</strong> Look around (alternative)</li>
+                </ul>
+                
+                <h3>Tesla Mode:</h3>
+                <p>Press <strong>T</strong> on desktop to enable Tesla mode, which shows mobile touch controls on large screens for big screen touch interfaces.</p>
+                
+                <h3>App Installation:</h3>
+                <div class="app-install-section">
+                    <p>Install Ocean Adventure as an app for the best offline experience!</p>
+                    <button id="installButton" class="install-button hidden">📱 Install App</button>
+                    <p id="installStatus" class="install-status hidden">App installation not available in this browser.</p>
+                </div>
+                
+                <h3>Objective:</h3>
+                <p>Collect all the golden stars to complete each level. Watch your depth and explore the underwater world!</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="mobileControls">
+        <div class="virtual-joystick" id="virtualJoystick">
+            <div class="joystick-knob" id="joystickKnob"></div>
+        </div>
+        <div class="camera-joystick" id="cameraJoystick">
+            <div class="camera-knob" id="cameraKnob"></div>
+        </div>
+        <div class="mobile-buttons">
+            <div class="mobile-btn" id="swimUpBtn">↑</div>
+            <div class="mobile-btn" id="swimDownBtn">↓</div>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Multiplayer Modal -->
+    <div id="multiplayerModal" class="multiplayer-modal hidden">
+        <div class="multiplayer-content">
+            <div class="multiplayer-header">
+                <h2>🌐 Multiplayer</h2>
+                <button id="closeMultiplayer" class="close-button">×</button>
+            </div>
+            <div class="multiplayer-body">
+                <h3>Host a Room</h3>
+                <p style="color:#b0c4de;font-size:13px;margin-bottom:10px;">
+                    Create a room and share the code with friends so they can join.
+                </p>
+                <button id="hostRoomBtn" class="mp-btn mp-btn-primary">🎮 Create Room</button>
+
+                <h3>Join a Room</h3>
+                <p style="color:#b0c4de;font-size:13px;margin-bottom:8px;">
+                    Enter the room code shared by the host.
+                </p>
+                <input id="joinRoomInput" class="mp-input" type="text" placeholder="Paste room code here…" autocomplete="off" spellcheck="false">
+                <button id="joinRoomBtn" class="mp-btn mp-btn-primary">🔗 Join Room</button>
+
+                <h3>Room Code</h3>
+                <div id="roomCodeDisplay" class="room-code-box">—</div>
+                <p style="color:#b0c4de;font-size:12px;margin-top:4px;">
+                    Share this code with other players so they can join your session.
+                </p>
+
+                <button id="leaveRoomBtn" class="mp-btn mp-btn-danger hidden">🚪 Leave Room</button>
+
+                <div id="playerCountDisplay" class="mp-player-count">Players connected: 0</div>
+                <div id="multiplayerStatus" class="mp-status">⚪ Not connected</div>
+
+                <h3>How it works</h3>
+                <ul style="color:#b0c4de;font-size:13px;padding-left:18px;line-height:1.7;">
+                    <li>All connections are direct peer-to-peer via WebRTC – no central server stores your data.</li>
+                    <li>One player hosts; others join using the room code.</li>
+                    <li>Up to ~10 simultaneous players are supported.</li>
+                    <li>WebRTC requires a modern browser (Chrome 80+, Firefox 75+, Safari 13+).</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+  <script nomodule crossorigin id="vite-legacy-polyfill" src="/3dgame/pr-475/assets/polyfills-legacy-Dwf89ZsZ.js"></script>
+  <script nomodule crossorigin id="vite-legacy-entry" data-src="/3dgame/pr-475/assets/index-legacy-DMvLFofv.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+</body>
+</html>
