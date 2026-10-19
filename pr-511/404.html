@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Adventure - Redirecting...</title>
+    <script>
+        // GitHub Pages SPA fallback
+        // Redirect any 404 to the main page with the path preserved
+        const currentPath = window.location.pathname;
+        const baseUrl = '/3dgame/';
+        
+        // If we're already at the base URL, just redirect to index
+        if (currentPath === baseUrl || currentPath === baseUrl + '404.html') {
+            window.location.replace(baseUrl);
+        } else {
+            // For other paths, redirect to base URL and let the app handle routing
+            window.location.replace(baseUrl);
+        }
+    </script>
+</head>
+<body>
+    <p>Redirecting to Ocean Adventure...</p>
+</body>
+</html>
