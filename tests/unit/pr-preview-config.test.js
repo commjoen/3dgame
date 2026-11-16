@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'fs/promises'
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import path from 'path'
 
 describe('PR Preview Configuration', () => {
   it('should have PR preview workflow with container URLs', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/pr-preview.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     // Check preview job exists
     expect(workflow.jobs['deploy-preview']).toBeDefined()
@@ -47,7 +47,7 @@ describe('PR Preview Configuration', () => {
   it('should have PR cleanup workflow with container information', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/pr-preview-cleanup.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     // Check cleanup job exists
     expect(workflow.jobs['cleanup-preview']).toBeDefined()
