@@ -2,7 +2,7 @@
  * Unit tests for mobile controls functionality
  */
 
-import { describe, test, expect, beforeEach } from 'vitest'
+import { describe, test, expect, beforeEach, vi } from 'vitest'
 import { JSDOM } from 'jsdom'
 
 // Mock DOM setup for testing mobile controls
@@ -26,12 +26,12 @@ function setupMockDOM() {
     </html>
   `)
 
-  global.window = dom.window
-  global.document = dom.window.document
-  global.navigator = {
+  vi.stubGlobal('window', dom.window)
+  vi.stubGlobal('document', dom.window.document)
+  vi.stubGlobal('navigator', {
     userAgent:
       'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
-  }
+  })
 
   // Mock canvas and WebGL context
   const canvas = document.getElementById('gameCanvas')
