@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'fs/promises'
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import path from 'path'
 
 describe('GitHub Pages Error Handling', () => {
   it('should have split deployment process for better error handling', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     // Should have separate prepare-pages and deploy jobs
     expect(workflow.jobs['prepare-pages']).toBeDefined()
@@ -28,7 +28,7 @@ describe('GitHub Pages Error Handling', () => {
   it('should provide helpful error messages when deployment fails', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     const deployJob = workflow.jobs.deploy
     const deploymentStatusStep = deployJob.steps.find(step => 
@@ -49,7 +49,7 @@ describe('GitHub Pages Error Handling', () => {
   it('should maintain environment configuration for successful deployments', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     const deployJob = workflow.jobs.deploy
     
@@ -69,7 +69,7 @@ describe('GitHub Pages Error Handling', () => {
   it('should use artifact passing between jobs', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     // Prepare-pages should have outputs
     const preparePagesJob = workflow.jobs['prepare-pages']

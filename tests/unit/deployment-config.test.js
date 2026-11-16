@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'fs/promises'
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import path from 'path'
 
 describe('Deployment Configuration', () => {
   it('should have GitHub Pages deployment correctly configured', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     // Check both prepare-pages and deploy jobs exist
     expect(workflow.jobs['prepare-pages']).toBeDefined()
@@ -40,7 +40,7 @@ describe('Deployment Configuration', () => {
   it('should have container build with multi-platform support', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     // Check container build job exists
     expect(workflow.jobs['build-and-push-container']).toBeDefined()
@@ -68,7 +68,7 @@ describe('Deployment Configuration', () => {
   it('should have proper Docker image metadata', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     const metadataStep = workflow.jobs['build-and-push-container'].steps.find(
       step => step.uses === 'docker/metadata-action@v6'
@@ -90,7 +90,7 @@ describe('Deployment Configuration', () => {
   it('should build containers on every main branch commit', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     const containerJob = workflow.jobs['build-and-push-container']
     expect(containerJob).toBeDefined()
@@ -105,7 +105,7 @@ describe('Deployment Configuration', () => {
   it('should allow container builds even when comprehensive tests fail', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     // Container builds should only depend on basic validation, not comprehensive tests
     const containerJob = workflow.jobs['build-and-push-container']
@@ -127,7 +127,7 @@ describe('Deployment Configuration', () => {
   it('should have separate validate job for basic quality checks', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     const validateJob = workflow.jobs['validate']
     expect(validateJob).toBeDefined()
@@ -143,7 +143,7 @@ describe('Deployment Configuration', () => {
   it('should have PR tagging for containers', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/ci-cd.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     const metadataStep = workflow.jobs['build-and-push-container'].steps.find(
       step => step.uses === 'docker/metadata-action@v6'

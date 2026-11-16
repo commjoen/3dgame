@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'fs/promises'
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import path from 'path'
 
 describe('Release Workflow Configuration', () => {
@@ -9,13 +9,13 @@ describe('Release Workflow Configuration', () => {
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
     
     // Should parse without throwing
-    expect(() => yaml.load(workflowContent)).not.toThrow()
+    expect(() => load(workflowContent)).not.toThrow()
   })
 
   it('should have proper release workflow structure', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/release.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     // Basic workflow structure
     expect(workflow.name).toBe('Release')
@@ -31,7 +31,7 @@ describe('Release Workflow Configuration', () => {
   it('should have proper permissions for release creation', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/release.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     expect(workflow.permissions.contents).toBe('write')
   })
@@ -39,7 +39,7 @@ describe('Release Workflow Configuration', () => {
   it('should have all required steps in the release job', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/release.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     const steps = workflow.jobs.release.steps
     const stepNames = steps.map(step => step.name)
@@ -69,7 +69,7 @@ describe('Release Workflow Configuration', () => {
   it('should have proper version handling for both trigger types', async () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/release.yml')
     const workflowContent = await fs.readFile(workflowPath, 'utf-8')
-    const workflow = yaml.load(workflowContent)
+    const workflow = load(workflowContent)
     
     const steps = workflow.jobs.release.steps
     
