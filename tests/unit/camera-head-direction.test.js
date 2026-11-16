@@ -8,8 +8,8 @@ import * as THREE from 'three'
 
 // Mock DOM for testing
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>')
-global.document = dom.window.document
-global.window = dom.window
+vi.stubGlobal('document', dom.window.document)
+vi.stubGlobal('window', dom.window)
 
 // Mock canvas context
 const mockContext = {

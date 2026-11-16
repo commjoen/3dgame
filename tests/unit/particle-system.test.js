@@ -16,7 +16,7 @@ vi.mock('three', async () => {
 })
 
 // Mock document and canvas for testing
-global.document = {
+vi.stubGlobal('document', {
   createElement: vi.fn().mockImplementation(tagName => {
     if (tagName === 'canvas') {
       return {
@@ -33,7 +33,7 @@ global.document = {
     }
     return {}
   }),
-}
+})
 
 describe('ParticleSystem', () => {
   let mockScene

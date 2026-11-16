@@ -20,7 +20,7 @@ vi.mock('three', async () => {
 })
 
 // Mock document for canvas creation
-global.document = {
+vi.stubGlobal('document', {
   createElement: vi.fn().mockImplementation(tagName => {
     if (tagName === 'canvas') {
       return {
@@ -56,7 +56,7 @@ global.document = {
   body: {
     appendChild: vi.fn(),
   },
-}
+})
 
 describe('Portal Transition Bug Fix', () => {
   let mockOceanAdventure
